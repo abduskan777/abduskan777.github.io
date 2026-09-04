@@ -38,6 +38,224 @@
         .stat span { color: #fbbf24; font-weight: bold; }
         .stat.coins span { color: #fbbf24; }
 
+        #auth-area { display: flex; align-items: center; gap: 8px; }
+        .auth-username { font-size: 0.85rem; color: #22d3ee; font-weight: bold; }
+        #auth-btn, #logout-btn {
+            padding: 7px 14px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        #auth-btn {
+            background: #22d3ee22;
+            border: 1px solid #22d3ee66;
+            color: #22d3ee;
+        }
+        #auth-btn:hover { background: #22d3ee44; }
+        #logout-btn {
+            background: #f8717122;
+            border: 1px solid #f8717166;
+            color: #fca5a5;
+        }
+        #logout-btn:hover { background: #f8717144; }
+        #trade-btn {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, #8b5cf622, #6d28d922);
+            border: 1px solid #a78bfa;
+            color: #c4b5fd;
+            border-radius: 10px;
+            padding: 8px 14px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all .25s ease;
+            box-shadow: 0 0 12px rgba(167,139,250,0.25), inset 0 0 8px rgba(167,139,250,0.1);
+            text-shadow: 0 0 6px rgba(167,139,250,0.7);
+        }
+        #trade-btn:hover {
+            background: linear-gradient(135deg, #8b5cf644, #6d28d944);
+            box-shadow: 0 0 20px rgba(167,139,250,0.5), inset 0 0 10px rgba(167,139,250,0.2);
+            transform: translateY(-1px);
+        }
+        #trade-btn:active { transform: translateY(0); }
+        #trade-badge {
+            position: absolute;
+            top: -7px;
+            right: -7px;
+            background: linear-gradient(135deg, #ef4444, #b91c1c);
+            color: #fff;
+            font-size: 0.65rem;
+            font-weight: 800;
+            min-width: 17px;
+            height: 17px;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+            border: 1px solid #fecaca;
+            box-shadow: 0 0 8px rgba(239,68,68,0.6);
+        }
+
+        .auth-overlay {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(4, 8, 14, 0.85);
+            z-index: 400;
+        }
+        .auth-overlay.open { display: flex; }
+        #auth-body { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+        .auth-tabs { display: flex; gap: 6px; }
+        .auth-tab {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #223040;
+            border-radius: 8px;
+            background: #131c28;
+            color: #9fb3c8;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .auth-tab.active { background: #22d3ee22; border-color: #22d3ee66; color: #22d3ee; }
+        #auth-form { display: flex; flex-direction: column; gap: 10px; }
+        #auth-form input {
+            padding: 10px 12px;
+            border: 1px solid #223040;
+            border-radius: 8px;
+            background: #0f1720;
+            color: #e8e8e8;
+            font-size: 0.9rem;
+            outline: none;
+        }
+        #auth-form input:focus { border-color: #22d3ee; }
+        .auth-submit {
+            padding: 10px;
+            border: 1px solid #22d3ee66;
+            border-radius: 8px;
+            background: #22d3ee22;
+            color: #22d3ee;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .auth-submit:hover { background: #22d3ee44; }
+        .auth-error { color: #f87171; font-size: 0.8rem; text-align: center; }
+        .auth-info { color: #64748b; font-size: 0.75rem; text-align: center; }
+
+        .trade-overlay {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(4, 8, 14, 0.85);
+            z-index: 400;
+        }
+        .trade-overlay.open { display: flex; }
+        #trade-body { padding: 16px; display: flex; flex-direction: column; gap: 12px; max-height: 70vh; overflow-y: auto; }
+        .trade-section { display: flex; flex-direction: column; gap: 10px; }
+        .trade-box { background: #10171f; border: 1px solid #223040; border-radius: 12px; padding: 12px; }
+        .trade-box-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 0.8rem; font-weight: bold; color: #9fb3c8; }
+        .trade-usr-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 8px 12px; border: 1px solid #223040; border-radius: 8px;
+            background: #131c28; margin-bottom: 6px;
+        }
+        .trade-usr-name { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #e8e8e8; font-weight: 600; }
+        .trade-online-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: #22c55e; box-shadow: 0 0 6px #22c55e; flex-shrink: 0;
+        }
+        .trade-usr-status { font-size: 0.7rem; color: #f59e0b; }
+        .trade-btn {
+            padding: 7px 12px; border: 1px solid #a78bfa66; border-radius: 8px;
+            background: #a78bfa22; color: #a78bfa; font-weight: bold; cursor: pointer;
+            transition: all 0.15s; white-space: nowrap; font-size: 0.8rem;
+        }
+        .trade-btn:hover { background: #a78bfa44; }
+        .trade-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .trade-btn.green { background: #22c55e22; border-color: #22c55e66; color: #4ade80; }
+        .trade-btn.green:hover { background: #22c55e44; }
+        .trade-btn.red { background: #f8717122; border-color: #f8717166; color: #fca5a5; }
+        .trade-btn.red:hover { background: #f8717144; }
+        .trade-msg { font-size: 0.8rem; color: #9fb3c8; text-align: center; padding: 10px; }
+        #trade-error { color: #f87171; font-size: 0.8rem; text-align: center; }
+
+        /* ---- Ventana de trade estilo Adopt Me ---- */
+        #twbox { width: min(720px, 94vw); }
+        #trade-win { background: #0d1520; border: 2px solid #2a3a50; border-radius: 16px; overflow: hidden; }
+        .tw-head { background: #131c28; border-bottom: 1px solid #2a3a50; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; }
+        .tw-head h3 { color: #a78bfa; margin: 0; font-size: 1rem; }
+        .tw-status { font-size: 0.75rem; color: #fbbf24; padding: 2px 10px; background: #fbbf2411; border: 1px solid #fbbf2466; border-radius: 999px; }
+        .tw-status.green { color: #4ade80; background: #22c55e11; border-color: #22c55e66; }
+        .tw-status.red { color: #f87171; background: #f8717111; border-color: #f8717166; }
+        .tw-sides { display: flex; gap: 10px; padding: 14px; }
+        .tw-side { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+        .tw-side-title { font-size: 0.8rem; font-weight: bold; color: #9fb3c8; text-align: center; padding: 6px; border-radius: 8px; background: #131c28; border: 1px solid #223040; }
+        .tw-arrows { display: flex; align-items: center; font-size: 1.4rem; color: #4ade80; }
+        .tw-slots { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+        .tw-slot {
+            background: #131c28; border: 2px dashed #334155; border-radius: 10px;
+            padding: 8px; display: flex; flex-direction: column; align-items: center; gap: 4px;
+            min-height: 108px; justify-content: center; position: relative; text-align: center;
+        }
+        .tw-slot.filled { border-style: solid; border-color: #a78bfa66; background: #1a1628; }
+        .tw-slot img { width: 46px; height: 46px; border-radius: 8px; object-fit: cover; background: #0a0f16; }
+        .tw-slot-name { font-size: 0.65rem; color: #e8e8e8; font-weight: 600; line-height: 1.1; max-width: 100%; overflow: hidden; white-space: nowrap; }
+        .tw-slot-qty { font-size: 0.7rem; color: #a78bfa; font-weight: bold; }
+        .tw-slot-minus {
+            position: absolute; top: -6px; right: -6px; width: 20px; height: 20px;
+            border-radius: 50%; background: #ef4444; color: #fff; border: none; cursor: pointer;
+            font-weight: bold; font-size: 0.8rem; display: flex; align-items: center; justify-content: center;
+        }
+        .tw-empty-txt { color: #334155; font-size: 0.6rem; }
+        .tw-owned {
+            background: #0f1720; border: 1px solid #223040; border-radius: 10px; padding: 8px;
+            max-height: 170px; overflow-y: auto;
+        }
+        .tw-owned-title { font-size: 0.68rem; color: #9fb3c8; font-weight: bold; margin-bottom: 6px; }
+        .tw-owned-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(58px, 1fr)); gap: 6px; }
+        .tw-owned-item {
+            background: #131c28; border: 1px solid #223040; border-radius: 8px; padding: 5px;
+            display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer;
+            transition: all 0.15s; position: relative;
+        }
+        .tw-owned-item:hover { border-color: #4ade80; background: #16201b; }
+        .tw-owned-item img { width: 34px; height: 34px; border-radius: 6px; object-fit: cover; }
+        .tw-owned-item .tw-owned-name { font-size: 0.55rem; color: #cbd5e1; max-width: 100%; overflow: hidden; white-space: nowrap; }
+        .tw-owned-item .tw-owned-qty { font-size: 0.6rem; color: #94a3b8; }
+        .tw-owned-item.in-offer { opacity: 0.5; border-color: #334155; cursor: default; }
+        .tw-bottom { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-top: 1px solid #2a3a50; background: #131c28; }
+        .tw-accept-col { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; }
+        .tw-tick {
+            width: 46px; height: 46px; border-radius: 12px; border: 2px solid #475569; background: #0f1720;
+            color: transparent; font-size: 1.5rem; cursor: pointer; transition: all 0.2s; display: flex;
+            align-items: center; justify-content: center;
+        }
+        .tw-tick.checked { background: #22c55e; border-color: #4ade80; color: #fff; box-shadow: 0 0 14px rgba(34,197,94,0.6); }
+        .tw-tick-name { font-size: 0.65rem; color: #94a3b8; max-width: 90px; overflow: hidden; white-space: nowrap; }
+        .tw-leave { padding: 10px 16px; border: 1px solid #f8717166; border-radius: 10px; background: #f8717122; color: #fca5a5; font-weight: bold; cursor: pointer; }
+        .tw-leave:hover { background: #f8717144; }
+        .tw-note { font-size: 0.72rem; color: #fbbf24; text-align: center; padding: 8px; }
+        .tw-countdown { font-size: 1.3rem; font-weight: bold; color: #4ade80; }
+
+        .trade-toast {
+            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+            background: #131c28; border: 1px solid #a78bfa66; color: #e8e8e8; padding: 12px 18px;
+            border-radius: 12px; z-index: 600; font-size: 0.85rem; box-shadow: 0 6px 24px rgba(0,0,0,0.5);
+            display: flex; align-items: center; gap: 10px; animation: toast-in 0.25s ease;
+        }
+        @keyframes toast-in { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+
         #main { flex: 1; display: flex; width: 100%; overflow: hidden; }
 
         #center {
@@ -586,6 +804,12 @@
         <div class="stat">Suerte: <span id="luck">1.0x</span></div>
         <div class="stat">Raros: <span id="lucky-count">0</span></div>
         <div class="stat">Desbloqueados: <span id="unlocked-count">0</span>/<span id="total-items">0</span></div>
+        <div id="auth-area">
+            <span id="auth-username" class="auth-username" style="display:none;"></span>
+            <button id="auth-btn">👤 Iniciar sesión</button>
+            <button id="logout-btn" style="display:none;">Cerrar sesión</button>
+            <button id="trade-btn" style="display:none;"><span style="font-size:1.1rem;">🤝</span><span>Comercio</span><span id="trade-badge" style="display:none;"></span></button>
+        </div>
     </div>
 
     <div id="main">
@@ -651,6 +875,66 @@
         </div>
     </div>
 
+    <!-- Modal Auth (Login / Registro) -->
+    <div id="auth-overlay" class="auth-overlay">
+        <div id="modal">
+            <div id="modal-header" style="border-color:#22d3ee;">
+                <h3 style="color:#22d3ee;">👤 Cuenta</h3>
+                <button id="auth-close">✕</button>
+            </div>
+            <div id="auth-body">
+                <div class="auth-tabs">
+                    <button id="auth-tab-login" class="auth-tab active">Iniciar sesión</button>
+                    <button id="auth-tab-register" class="auth-tab">Registrarse</button>
+                </div>
+                <div id="auth-form">
+                    <input type="text" id="auth-username-input" placeholder="Nombre de usuario" autocomplete="username">
+                    <input type="password" id="auth-password-input" placeholder="Contraseña" autocomplete="current-password">
+                    <button id="auth-submit" class="auth-submit">Entrar</button>
+                    <div id="auth-error" class="auth-error" style="display:none;"></div>
+                    <div id="auth-info" class="auth-info">Tu progreso se guardará en el servidor para que puedas continuar en otro dispositivo.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Comercio -->
+    <div id="trade-overlay" class="trade-overlay">
+        <div id="modal">
+            <div id="modal-header" style="border-color:#a78bfa;">
+                <h3 style="color:#a78bfa;">🤝 Comercio de personajes</h3>
+                <button id="trade-close">✕</button>
+            </div>
+            <div id="trade-body">
+                <div id="trade-meta" class="trade-section">
+                    <div class="trade-box">
+                        <div class="trade-box-head">
+                            <span>🟢 Jugadores online</span>
+                            <button id="trade-refresh" class="trade-btn">Actualizar</button>
+                        </div>
+                        <div id="trade-online-list"><div class="trade-msg">Cargando...</div></div>
+                    </div>
+                    <div class="trade-box">
+                        <div class="trade-box-head"><span>📩 Solicitudes recibidas</span></div>
+                        <div id="trade-incoming-list"><div class="trade-msg">Sin solicitudes</div></div>
+                    </div>
+                    <div class="trade-box">
+                        <div class="trade-box-head"><span>📤 Solicitudes enviadas</span></div>
+                        <div id="trade-outgoing-list"><div class="trade-msg">Sin solicitudes</div></div>
+                    </div>
+                </div>
+                <div id="trade-error" style="display:none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ventana de trade (estilo Adopt Me) -->
+    <div id="trade-win-overlay" class="trade-overlay">
+        <div id="twbox">
+            <div id="trade-win"></div>
+        </div>
+    </div>
+
     <!-- Pantalla negra épica -->
     <div id="epic-screen">
         <div class="epic-name">-</div>
@@ -661,7 +945,11 @@
 
     <script>
     const SAVE_KEY = 'valle-rng-save-v4';
+    const AUTH_TOKEN_KEY = 'valle-rng-auth-token';
     const BASE_COOLDOWN_MS = 800;
+    let authToken = null;
+    let authUsername = null;
+    let authMode = 'login';
 
     const SHOP_DEFS = [
         {
@@ -715,35 +1003,762 @@
         return Math.max(1, Math.floor(Math.sqrt(item.chance / 10)));
     }
 
-    function save() {
+    function buildSaveData() {
+        return {
+            rolls: state.rolls,
+            luck: state.luck,
+            lucky: state.lucky,
+            owned: state.owned,
+            coins: state.coins,
+            totalCoins: state.totalCoins,
+            shop: state.shop,
+            autoSell: state.autoSell,
+        };
+    }
+
+    function applySaveData(d) {
+        state.rolls = (d && d.rolls) || 0;
+        state.luck = (d && d.luck) || 1;
+        state.lucky = (d && d.lucky) || 0;
+        state.owned = (d && d.owned) || {};
+        state.coins = (d && d.coins) || 0;
+        state.totalCoins = (d && d.totalCoins) || 0;
+        state.shop = (d && d.shop) || { rollSpeed: 0, luckBoost: 0, coinMulti: 0 };
+        state.autoSell = !!(d && d.autoSell);
+        updateTopStats();
+    }
+
+    async function save() {
+        if (authToken) {
+            try {
+                await fetch('/api/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-token': authToken },
+                    body: JSON.stringify(buildSaveData()),
+                });
+            } catch (e) {}
+        } else {
+            try {
+                localStorage.setItem(SAVE_KEY, JSON.stringify(buildSaveData()));
+            } catch (e) {}
+        }
+    }
+
+    async function load() {
+        if (authToken) {
+            try {
+                const res = await fetch('/api/load', { headers: { 'x-token': authToken } });
+                const data = await res.json();
+                if (data.ok) {
+                    applySaveData(data.data);
+                    setAuthUI(data.username);
+                } else {
+                    authToken = null;
+                    localStorage.removeItem(AUTH_TOKEN_KEY);
+                    setAuthUI(null);
+                }
+            } catch (e) {}
+        } else {
+            try {
+                const raw = localStorage.getItem(SAVE_KEY);
+                if (!raw) return;
+                applySaveData(JSON.parse(raw));
+            } catch (e) {}
+        }
+    }
+
+    // ---- Auth (Login / Registro) ----
+    function setAuthUI(username) {
+        authUsername = username || null;
+        const userEl = document.getElementById('auth-username');
+        const authBtn = document.getElementById('auth-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const tradeBtn = document.getElementById('trade-btn');
+        if (username) {
+            userEl.textContent = '👤 ' + username;
+            userEl.style.display = 'inline';
+            authBtn.style.display = 'none';
+            logoutBtn.style.display = 'inline-block';
+            tradeBtn.style.display = 'inline-block';
+            initTradeStream();
+            refreshTradeMenu();
+        } else {
+            userEl.style.display = 'none';
+            authBtn.style.display = 'inline-block';
+            logoutBtn.style.display = 'none';
+            tradeBtn.style.display = 'none';
+            stopTradeStream();
+            closeTradeWindow();
+            closeTrade();
+        }
+    }
+
+    function setAuthMode(mode) {
+        authMode = mode;
+        document.getElementById('auth-tab-login').classList.toggle('active', mode === 'login');
+        document.getElementById('auth-tab-register').classList.toggle('active', mode === 'register');
+        document.getElementById('auth-submit').textContent = mode === 'login' ? 'Entrar' : 'Crear cuenta';
+    }
+
+    function openAuth() {
+        document.getElementById('auth-overlay').classList.add('open');
+        document.getElementById('auth-username-input').value = '';
+        document.getElementById('auth-password-input').value = '';
+        document.getElementById('auth-error').style.display = 'none';
+        setAuthMode('login');
+        setTimeout(() => document.getElementById('auth-username-input').focus(), 50);
+    }
+
+    function closeAuth() {
+        document.getElementById('auth-overlay').classList.remove('open');
+    }
+
+    async function submitAuth() {
+        const username = document.getElementById('auth-username-input').value.trim();
+        const password = document.getElementById('auth-password-input').value;
+        const errEl = document.getElementById('auth-error');
+        if (!username || !password) {
+            errEl.textContent = 'Completa todos los campos';
+            errEl.style.display = 'block';
+            return;
+        }
+        const endpoint = authMode === 'login' ? '/api/login' : '/api/register';
         try {
-            localStorage.setItem(SAVE_KEY, JSON.stringify({
-                rolls: state.rolls,
-                luck: state.luck,
-                lucky: state.lucky,
-                owned: state.owned,
-                coins: state.coins,
-                totalCoins: state.totalCoins,
-                shop: state.shop,
-                autoSell: state.autoSell,
-            }));
+            const res = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.ok) {
+                errEl.textContent = data.error || 'Error desconocido';
+                errEl.style.display = 'block';
+                return;
+            }
+            authToken = data.token;
+            localStorage.setItem(AUTH_TOKEN_KEY, authToken);
+            if (authMode === 'register') {
+                await save();
+            } else {
+                await load();
+            }
+            setAuthUI(data.username);
+            closeAuth();
+            addEvent(`✅ Sesión iniciada como ${data.username}`, 'evt-sistema');
+        } catch (e) {
+            errEl.textContent = 'No se pudo conectar al servidor';
+            errEl.style.display = 'block';
+        }
+    }
+
+    async function logout() {
+        try {
+            await fetch('/api/logout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: authToken }),
+            });
+        } catch (e) {}
+        authToken = null;
+        localStorage.removeItem(AUTH_TOKEN_KEY);
+        setAuthUI(null);
+        load();
+        addEvent('Sesión cerrada. Volviendo a la partida local', 'evt-sistema');
+    }
+
+    function restoreAuth() {
+        authToken = localStorage.getItem(AUTH_TOKEN_KEY) || null;
+        if (authToken) {
+            load();
+        }
+    }
+
+    // ---- Comercio (Trade) v2 (estilo Adopt Me) ----
+    let tradeStream = null;
+    let currentTrade = null;
+
+    function itemById(id) {
+        return ITEMS.find(i => i.id === id) || null;
+    }
+
+    function imgFor(id) {
+        const it = itemById(id);
+        return it && it.image ? 'img/' + it.image : '';
+    }
+
+    function openTrade() {
+        if (!authToken) return;
+        document.getElementById('trade-overlay').classList.add('open');
+        refreshTradeMenu();
+    }
+
+    function closeTrade() {
+        document.getElementById('trade-overlay').classList.remove('open');
+    }
+
+    function tradeErr(msg) {
+        const el = document.getElementById('trade-error');
+        el.textContent = msg || '';
+        el.style.display = msg ? 'block' : 'none';
+        if (msg) setTimeout(() => tradeErr(null), 4000);
+    }
+
+    function showTradeToast(text) {
+        const old = document.getElementById('trade-toast');
+        if (old) old.remove();
+        const t = document.createElement('div');
+        t.className = 'trade-toast';
+        t.id = 'trade-toast';
+        t.textContent = text;
+        document.body.appendChild(t);
+        setTimeout(() => { if (t.parentNode) t.parentNode.removeChild(t); }, 4000);
+    }
+
+    function updateTradeBadge(count) {
+        const badge = document.getElementById('trade-badge');
+        badge.style.display = count > 0 ? 'flex' : 'none';
+        badge.textContent = count;
+    }
+
+    async function fetchOnline() {
+        const res = await fetch('/api/trade/online', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: authToken }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) throw new Error(data.error || 'Error');
+        return data.users || [];
+    }
+
+    async function refreshTradeMenu() {
+        if (!authToken) return;
+        tradeErr(null);
+        try {
+            const res = await fetch('/api/trade/requests', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: authToken }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.ok) return tradeErr(data.error || 'Error');
+            updateTradeBadge((data.incoming || []).length);
+            renderOnlineList(await fetchOnline());
+            renderIncomingList(data.incoming || []);
+            renderOutgoingList(data.outgoing || []);
+        } catch (e) {
+            tradeErr('No se pudo conectar con el servidor');
+        }
+    }
+
+    function renderOnlineList(users) {
+        const el = document.getElementById('trade-online-list');
+        el.innerHTML = '';
+        if (!users.length) {
+            const d = document.createElement('div');
+            d.className = 'trade-msg';
+            d.textContent = '🟢 Nadie online ahora mismo';
+            el.appendChild(d);
+            return;
+        }
+        users.forEach(u => {
+            const row = document.createElement('div');
+            row.className = 'trade-usr-row';
+            const name = document.createElement('div');
+            name.className = 'trade-usr-name';
+            const dot = document.createElement('span');
+            dot.className = 'trade-online-dot';
+            name.appendChild(dot);
+            name.appendChild(document.createTextNode(u.name));
+            row.appendChild(name);
+            if (u.inTrade) {
+                const st = document.createElement('span');
+                st.className = 'trade-usr-status';
+                st.textContent = 'En un trade';
+                row.appendChild(st);
+            } else {
+                const btn = document.createElement('button');
+                btn.className = 'trade-btn';
+                btn.textContent = 'Enviar solicitud';
+                btn.addEventListener('click', () => sendTradeRequest(u.name, btn));
+                row.appendChild(btn);
+            }
+            el.appendChild(row);
+        });
+    }
+
+    function renderIncomingList(list) {
+        const el = document.getElementById('trade-incoming-list');
+        el.innerHTML = '';
+        if (!list.length) {
+            const d = document.createElement('div');
+            d.className = 'trade-msg';
+            d.textContent = 'Sin solicitudes';
+            el.appendChild(d);
+            return;
+        }
+        list.forEach(r => {
+            const row = document.createElement('div');
+            row.className = 'trade-usr-row';
+            const name = document.createElement('div');
+            name.className = 'trade-usr-name';
+            name.textContent = '📩 ' + r.from;
+            row.appendChild(name);
+            const actions = document.createElement('div');
+            actions.style.display = 'flex';
+            actions.style.gap = '6px';
+            const accept = document.createElement('button');
+            accept.className = 'trade-btn green';
+            accept.textContent = 'Aceptar';
+            accept.addEventListener('click', () => acceptTradeInvite(r.id));
+            const decline = document.createElement('button');
+            decline.className = 'trade-btn red';
+            decline.textContent = 'Rechazar';
+            decline.addEventListener('click', () => declineTradeRequest(r.id));
+            actions.appendChild(accept);
+            actions.appendChild(decline);
+            row.appendChild(actions);
+            el.appendChild(row);
+        });
+    }
+
+    function renderOutgoingList(list) {
+        const el = document.getElementById('trade-outgoing-list');
+        el.innerHTML = '';
+        if (!list.length) {
+            const d = document.createElement('div');
+            d.className = 'trade-msg';
+            d.textContent = 'Sin solicitudes';
+            el.appendChild(d);
+            return;
+        }
+        list.forEach(r => {
+            const row = document.createElement('div');
+            row.className = 'trade-usr-row';
+            const name = document.createElement('div');
+            name.className = 'trade-usr-name';
+            name.textContent = '📤 ' + r.to;
+            row.appendChild(name);
+            const btn = document.createElement('button');
+            btn.className = 'trade-btn red';
+            btn.textContent = 'Cancelar';
+            btn.addEventListener('click', () => cancelTradeReq(r.id));
+            row.appendChild(btn);
+            el.appendChild(row);
+        });
+    }
+
+    async function sendTradeRequest(to, btn) {
+        if (!authToken) return;
+        if (btn) btn.disabled = true;
+        try {
+            const res = await fetch('/api/trade/request', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: authToken, to }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.ok) return tradeErr(data.error || 'Error');
+            addEvent(`🤝 Solicitud enviada a ${to}`, 'evt-sistema');
+            showTradeToast('🤝 Solicitud enviada a ' + to);
+            refreshTradeMenu();
+        } catch (e) {
+            tradeErr('No se pudo conectar con el servidor');
+        } finally {
+            if (btn) btn.disabled = false;
+        }
+    }
+
+    async function acceptTradeInvite(id) {
+        try {
+            const res = await fetch('/api/trade/accept', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: authToken, tradeId: id }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.ok) return tradeErr(data.error || 'Error');
+            currentTrade = data.trade;
+            openTradeWindow(data.trade);
+        } catch (e) {
+            tradeErr('No se pudo conectar con el servidor');
+        }
+    }
+
+    async function declineTradeRequest(id) {
+        try {
+            const res = await fetch('/api/trade/decline', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: authToken, tradeId: id }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.ok) return tradeErr(data.error || 'Error');
+            refreshTradeMenu();
+        } catch (e) {
+            tradeErr('No se pudo conectar con el servidor');
+        }
+    }
+
+    async function cancelTradeReq(id) {
+        try {
+            const res = await fetch('/api/trade/cancel', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: authToken, tradeId: id }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.ok) return tradeErr(data.error || 'Error');
+            refreshTradeMenu();
+        } catch (e) {
+            tradeErr('No se pudo conectar con el servidor');
+        }
+    }
+
+    // ---- Stream SSE en tiempo real ----
+    let heartbeatTimer = null;
+
+    function initTradeStream() {
+        if (tradeStream) stopTradeStream();
+        if (!authToken) return;
+        heartbeatTimer = setInterval(() => {
+            fetch('/api/heartbeat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: authToken }),
+            }).catch(() => {});
+        }, 10000);
+        try {
+            tradeStream = new EventSource('/api/trade/stream?token=' + encodeURIComponent(authToken));
+            tradeStream.onmessage = (e) => {
+                let msg = {};
+                try { msg = JSON.parse(e.data); } catch (_) { return; }
+                handleTradeEvent(msg);
+            };
+            tradeStream.onerror = () => {
+                refreshTradeMenu();
+            };
         } catch (e) {}
     }
 
-    function load() {
+    function stopTradeStream() {
+        if (heartbeatTimer) { clearInterval(heartbeatTimer); heartbeatTimer = null; }
+        if (tradeStream) { tradeStream.close(); tradeStream = null; }
+    }
+
+    function handleTradeEvent(msg) {
+        if (msg.type === 'request') {
+            showTradeToast('📩 ' + msg.trade.from + ' quiere comerciar contigo');
+            refreshTradeMenu();
+        } else if (msg.type === 'trade') {
+            currentTrade = msg.trade;
+            if (msg.trade.status === 'active') openTradeWindow(msg.trade);
+        } else if (msg.type === 'declined') {
+            showTradeToast('❌ Rechazaron tu solicitud');
+            refreshTradeMenu();
+        } else if (msg.type === 'cancelled') {
+            showTradeToast('🚫 El trade se canceló' + (msg.reason ? ' (' + msg.reason + ')' : ''));
+            closeTradeWindow();
+            refreshTradeMenu();
+        } else if (msg.type === 'failed') {
+            showTradeToast('⚠️ ' + (msg.reason || 'El trade no se completó'));
+            closeTradeWindow();
+            refreshTradeMenu();
+        } else if (msg.type === 'completed') {
+            closeTradeWindow();
+            showTradeToast('✅ ¡Intercambio completado!');
+            if (authToken) load();
+            refreshTradeMenu();
+        }
+    }
+
+    // ---- Ventana de trade (Adopt Me) ----
+    function openTradeWindow(t) {
+        currentTrade = t;
+        document.getElementById('trade-win-overlay').classList.add('open');
+        renderTradeWindow();
+    }
+
+    function closeTradeWindow() {
+        currentTrade = null;
+        document.getElementById('trade-win-overlay').classList.remove('open');
+    }
+
+    function tradeOtherName(t) {
+        return String(t.from).toLowerCase() === String(authUsername || '').toLowerCase() ? t.to : t.from;
+    }
+
+    function tradeMyOffer(t) {
+        return String(t.from).toLowerCase() === String(authUsername || '').toLowerCase() ? t.offerFrom : t.offerTo;
+    }
+
+    function tradeOtherOffer(t) {
+        return String(t.from).toLowerCase() === String(authUsername || '').toLowerCase() ? t.offerTo : t.offerFrom;
+    }
+
+    function tradeMyAccept(t) {
+        return String(t.from).toLowerCase() === String(authUsername || '').toLowerCase() ? t.acceptFrom : t.acceptTo;
+    }
+
+    function tradeOtherAccept(t) {
+        return String(t.from).toLowerCase() === String(authUsername || '').toLowerCase() ? t.acceptTo : t.acceptFrom;
+    }
+
+    function renderTradeWindow() {
+        const t = currentTrade;
+        if (!t) return;
+        const win = document.getElementById('trade-win');
+        win.innerHTML = '';
+
+        const head = document.createElement('div');
+        head.className = 'tw-head';
+        const h = document.createElement('h3');
+        h.textContent = '🤝 Trade con ' + tradeOtherName(t);
+        head.appendChild(h);
+        const statusEl = document.createElement('div');
+        statusEl.id = 'tw-status';
+        statusEl.className = 'tw-status';
+        head.appendChild(statusEl);
+        win.appendChild(head);
+
+        const sides = document.createElement('div');
+        sides.className = 'tw-sides';
+        sides.appendChild(renderSide(true));
+        const arrows = document.createElement('div');
+        arrows.className = 'tw-arrows';
+        arrows.textContent = '⇄';
+        sides.appendChild(arrows);
+        sides.appendChild(renderSide(false));
+        win.appendChild(sides);
+
+        const bottom = document.createElement('div');
+        bottom.className = 'tw-bottom';
+        const leave = document.createElement('button');
+        leave.className = 'tw-leave';
+        leave.textContent = '✕ Salir del trade';
+        leave.addEventListener('click', cancelActiveTrade);
+        bottom.appendChild(leave);
+
+        const otherTickCol = document.createElement('div');
+        otherTickCol.className = 'tw-accept-col';
+        const otherTick = document.createElement('div');
+        otherTick.className = 'tw-tick' + (tradeOtherAccept(t) ? ' checked' : '');
+        otherTick.textContent = '✓';
+        const otherName = document.createElement('div');
+        otherName.className = 'tw-tick-name';
+        otherName.textContent = tradeOtherName(t);
+        otherTickCol.appendChild(otherTick);
+        otherTickCol.appendChild(otherName);
+
+        const myTickCol = document.createElement('div');
+        myTickCol.className = 'tw-accept-col';
+        const myTick = document.createElement('div');
+        myTick.className = 'tw-tick' + (tradeMyAccept(t) ? ' checked' : '');
+        myTick.textContent = '✓';
+        myTick.title = 'Aceptar trade';
+        myTick.addEventListener('click', toggleAccept);
+        const myName = document.createElement('div');
+        myName.className = 'tw-tick-name';
+        myName.textContent = (authUsername || '');
+        myTickCol.appendChild(myTick);
+        myTickCol.appendChild(myName);
+
+        bottom.appendChild(otherTickCol);
+        bottom.appendChild(myTickCol);
+        win.appendChild(bottom);
+
+        const note = document.createElement('div');
+        note.id = 'tw-note';
+        note.className = 'tw-note';
+        win.appendChild(note);
+
+        renderTradeStatus();
+    }
+
+    function slotHtmlFor(offer, allowRemove) {
+        const wrap = document.createElement('div');
+        wrap.className = 'tw-slots';
+        const ids = Object.keys(offer || {});
+        for (let i = 0; i < 4; i++) {
+            const slot = document.createElement('div');
+            slot.className = 'tw-slot';
+            const id = ids[i];
+            if (!id) {
+                const empt = document.createElement('div');
+                empt.className = 'tw-empty-txt';
+                empt.textContent = 'vacío';
+                slot.appendChild(empt);
+            } else {
+                const it = itemById(id);
+                const qty = offer[id];
+                slot.classList.add('filled');
+                const img = document.createElement('img');
+                img.src = imgFor(id);
+                img.alt = it ? it.name : id;
+                const nm = document.createElement('div');
+                nm.className = 'tw-slot-name';
+                nm.textContent = it ? it.name : id;
+                const q = document.createElement('div');
+                q.className = 'tw-slot-qty';
+                q.textContent = '×' + qty;
+                slot.appendChild(img);
+                slot.appendChild(nm);
+                slot.appendChild(q);
+                if (allowRemove) {
+                    const minus = document.createElement('button');
+                    minus.className = 'tw-slot-minus';
+                    minus.textContent = '−';
+                    minus.addEventListener('click', () => updateOffer(id, -1));
+                    slot.appendChild(minus);
+                }
+            }
+            wrap.appendChild(slot);
+        }
+        return wrap;
+    }
+
+    function renderSide(isMy) {
+        const t = currentTrade;
+        const side = document.createElement('div');
+        side.className = 'tw-side';
+        const title = document.createElement('div');
+        title.className = 'tw-side-title';
+        title.textContent = isMy ? 'TU OFERTA' : ('OFERTA DE ' + tradeOtherName(t).toUpperCase());
+        side.appendChild(title);
+        side.appendChild(slotHtmlFor(isMy ? tradeMyOffer(t) : tradeOtherOffer(t), isMy));
+        const owned = document.createElement('div');
+        owned.className = 'tw-owned';
+        if (isMy) {
+            const ot = document.createElement('div');
+            ot.className = 'tw-owned-title';
+            ot.textContent = 'Tus personajes (clic para añadir)';
+            owned.appendChild(ot);
+            const grid = document.createElement('div');
+            grid.className = 'tw-owned-grid';
+            const offerObj = tradeMyOffer(t);
+            const sortedIds = Object.keys(state.owned).sort((a, b) =>
+                ((itemById(a) || {}).chance || 0) - ((itemById(b) || {}).chance || 0));
+            sortedIds.forEach(id => {
+                const qty = state.owned[id] || 0;
+                const it = itemById(id);
+                if (!it || qty <= 0) return;
+                const cell = document.createElement('div');
+                cell.className = 'tw-owned-item';
+                const img = document.createElement('img');
+                img.src = imgFor(id);
+                const nm = document.createElement('span');
+                nm.className = 'tw-owned-name';
+                nm.textContent = it.name;
+                const qt = document.createElement('span');
+                qt.className = 'tw-owned-qty';
+                qt.textContent = '×' + qty;
+                cell.appendChild(img);
+                cell.appendChild(nm);
+                cell.appendChild(qt);
+                const alreadyFull = Object.keys(offerObj).length >= 4 && !(id in offerObj);
+                cell.classList.toggle('in-offer', !!offerObj[id] || alreadyFull);
+                cell.title = (offerObj[id] ? `En oferta: ${offerObj[id]}` : 'Clic para añadir 1');
+                if (!alreadyFull && !offerObj[id]) {
+                    cell.addEventListener('click', () => updateOffer(id, 1));
+                }
+                grid.appendChild(cell);
+            });
+            if (!grid.children.length) {
+                const d = document.createElement('div');
+                d.className = 'trade-msg';
+                d.textContent = 'No tienes personajes';
+                grid.appendChild(d);
+            }
+            owned.appendChild(grid);
+        } else {
+            const ot = document.createElement('div');
+            ot.className = 'tw-owned-title';
+            ot.textContent = 'Eligiendo sus personajes...';
+            owned.appendChild(ot);
+        }
+        side.appendChild(owned);
+        return side;
+    }
+
+    async function updateOffer(item, delta) {
+        const t = currentTrade;
+        if (!t || t.status !== 'active') return;
         try {
-            const raw = localStorage.getItem(SAVE_KEY);
-            if (!raw) return;
-            const d = JSON.parse(raw);
-            state.rolls = d.rolls || 0;
-            state.luck = d.luck || 1;
-            state.lucky = d.lucky || 0;
-            state.owned = d.owned || {};
-            state.coins = d.coins || 0;
-            state.totalCoins = d.totalCoins || 0;
-            state.shop = d.shop || { rollSpeed: 0, luckBoost: 0, coinMulti: 0 };
-            state.autoSell = !!d.autoSell;
+            const res = await fetch('/api/trade/offer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: authToken, tradeId: t.id, item, delta }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.ok) return showTradeToast('⚠️ ' + (data.error || 'Error'));
+        } catch (e) {
+            showTradeToast('⚠️ No se pudo conectar con el servidor');
+        }
+    }
+
+    async function toggleAccept() {
+        const t = currentTrade;
+        if (!t || t.status !== 'active') return;
+        if (!Object.keys(tradeMyOffer(t)).length) return showTradeToast('⚠️ Añade al menos un personaje');
+        try {
+            const res = await fetch('/api/trade/accept', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: authToken, tradeId: t.id }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.ok) return showTradeToast('⚠️ ' + (data.error || 'Error'));
+            if (data.done) {
+                closeTradeWindow();
+                showTradeToast('✅ ¡Intercambio completado!');
+                if (authToken) load();
+                refreshTradeMenu();
+            }
+        } catch (e) {
+            showTradeToast('⚠️ No se pudo conectar con el servidor');
+        }
+    }
+
+    async function cancelActiveTrade() {
+        const t = currentTrade;
+        if (!t) return;
+        try {
+            await fetch('/api/trade/cancel', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: authToken, tradeId: t.id }),
+            });
         } catch (e) {}
+        closeTradeWindow();
+        showTradeToast('🚫 Trade cancelado');
+        refreshTradeMenu();
+    }
+
+    function renderTradeStatus() {
+        const t = currentTrade;
+        if (!t) return;
+        const statusEl = document.getElementById('tw-status');
+        const note = document.getElementById('tw-note');
+        if (!statusEl || !note) return;
+        const myT = tradeMyAccept(t);
+        const otherT = tradeOtherAccept(t);
+        if (myT && otherT) {
+            statusEl.className = 'tw-status green';
+            statusEl.textContent = '✅ ¡Ambos aceptaron!';
+            note.textContent = 'Completando intercambio...';
+        } else if (myT) {
+            statusEl.className = 'tw-status';
+            statusEl.textContent = 'Aceptado por ti';
+            note.textContent = 'Esperando a ' + tradeOtherName(t) + '...';
+        } else if (otherT) {
+            statusEl.className = 'tw-status';
+            statusEl.textContent = '✔ Aceptado por ' + tradeOtherName(t);
+            note.textContent = 'Pulsa tu ✓ para aceptar también';
+        } else {
+            statusEl.className = 'tw-status';
+            statusEl.textContent = 'En negociación';
+            note.textContent = 'Añade tus personajes y pulsa ✓ cuando esté bien para ti';
+        }
     }
 
     async function loadItems() {
@@ -1434,8 +2449,32 @@
     document.querySelector('.tester-overlay').addEventListener('click', (e) => {
         if (e.target === e.currentTarget) closeTester();
     });
+    document.getElementById('auth-btn').addEventListener('click', openAuth);
+    document.getElementById('auth-close').addEventListener('click', closeAuth);
+    document.getElementById('logout-btn').addEventListener('click', logout);
+    document.getElementById('auth-overlay').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeAuth();
+    });
+    document.getElementById('auth-tab-login').addEventListener('click', () => setAuthMode('login'));
+    document.getElementById('auth-tab-register').addEventListener('click', () => setAuthMode('register'));
+    document.getElementById('auth-submit').addEventListener('click', submitAuth);
+    document.getElementById('auth-username-input').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') submitAuth();
+    });
+    document.getElementById('auth-password-input').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') submitAuth();
+    });
+    document.getElementById('trade-btn').addEventListener('click', openTrade);
+    document.getElementById('trade-close').addEventListener('click', closeTrade);
+    document.getElementById('trade-refresh').addEventListener('click', refreshTradeMenu);
+    document.getElementById('trade-overlay').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeTrade();
+    });
+    document.getElementById('trade-win-overlay').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) cancelActiveTrade();
+    });
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') { closeInventory(); closeShop(); closeTester(); }
+        if (e.key === 'Escape') { closeInventory(); closeShop(); closeTester(); closeAuth(); closeTrade(); cancelActiveTrade(); }
     });
 
     document.getElementById('reset-btn').addEventListener('click', () => {
@@ -1447,6 +2486,7 @@
         updateTopStats();
         addLog('Progreso reiniciado', 'log-legend');
         addEvent('Progreso reiniciado', 'evt-sistema');
+        save();
     });
 
     // ---- Background Music ----
@@ -1497,7 +2537,7 @@
         document.removeEventListener('keydown', firstKey);
     }, { once: true });
 
-    load();
+    restoreAuth();
     loadItems();
     </script>
 </body>
