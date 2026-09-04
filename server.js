@@ -54,7 +54,9 @@ const server = http.createServer((req, res) => {
             return res.end('404 Not Found');
         }
         const ext = path.extname(filePath).toLowerCase();
-        res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream' });
+        const headers = { 'Content-Type': MIME[ext] || 'application/octet-stream' };
+        if (ext === '.html' || ext === '.js') headers['Cache-Control'] = 'no-store';
+        res.writeHead(200, headers);
         res.end(data);
     });
 });

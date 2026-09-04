@@ -36,6 +36,7 @@
         }
         .stat { font-size: 0.9rem; color: #9fb3c8; }
         .stat span { color: #fbbf24; font-weight: bold; }
+        .stat.coins span { color: #fbbf24; }
 
         #main { flex: 1; display: flex; width: 100%; overflow: hidden; }
 
@@ -147,23 +148,24 @@
             display: flex;
             gap: 8px;
         }
-        #inventory-btn, #index-btn {
+        #inventory-btn, #index-btn, #shop-btn-top {
             padding: 10px 18px;
             font-size: 0.95rem;
             font-weight: bold;
-            border: 2px solid #22c55e66;
             border-radius: 8px;
             background: #10161db0;
-            color: #4ade80;
             cursor: pointer;
             transition: all 0.2s;
             white-space: nowrap;
         }
-        #index-btn { border-color: #22d3ee66; color: #22d3ee; }
+        #inventory-btn { border: 2px solid #22c55e66; color: #4ade80; }
         #inventory-btn:hover { background: #22c55e33; }
+        #index-btn { border: 2px solid #22d3ee66; color: #22d3ee; }
         #index-btn:hover { background: #22d3ee22; }
+        #shop-btn-top { border: 2px solid #fbbf2466; color: #fbbf24; }
+        #shop-btn-top:hover { background: #fbbf2422; }
 
-        /* Modal inventario */
+        /* Modal base */
         #modal-overlay {
             position: fixed;
             inset: 0;
@@ -193,7 +195,7 @@
             justify-content: space-between;
             align-items: center;
         }
-        #modal-header h3 { color: #4ade80; font-size: 1.1rem; }
+        #modal-header h3 { font-size: 1.1rem; }
         #modal-close {
             background: none;
             border: none;
@@ -202,7 +204,16 @@
             cursor: pointer;
             padding: 0 6px;
         }
-        #modal-close:hover { color: #f87171; }
+        #modal-close:hover, #shop-close:hover { color: #f87171; }
+        #shop-close {
+            background: none;
+            border: none;
+            color: #fbbf24;
+            font-size: 1.4rem;
+            cursor: pointer;
+            padding: 0 6px;
+            line-height: 1;
+        }
         #modal-body {
             padding: 16px;
             overflow-y: auto;
@@ -224,7 +235,50 @@
         .inv-card img { width: 56px; height: 56px; object-fit: fill; }
         .inv-card .inv-name { font-size: 0.75rem; color: #e8e8e8; font-weight: bold; }
         .inv-card .inv-count { font-size: 0.9rem; color: #fbbf24; font-weight: bold; }
-        .inv-empty { color: #64748b; text-align: center; padding: 30px; font-size: 0.9rem; }
+        .inv-value { font-size: 0.7rem; color: #9fb3c8; margin-bottom: 2px; }
+        .inv-sell-row { display: flex; gap: 6px; width: 100%; }
+        .inv-sell {
+            flex: 1;
+            min-width: 0;
+            padding: 5px;
+            font-size: 0.68rem;
+            font-weight: bold;
+            border: 1px solid #fbbf2466;
+            border-radius: 6px;
+            background: #fbbf2422;
+            color: #fbbf24;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .inv-sell:hover { background: #fbbf2444; }
+        .inv-sell:active { transform: scale(0.95); }
+        .inv-sell:disabled { opacity: 0.4; cursor: not-allowed; }
+        .inv-sell-all {
+            background: #f8717122;
+            border-color: #f8717166;
+            color: #fca5a5;
+        }
+        .inv-sell-all:hover { background: #f8717144; }
+        .inv-empty { color: #64748b; text-align: center; padding: 30px; font-size: 0.9rem; grid-column: 1 / -1; }
+        .inv-autosell-bar { display: flex; justify-content: flex-end; margin-bottom: 10px; }
+        .inv-autosell {
+            padding: 6px 14px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            border-radius: 8px;
+            border: 1px solid #64748b44;
+            background: #1e293b;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .inv-autosell.on {
+            background: #22c55e22;
+            border-color: #22c55e66;
+            color: #4ade80;
+            box-shadow: 0 0 10px #22c55e22;
+        }
+        .inv-autosell:hover { transform: scale(1.05); }
 
         .index-card {
             background: #111a24;
@@ -258,46 +312,7 @@
         .index-card .idx-chance { font-size: 0.7rem; color: #9fb3c8; }
         .index-card .idx-rarity { font-size: 0.68rem; font-weight: bold; }
 
-        #prestige-panel {
-            background: rgba(20, 14, 38, 0.8);
-            border: 2px solid #7c3aed;
-            border-radius: 12px;
-            padding: 14px 20px;
-            width: 300px;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            text-align: center;
-            box-shadow: 0 0 20px rgba(124, 58, 237, 0.25);
-        }
-        #prestige-title {
-            font-size: 1.1rem;
-            font-weight: bold;
-            color: #a78bfa;
-        }
-        #prestige-title span { color: #fbbf24; }
-        .prestige-goal, .prestige-run, .prestige-reward {
-            font-size: 0.85rem;
-            color: #cbd5e1;
-        }
-        .prestige-goal span, .prestige-run span { font-weight: bold; color: #4ade80; }
-        .prestige-reward span { font-weight: bold; color: #fbbf24; }
-        #prestige-btn {
-            margin-top: 8px;
-            padding: 10px;
-            font-size: 1rem;
-            font-weight: bold;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            background: linear-gradient(90deg, #a855f7, #6366f1);
-            color: #fff;
-            transition: transform 0.1s, box-shadow 0.2s;
-        }
-        #prestige-btn:active { transform: scale(0.96); }
-        #prestige-btn:disabled { opacity: 0.5; cursor: not-allowed; background: #333; }
-
-        #event-log {
+                #event-log {
             position: absolute;
             top: 56px;
             left: 20px;
@@ -323,11 +338,11 @@
             0% { transform: translateX(-30px); opacity: 0; }
             100% { transform: translateX(0); opacity: 1; }
         }
-        .evt-nuevo { border-left-color: #22d3ee; color: #7dd3fc; }
-        .evt-raro { border-left-color: #a78bfa; color: #c4b5fd; }
-        .evt-legend { border-left-color: #fbbf24; color: #fde68a; }
-        .evt-god { border-left-color: #f472b6; color: #f9a8d4; text-shadow: 0 0 8px rgba(244, 114, 182, 0.7); }
-        .evt-prestige { border-left-color: #4ade80; color: #86efac; font-size: 0.95rem; text-shadow: 0 0 10px rgba(74, 222, 128, 0.6); }
+        .evt-uncommon { border-left-color: #4ade80; color: #86efac; }
+        .evt-nuevo { border-left-color: #3b82f6; color: #93c5fd; }
+        .evt-raro { border-left-color: #a855f7; color: #d8b4fe; }
+        .evt-legend { border-left-color: #f59e0b; color: #fcd34d; }
+        .evt-god { border-left-color: #eaff00; color: #f7ff99; text-shadow: 0 0 8px rgba(234, 255, 0, 0.7); }
         .evt-sistema { border-left-color: #94a3b8; color: #cbd5e1; font-weight: normal; }
 
         #log {
@@ -352,10 +367,10 @@
             z-index: 40;
         }
         #log div { padding: 2px 0; }
-        .log-rare { color: #22d3ee; }
-        .log-epic { color: #a78bfa; }
-        .log-legend { color: #fbbf24; }
-        .log-myth { color: #f472b6; font-weight: bold; }
+        .log-rare { color: #3b82f6; }
+        .log-epic { color: #a855f7; }
+        .log-legend { color: #f59e0b; }
+        .log-myth { color: #eaff00; font-weight: bold; }
 
         .rarity-tag {
             display: inline-block;
@@ -365,8 +380,50 @@
             border: 1px solid currentColor;
         }
 
-        /* --- Menú Tester --- */
-        .tester-overlay { z-index: 60; }
+        /* Tester */
+        .tester-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(4, 8, 14, 0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 60;
+            padding: 20px;
+        }
+        .tester-overlay.open { display: flex; }
+        #tester-pw {
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+        .tester-pw-title { color: #a78bfa; font-size: 0.95rem; font-weight: bold; }
+        #tester-pw-input {
+            width: 200px;
+            padding: 10px 12px;
+            border: 1px solid #7c3aed66;
+            border-radius: 8px;
+            background: #0f1720;
+            color: #e8e8e8;
+            text-align: center;
+            font-size: 0.9rem;
+            outline: none;
+        }
+        #tester-pw-input:focus { border-color: #a78bfa; }
+        #tester-pw-btn {
+            padding: 8px 24px;
+            border: 1px solid #7c3aed66;
+            border-radius: 8px;
+            background: #7c3aed22;
+            color: #a78bfa;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        #tester-pw-btn:hover { background: #7c3aed44; }
+        .tester-pw-error { color: #f87171; font-size: 0.8rem; }
         #tester-body {
             padding: 16px;
             overflow-y: auto;
@@ -412,7 +469,7 @@
         .tester-btn-item .t-name { font-size: 0.72rem; font-weight: bold; color: #e8e8e8; }
         .tester-btn-item .t-chance { font-size: 0.65rem; color: #9fb3c8; }
 
-        /* --- Pantalla épica --- */
+        /* Pantalla épica */
         #epic-screen {
             position: fixed;
             inset: 0;
@@ -455,6 +512,68 @@
             100% { transform: scale(1) rotate(0); opacity: 1; }
         }
 
+        /* Shop */
+        .shop-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(4, 8, 14, 0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 55;
+            padding: 20px;
+        }
+        .shop-overlay.open { display: flex; }
+        #shop-body {
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 65vh;
+        }
+        .shop-item {
+            background: #131c28;
+            border: 2px solid #223040;
+            border-radius: 10px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .shop-item:hover { border-color: #fbbf24; background: #1a2535; }
+        .shop-item.maxed { border-color: #4ade8066; opacity: 0.6; cursor: default; }
+        .shop-item.maxed:hover { background: #131c28; border-color: #4ade8066; }
+        .shop-icon { font-size: 2rem; min-width: 48px; text-align: center; }
+        .shop-info { flex: 1; }
+        .shop-info .shop-name { font-size: 1rem; font-weight: bold; color: #e8e8e8; }
+        .shop-info .shop-desc { font-size: 0.78rem; color: #9fb3c8; margin-top: 2px; }
+        .shop-info .shop-level { font-size: 0.75rem; color: #4ade80; margin-top: 4px; }
+        .shop-cost {
+            font-size: 1rem;
+            font-weight: bold;
+            color: #fbbf24;
+            white-space: nowrap;
+        }
+        .shop-cost.cant { color: #f87171; }
+
+        .coins-float {
+            position: fixed;
+            pointer-events: none;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #fbbf24;
+            text-shadow: 0 0 6px rgba(251, 191, 36, 0.6);
+            z-index: 200;
+            animation: coinFloat 1s ease-out forwards;
+        }
+        @keyframes coinFloat {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-40px) scale(0.7); }
+        }
+
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-thumb { background: #223040; border-radius: 4px; }
     </style>
@@ -462,6 +581,7 @@
 <body>
     <div id="top-bar">
         <h1>🌿 Valle RNG</h1>
+        <div class="stat coins">Monedas: <span id="coins">0</span></div>
         <div class="stat">Rolls: <span id="roll-count">0</span></div>
         <div class="stat">Suerte: <span id="luck">1.0x</span></div>
         <div class="stat">Raros: <span id="lucky-count">0</span></div>
@@ -473,6 +593,7 @@
             <div id="menu-btns">
                 <button id="inventory-btn">🎒 Inventario</button>
                 <button id="index-btn">📖 Índice</button>
+                <button id="shop-btn-top">🛒 Tienda</button>
             </div>
             <div id="event-log"></div>
             <div id="display"><span id="new-badge">🆕</span></div>
@@ -481,13 +602,6 @@
             <div id="buttons">
                 <button id="roll-btn">Roll</button>
                 <button id="afk-btn" class="tool-btn" style="border-color:#f59e0b;color:#fbbf24;">AFK Roll</button>
-            </div>
-            <div id="prestige-panel">
-                <div id="prestige-title">Renacimiento <span id="prestige-level">1</span></div>
-                <div class="prestige-goal">Objetivo: desbloquear <span id="goal-unlock">0</span> items distintos</div>
-                <div class="prestige-run">Progreso: <span id="run-unlock">0</span></div>
-                <div class="prestige-reward">Recompensa: +<span id="prestige-bonus">0</span>x suerte permanente</div>
-                <button id="prestige-btn" disabled>Renacer</button>
             </div>
             <div id="buttons">
                 <button id="reset-btn" class="tool-btn" style="border-color:#7f1d1d;color:#f87171;">Reiniciar</button>
@@ -498,6 +612,7 @@
 
     <div id="log"></div>
 
+    <!-- Modal Inventario / Índice -->
     <div id="modal-overlay">
         <div id="modal">
             <div id="modal-header">
@@ -508,12 +623,29 @@
         </div>
     </div>
 
+    <!-- Modal Tienda -->
+    <div id="shop-overlay" class="shop-overlay">
+        <div id="modal">
+            <div id="modal-header" style="border-color:#fbbf24;">
+                <h3 style="color:#fbbf24;">🛒 Tienda</h3>
+                <button id="shop-close">✕</button>
+            </div>
+            <div id="shop-body"></div>
+        </div>
+    </div>
+
     <!-- Menú Tester -->
-    <div id="modal-overlay" class="tester-overlay">
+    <div id="tester-overlay" class="tester-overlay">
         <div id="modal">
             <div id="modal-header">
-                <h3 id="tester-title">🧪 Tester: Elige qué te toque</h3>
+                <h3 id="tester-title">🧪 Tester</h3>
                 <button id="tester-close">✕</button>
+            </div>
+            <div id="tester-pw">
+                <div class="tester-pw-title">🔒 Introduce la contraseña</div>
+                <input type="password" id="tester-pw-input" placeholder="Contraseña" autocomplete="off">
+                <button id="tester-pw-btn">Aceptar</button>
+                <div id="tester-pw-error" class="tester-pw-error" style="display:none;">Contraseña incorrecta</div>
             </div>
             <div id="tester-body"></div>
         </div>
@@ -528,9 +660,29 @@
     <audio id="bg-music" preload="auto"></audio>
 
     <script>
-    const SAVE_KEY = 'valle-rng-save-v3';
+    const SAVE_KEY = 'valle-rng-save-v4';
+    const BASE_COOLDOWN_MS = 800;
 
-    const COOLDOWN_MS = 800;
+    const SHOP_DEFS = [
+        {
+            id: 'rollSpeed', icon: '⚡', name: 'Velocidad de Roll',
+            desc: 'Reduce el cooldown entre rolls',
+            maxLevel: 5, baseCost: 50, costMult: 3.5,
+            effect: (lvl) => Math.max(100, BASE_COOLDOWN_MS - lvl * 140),
+        },
+        {
+            id: 'luckBoost', icon: '🍀', name: 'Suerte Extra',
+            desc: '+0.1x suerte por nivel',
+            maxLevel: 10, baseCost: 30, costMult: 2.2,
+            effect: (lvl) => 1 + lvl * 0.1,
+        },
+        {
+            id: 'coinMulti', icon: '💰', name: 'Mejor Precio de Venta',
+            desc: '+50% monedas al vender personajes',
+            maxLevel: 5, baseCost: 150, costMult: 3.5,
+            effect: (lvl) => 1 + lvl * 0.5,
+        },
+    ];
 
     const state = {
         rolls: 0,
@@ -539,12 +691,29 @@
         owned: {},
         rolling: false,
         cooldownUntil: 0,
-        prestige: 0,
-        prestigeLuck: 1,
-        runUnlocks: 0,
+        coins: 0,
+        totalCoins: 0,
+        shop: { rollSpeed: 0, luckBoost: 0, coinMulti: 0 },
+        autoSell: false,
     };
 
     let ITEMS = [];
+
+    function shopCost(def) {
+        return Math.floor(def.baseCost * Math.pow(def.costMult, state.shop[def.id]));
+    }
+
+    function cooldownMs() {
+        return Math.max(100, BASE_COOLDOWN_MS - (state.shop.rollSpeed || 0) * 140);
+    }
+
+    function coinMultiTotal() {
+        return 1 + (state.shop.coinMulti || 0) * 0.5;
+    }
+
+    function coinsForItem(item) {
+        return Math.max(1, Math.floor(Math.sqrt(item.chance / 10)));
+    }
 
     function save() {
         try {
@@ -553,9 +722,10 @@
                 luck: state.luck,
                 lucky: state.lucky,
                 owned: state.owned,
-                prestige: state.prestige,
-                prestigeLuck: state.prestigeLuck,
-                runUnlocks: state.runUnlocks,
+                coins: state.coins,
+                totalCoins: state.totalCoins,
+                shop: state.shop,
+                autoSell: state.autoSell,
             }));
         } catch (e) {}
     }
@@ -569,9 +739,10 @@
             state.luck = d.luck || 1;
             state.lucky = d.lucky || 0;
             state.owned = d.owned || {};
-            state.prestige = d.prestige || 0;
-            state.prestigeLuck = d.prestigeLuck || 1;
-            state.runUnlocks = d.runUnlocks || 0;
+            state.coins = d.coins || 0;
+            state.totalCoins = d.totalCoins || 0;
+            state.shop = d.shop || { rollSpeed: 0, luckBoost: 0, coinMulti: 0 };
+            state.autoSell = !!d.autoSell;
         } catch (e) {}
     }
 
@@ -580,76 +751,57 @@
         const data = await res.json();
         ITEMS = data.items;
         updateTopStats();
-        renderPrestige();
     }
 
     const RARITY_TIERS = [
-        { label: 'Común',   color: '#9aa5b1' },
-        { label: 'Raro',    color: '#4ade80' },
-        { label: 'Épico',   color: '#22d3ee' },
-        { label: 'Legendary',  color: '#a78bfa' },
-        { label: 'Mítico',  color: '#fbbf24' },
-        { label: 'Godly',   color: '#f472b6' },
+        { label: 'Común',        color: '#9ca3af' },
+        { label: 'Poco común',   color: '#4ade80' },
+        { label: 'Raro',         color: '#3b82f6' },
+        { label: 'Épico',        color: '#a855f7' },
+        { label: 'Legendario',   color: '#f59e0b' },
+        { label: 'Mítico',       color: '#eaff00' },
     ];
-    function colorFor(item) {
+    function tierIndex(item) {
         const c = item.chance;
-        if (c <= 128) return RARITY_TIERS[0].color;
-        if (c <= 4096) return RARITY_TIERS[1].color;
-        if (c <= 100000) return RARITY_TIERS[2].color;
-        if (c <= 10000000) return RARITY_TIERS[3].color;
-        if (c <= 1000000000) return RARITY_TIERS[4].color;
-        return RARITY_TIERS[5].color;
+        if (c <= 16) return 0;
+        if (c <= 128) return 1;
+        if (c <= 8000) return 2;
+        if (c <= 400000) return 3;
+        if (c <= 10000000) return 4;
+        return 5;
     }
-
+    function colorFor(item) {
+        return RARITY_TIERS[tierIndex(item)].color;
+    }
+    function tierOf(item) {
+        return RARITY_TIERS[tierIndex(item)].label;
+    }
+    function rarityClass(item) {
+        const i = tierIndex(item);
+        if (i <= 1) return '';
+        if (i === 2) return 'rare';
+        if (i === 3) return 'epic';
+        if (i === 4) return 'legend';
+        return 'myth';
+    }
     function effLuck() {
-        const l = (state.luck || 1) * (state.prestigeLuck || 1);
-        return Math.max(1, l);
+        const shopLuck = state.shop.luckBoost ? 1 + state.shop.luckBoost * 0.1 : 1;
+        return Math.max(1, (state.luck || 1) * shopLuck);
     }
-
     function effLuckTotal() {
         let total = 0;
         for (const it of ITEMS) total += effLuck() / it.chance;
         return total;
     }
 
-    function prestigeGoal() {
-        // Items únicos que hay que desbloquear en esta run para poder renacer.
-        // Sube con cada renacimiento, limitado al total de items.
-        return Math.min(1 + state.prestige, ITEMS.length);
-    }
-
-    function renderPrestige() {
-        const level = state.prestige + 1;
-        document.getElementById('prestige-level').textContent = level;
-        document.getElementById('goal-unlock').textContent = prestigeGoal();
-        document.getElementById('run-unlock').textContent = state.runUnlocks;
-        const bonus = (state.prestigeLuck - 1) * 100;
-        document.getElementById('prestige-bonus').textContent = Math.round(bonus);
-        const btn = document.getElementById('prestige-btn');
-        btn.disabled = !(state.runUnlocks >= prestigeGoal());
-    }
-
-    function doPrestige() {
-        if ((state.runUnlocks || 0) < prestigeGoal()) return;
-        state.prestige = (state.prestige || 0) + 1;
-        state.prestigeLuck = (state.prestigeLuck || 1) + 0.25;
-        state.luck = 1;
-        state.owned = {};
-        state.runUnlocks = 0;
-        state.lucky = 0;
-
-        addEvent(`🔄 Renacimiento ${state.prestige}! Suerte permanente +25% (${Math.round((state.prestigeLuck - 1) * 100)}%)`, 'evt-prestige');
-        addLog(`RENACISTE → Renacimiento ${state.prestige}`, 'log-legend');
-
-        document.getElementById('display').innerHTML = '<span id="new-badge" style="display:none">🆕</span>';
-        document.getElementById('item-name').textContent = '-';
-        document.getElementById('item-name').style.color = '';
-        document.getElementById('item-rarity').textContent = '';
-        document.getElementById('modal-overlay').classList.remove('open');
-
-        updateTopStats();
-        renderPrestige();
-        save();
+    function floatCoins(amount, x, y) {
+        const el = document.createElement('div');
+        el.className = 'coins-float';
+        el.textContent = '+' + amount + ' 🪙';
+        el.style.left = x + 'px';
+        el.style.top = y + 'px';
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 1000);
     }
 
     async function roll() {
@@ -671,23 +823,37 @@
         state.rolls++;
         const isNew = !state.owned[picked.id];
         state.owned[picked.id] = (state.owned[picked.id] || 0) + 1;
-        if (isNew) state.runUnlocks++;
         if (picked.epic) state.lucky++;
+        if (isNew) {
+            state.coins += 5;
+            state.totalCoins += 5;
+        }
+
+        let autoSold = false;
+        if (state.autoSell && !isNew) {
+            const count = state.owned[picked.id] || 0;
+            state.owned[picked.id] = count - 1;
+            const value = sellValue(picked);
+            state.coins += value;
+            state.totalCoins += value;
+            autoSold = true;
+            addEvent(`💰 Auto Sell: ${picked.name} (+${value.toLocaleString()} 🪙)`, 'evt-sistema');
+        }
 
         clearEpicScreen();
         revertEpicBackground();
         revealItem(picked, isNew);
 
         updateTopStats();
-        renderPrestige();
         save();
 
-        state.cooldownUntil = Date.now() + COOLDOWN_MS;
+        const cd = cooldownMs();
+        state.cooldownUntil = Date.now() + cd;
         setTimeout(() => {
             state.rolling = false;
             btn.disabled = false;
-        }, 200);
-        return picked;
+        }, Math.min(cd, 200));
+        return lastPicked;
     }
 
     function revealItem(picked, isNew) {
@@ -697,10 +863,11 @@
         display.classList.add('bounce');
 
         const isEpic = !!picked.epic;
+        const showEpicAnim = isEpic && (picked.id === 'glitchedalba' || picked.id === 'dianadelaperla');
 
         setTimeout(() => {
             const col = colorFor(picked);
-            if (!isEpic) {
+            if (!showEpicAnim) {
                 display.innerHTML = '';
                 const img = document.createElement('img');
                 img.src = picked.image;
@@ -722,32 +889,33 @@
                 document.getElementById('item-rarity').innerHTML =
                     `<span class="rarity-tag" style="color:${col}">${tierOf(picked)}</span> &nbsp; Chance: ${chanceStr}`;
             } else {
-                // Épico: no revelar aún quién tocó (se muestra en el fade out)
                 document.getElementById('item-name').textContent = '???';
                 document.getElementById('item-name').style.color = '#9aa5b1';
                 document.getElementById('item-rarity').textContent = '???';
             }
 
-            const colCls = picked.chance >= 1000000 ? 'evt-god' : picked.chance >= 100000 ? 'evt-legend' : picked.chance >= 10000 ? 'evt-raro' : 'evt-nuevo';
-            if (picked.chance >= 100000) {
-                addLog(isNew ? `🔮 ¡NUEVO! Conseguiste ${picked.name} (1 en ${picked.chance.toLocaleString()})` : `Conseguiste ${picked.name} (1 en ${picked.chance.toLocaleString()})`, 'log-' + rarityClass(picked));
-                if (isNew) {
-                    addEvent(`🎉 Nuevo item: ${picked.name} (1 en ${picked.chance.toLocaleString()})`, colCls);
-                }
-            } else if (isNew) {
-                addEvent(`Nuevo: ${picked.name}`, 'evt-nuevo');
+            const tk = tierIndex(picked);
+            const colCls = tk >= 5 ? 'evt-god' : tk >= 4 ? 'evt-legend' : tk >= 3 ? 'evt-raro' : tk >= 2 ? 'evt-nuevo' : tk >= 1 ? 'evt-uncommon' : 'evt-sistema';
+            const rarColor = colorFor(picked);
+            const rc = rarityClass(picked);
+            const clsLog = rc ? 'log-' + rc : '';
+            if (isNew) {
+                addLog(`🔮 ¡NUEVO! ${picked.name} (+5 🪙) (1 en ${picked.chance.toLocaleString()})`, clsLog, rarColor);
+                addEvent(`🎉 Nuevo: ${picked.name} (+5 🪙)`, colCls);
+            } else {
+                addLog(`${picked.name} (1 en ${picked.chance})`, clsLog, rarColor);
             }
-            const clsLog = picked.chance >= 1000000 ? 'log-myth' : picked.chance >= 100000 ? 'log-legend' : picked.chance >= 10000 ? 'log-epic' : picked.chance > 2 ? 'log-rare' : '';
-            addLog(`${picked.name} (1 en ${picked.chance})`, clsLog);
 
-            if (isEpic) showEpicScreen(picked, picked.epicBackground);
+            if (showEpicAnim) showEpicScreen(picked, picked.epicBackground);
         }, 165);
     }
 
+    let epicAnimId = 0;
     function showEpicScreen(item, backgroundPath) {
         const screen = document.getElementById('epic-screen');
         const col = colorFor(item);
         const bg = backgroundPath || 'fondos/matrix.gif';
+        const myId = ++epicAnimId;
 
         screen.style.background = '#000';
         screen.querySelector('.epic-name').textContent = '';
@@ -757,18 +925,19 @@
         screen.style.transition = 'none';
         screen.style.opacity = '0';
         void screen.offsetWidth;
-        // Fade in lento a negro: aún no se ve quién tocó
         screen.style.transition = 'opacity 2.2s';
         screen.style.opacity = '1';
 
         setTimeout(() => {
+            if (myId !== epicAnimId) return;
             applyEpicBackground(bg);
             revealEpicItem(item, col);
-            // Fade out: se revela el fondo matrix y el personaje
             screen.style.transition = 'opacity 2.6s';
             screen.style.opacity = '0';
             setTimeout(() => {
+                if (myId !== epicAnimId) return;
                 clearEpicScreen();
+                revertEpicBackground();
                 const display = document.getElementById('display');
                 display.classList.remove('bounce');
                 void display.offsetWidth;
@@ -777,7 +946,7 @@
         }, 2400);
     }
 
-    const originalBodyStyle = { bg: '', border: '', shadow: '' };
+    const originalBodyStyle = { bg: '' };
     function applyEpicBackground(path) {
         if (!path) return;
         const body = document.body;
@@ -815,28 +984,11 @@
     }
 
     function clearEpicScreen() {
+        epicAnimId++;
         const screen = document.getElementById('epic-screen');
         screen.classList.remove('on');
         screen.style.transition = 'none';
         screen.style.opacity = '0';
-    }
-
-    function tierOf(item) {
-        const c = item.chance;
-        if (c <= 128) return RARITY_TIERS[0].label;
-        if (c <= 4096) return RARITY_TIERS[1].label;
-        if (c <= 100000) return RARITY_TIERS[2].label;
-        if (c <= 10000000) return RARITY_TIERS[3].label;
-        if (c <= 1000000000) return RARITY_TIERS[4].label;
-        return RARITY_TIERS[5].label;
-    }
-
-    function rarityClass(item) {
-        const c = item.chance;
-        if (c <= 4096) return 'rare';
-        if (c <= 100000) return 'epic';
-        if (c <= 10000000) return 'legend';
-        return 'myth';
     }
 
     function doScreenShake(item) {
@@ -854,6 +1006,7 @@
 
     function updateTopStats() {
         document.getElementById('roll-count').textContent = state.rolls.toLocaleString();
+        document.getElementById('coins').textContent = Math.floor(state.coins).toLocaleString();
         const eff = effLuck();
         document.getElementById('luck').textContent = eff.toLocaleString('es', { maximumFractionDigits: 2 }) + 'x';
         document.getElementById('lucky-count').textContent = state.lucky.toLocaleString();
@@ -862,16 +1015,47 @@
         document.getElementById('total-items').textContent = ITEMS.length;
     }
 
-    // ---- Inventory / Index modal ----
-    function setModalTitle(text) {
-        document.getElementById('modal-title').textContent = text;
-    }
-
     function chanceStr(c) {
         return c < 1000 ? `1 en ${c}` : `1 en ${c.toLocaleString()}`;
     }
 
+    // ---- Modals ----
     let invRefreshInterval = null;
+
+    function setModalTitle(text) {
+        document.getElementById('modal-title').textContent = text;
+    }
+
+    function sellValue(item) {
+        return Math.round(coinsForItem(item) * coinMultiTotal() / 2);
+    }
+
+    function handleSell(item) {
+        const count = state.owned[item.id] || 0;
+        if (count <= 1) return;
+        state.owned[item.id] = count - 1;
+        const value = sellValue(item);
+        state.coins += value;
+        state.totalCoins += value;
+        addEvent(`💰 Vendiste 1x ${item.name} por ${value.toLocaleString()} 🪙`, 'evt-sistema');
+        updateTopStats();
+        refreshInventory();
+        save();
+    }
+
+    function handleSellAll(item) {
+        const count = state.owned[item.id] || 0;
+        if (count <= 1) return;
+        const sellQty = count - 1;
+        state.owned[item.id] = 1;
+        const value = sellValue(item) * sellQty;
+        state.coins += value;
+        state.totalCoins += value;
+        addEvent(`💰 Vendiste ${sellQty}x ${item.name} por ${value.toLocaleString()} 🪙`, 'evt-sistema');
+        updateTopStats();
+        refreshInventory();
+        save();
+    }
 
     function buildInvCard(item) {
         const count = state.owned[item.id] || 0;
@@ -891,6 +1075,25 @@
         cnt.textContent = 'x' + count;
         card.appendChild(name);
         card.appendChild(cnt);
+        const value = document.createElement('div');
+        value.className = 'inv-value';
+        value.textContent = 'vende por ' + sellValue(item).toLocaleString() + ' 🪙';
+        card.appendChild(value);
+        const sellRow = document.createElement('div');
+        sellRow.className = 'inv-sell-row';
+        const sell = document.createElement('button');
+        sell.className = 'inv-sell';
+        sell.textContent = 'Vender 1';
+        sell.disabled = count <= 1;
+        sell.addEventListener('click', () => handleSell(item));
+        sellRow.appendChild(sell);
+        const sellAll = document.createElement('button');
+        sellAll.className = 'inv-sell inv-sell-all';
+        sellAll.textContent = 'Vender todo';
+        sellAll.disabled = count <= 1;
+        sellAll.addEventListener('click', () => handleSellAll(item));
+        sellRow.appendChild(sellAll);
+        card.appendChild(sellRow);
         return card;
     }
 
@@ -906,11 +1109,10 @@
                 body.appendChild(card);
             } else {
                 card.querySelector('.inv-count').textContent = 'x' + count;
+                card.querySelectorAll('.inv-sell').forEach(b => b.disabled = count <= 1);
             }
         });
-        const hasItems = body.querySelector('.inv-card');
-        let empty = body.querySelector('.inv-empty');
-        if (!hasItems && !empty) {
+        if (!body.querySelector('.inv-card') && !body.querySelector('.inv-empty')) {
             body.innerHTML = '<div class="inv-empty">Aún no tienes items. ¡Haz roll!</div>';
         }
     }
@@ -918,6 +1120,20 @@
     function openInventory() {
         setModalTitle('🎒 Mi Inventario');
         document.getElementById('modal-body').innerHTML = '';
+
+        const autoSellBar = document.createElement('div');
+        autoSellBar.className = 'inv-autosell-bar';
+        const autoSellBtn = document.createElement('button');
+        autoSellBtn.className = 'inv-autosell' + (state.autoSell ? ' on' : '');
+        autoSellBtn.textContent = state.autoSell ? '💰 Auto Sell: ON' : '💰 Auto Sell: OFF';
+        autoSellBtn.addEventListener('click', () => {
+            state.autoSell = !state.autoSell;
+            autoSellBtn.classList.toggle('on', state.autoSell);
+            autoSellBtn.textContent = state.autoSell ? '💰 Auto Sell: ON' : '💰 Auto Sell: OFF';
+            save();
+        });
+        autoSellBar.appendChild(autoSellBtn);
+        document.getElementById('modal-body').appendChild(autoSellBar);
         const unlockedCount = Object.keys(state.owned).filter(id => state.owned[id] > 0).length;
         if (unlockedCount === 0) {
             document.getElementById('modal-body').innerHTML = '<div class="inv-empty">Aún no tienes items. ¡Haz roll!</div>';
@@ -934,6 +1150,11 @@
         invRefreshInterval = setInterval(refreshInventory, 300);
     }
 
+    function closeInventory() {
+        clearInterval(invRefreshInterval);
+        document.getElementById('modal-overlay').classList.remove('open');
+    }
+
     function openIndex() {
         setModalTitle('📖 Índice de Personajes');
         document.getElementById('modal-body').innerHTML = '';
@@ -942,11 +1163,8 @@
             const have = (state.owned[item.id] || 0) > 0;
             const col = colorFor(item);
             const rar = tierOf(item);
-
             const card = document.createElement('div');
             card.className = 'index-card';
-
-            // Imagen: si no lo tienes, caja negra con ???
             if (have) {
                 const img = document.createElement('img');
                 img.className = 'idx-img';
@@ -959,104 +1177,126 @@
                 locked.textContent = '???';
                 card.appendChild(locked);
             }
-
             const name = document.createElement('div');
             name.className = have ? 'idx-name' : 'idx-name locked';
             name.textContent = have ? item.name : '???';
             card.appendChild(name);
-
             const rarity = document.createElement('div');
             rarity.className = 'idx-rarity';
             rarity.style.color = have ? col : '#64748b';
             rarity.textContent = have ? rar : '???';
             card.appendChild(rarity);
-
-            // La probabilidad SIEMPRE se muestra, esté o no desbloqueado
             const chance = document.createElement('div');
             chance.className = 'idx-chance';
             chance.textContent = chanceStr(item.chance);
             card.appendChild(chance);
-
             document.getElementById('modal-body').appendChild(card);
         });
         document.getElementById('modal-overlay').classList.add('open');
     }
-    function closeInventory() {
-        clearInterval(invRefreshInterval);
-        document.getElementById('modal-overlay').classList.remove('open');
+
+    // ---- Shop ----
+    function renderShop() {
+        const body = document.getElementById('shop-body');
+        body.innerHTML = '';
+        const coinEl = document.createElement('div');
+        coinEl.style.cssText = 'text-align:center;font-size:1.1rem;font-weight:bold;color:#fbbf24;padding:8px;background:#1a2535;border-radius:8px;';
+        coinEl.textContent = '🪙 ' + Math.floor(state.coins).toLocaleString() + ' monedas';
+        body.appendChild(coinEl);
+
+        SHOP_DEFS.forEach(def => {
+            const lvl = state.shop[def.id] || 0;
+            const maxed = lvl >= def.maxLevel;
+            const cost = shopCost(def);
+            const canBuy = state.coins >= cost && !maxed;
+
+            const item = document.createElement('div');
+            item.className = 'shop-item' + (maxed ? ' maxed' : '');
+
+            const icon = document.createElement('div');
+            icon.className = 'shop-icon';
+            icon.textContent = def.icon;
+            item.appendChild(icon);
+
+            const info = document.createElement('div');
+            info.className = 'shop-info';
+            const nameEl = document.createElement('div');
+            nameEl.className = 'shop-name';
+            nameEl.textContent = def.name;
+            info.appendChild(nameEl);
+            const descEl = document.createElement('div');
+            descEl.className = 'shop-desc';
+            descEl.textContent = def.desc;
+            info.appendChild(descEl);
+            const lvlEl = document.createElement('div');
+            lvlEl.className = 'shop-level';
+            lvlEl.textContent = maxed ? '✅ Nivel máximo' : `Nivel: ${lvl} / ${def.maxLevel}`;
+            info.appendChild(lvlEl);
+            item.appendChild(info);
+
+            const costEl = document.createElement('div');
+            costEl.className = 'shop-cost' + (canBuy ? '' : ' cant');
+            costEl.textContent = maxed ? 'MAX' : '🪙 ' + cost.toLocaleString();
+            item.appendChild(costEl);
+
+            if (!maxed) {
+                item.addEventListener('click', () => {
+                    const curCost = shopCost(def);
+                    if (state.coins < curCost) return;
+                    state.coins -= curCost;
+                    state.shop[def.id] = (state.shop[def.id] || 0) + 1;
+                    addEvent(`🛒 ${def.name} nivel ${state.shop[def.id]}!`, 'evt-sistema');
+                    updateTopStats();
+                    renderShop();
+                    save();
+                });
+            }
+
+            body.appendChild(item);
+        });
     }
 
-    function addLog(msg, cls) {
-        const log = document.getElementById('log');
-        const div = document.createElement('div');
-        div.className = cls || '';
-        div.textContent = msg;
-        log.prepend(div);
-        if (log.children.length > 80) log.lastChild.remove();
+    function openShop() {
+        renderShop();
+        document.getElementById('shop-overlay').classList.add('open');
     }
-
-    function addEvent(msg, cls) {
-        const log = document.getElementById('event-log');
-        const div = document.createElement('div');
-        div.className = 'evt ' + (cls || 'evt-sistema');
-        div.textContent = msg;
-        log.prepend(div);
-        while (log.children.length > 6) log.lastChild.remove();
-        setTimeout(() => {
-            div.style.transition = 'opacity 0.5s';
-            div.style.opacity = '0';
-            setTimeout(() => div.remove(), 500);
-        }, 6000);
+    function closeShop() {
+        document.getElementById('shop-overlay').classList.remove('open');
     }
-
-    // ---- AFK Roll ----
-    let afkActive = false;
-    let afkTimer = null;
-    const afkBtn = document.getElementById('afk-btn');
-
-    function setAfk(on) {
-        afkActive = on;
-        afkBtn.classList.toggle('active', on);
-        afkBtn.textContent = on ? '⏸ Detener AFK' : 'AFK Roll';
-        clearInterval(afkTimer);
-        if (on) {
-            afkTimer = setInterval(() => roll(), COOLDOWN_MS + 50);
-        }
-    }
-    afkBtn.addEventListener('click', () => setAfk(!afkActive));
-
-    // ---- Controls ----
-    document.getElementById('roll-btn').addEventListener('click', () => roll());
-    document.getElementById('inventory-btn').addEventListener('click', openInventory);
-    document.getElementById('index-btn').addEventListener('click', openIndex);
-    document.getElementById('modal-close').addEventListener('click', closeInventory);
-    document.getElementById('modal-overlay').addEventListener('click', (e) => {
-        if (e.target === e.currentTarget) closeInventory();
-    });
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeInventory();
-    });
-
-    document.getElementById('reset-btn').addEventListener('click', () => {
-        if (!confirm('¿Seguro que quieres reiniciar TODO tu progreso? (incluidos renacimientos)')) return;
-        localStorage.removeItem(SAVE_KEY);
-        state.rolls = 0; state.luck = 1; state.lucky = 0; state.owned = {};
-        state.prestige = 0; state.prestigeLuck = 1; state.runUnlocks = 0;
-        updateTopStats();
-        renderPrestige();
-        addLog('Progreso reiniciado', 'log-legend');
-        addEvent('Progreso reiniciado', 'evt-sistema');
-    });
-
-    document.getElementById('prestige-btn').addEventListener('click', () => {
-        if (state.rolling) return;
-        doPrestige();
-    });
 
     // ---- Tester ----
+    const TESTER_PASSWORD = '676767';
     function openTester() {
+        const pw = document.getElementById('tester-pw');
+        const body = document.getElementById('tester-body');
+        const input = document.getElementById('tester-pw-input');
+        pw.style.display = 'flex';
+        body.style.display = 'none';
+        document.getElementById('tester-pw-error').style.display = 'none';
+        input.value = '';
+        document.getElementById('tester-title').textContent = '🧪 Tester';
+        document.querySelector('.tester-overlay').classList.add('open');
+        setTimeout(() => input.focus(), 50);
+    }
+
+    function tryTesterPassword() {
+        const input = document.getElementById('tester-pw-input');
+        if (input.value === TESTER_PASSWORD) {
+            document.getElementById('tester-pw-error').style.display = 'none';
+            document.getElementById('tester-pw').style.display = 'none';
+            buildTesterGrid();
+        } else {
+            document.getElementById('tester-pw-error').style.display = 'block';
+            input.value = '';
+            input.focus();
+        }
+    }
+
+    function buildTesterGrid() {
+        document.getElementById('tester-title').textContent = '🧪 Tester: Elige qué te toque';
         const body = document.getElementById('tester-body');
         body.innerHTML = '';
+        body.style.display = 'grid';
         const sorted = [...ITEMS].sort((a, b) => b.chance - a.chance);
         sorted.forEach(item => {
             const card = document.createElement('div');
@@ -1103,32 +1343,110 @@
                 state.rolls++;
                 const isNew = !state.owned[item.id];
                 state.owned[item.id] = (state.owned[item.id] || 0) + 1;
-                if (isNew) state.runUnlocks++;
                 if (item.epic) state.lucky++;
+                if (isNew) {
+                    state.coins += 5;
+                    state.totalCoins += 5;
+                }
+                if (state.autoSell && !isNew) {
+                    const count = state.owned[item.id] || 0;
+                    state.owned[item.id] = count - 1;
+                    const value = sellValue(item);
+                    state.coins += value;
+                    state.totalCoins += value;
+                    addEvent(`💰 Auto Sell: ${item.name} (+${value.toLocaleString()} 🪙)`, 'evt-sistema');
+                }
 
                 closeTester();
                 revealItem(item, isNew);
                 updateTopStats();
-                renderPrestige();
                 save();
             });
 
             body.appendChild(card);
         });
-        document.querySelector('.tester-overlay').classList.add('open');
     }
 
     function closeTester() {
         document.querySelector('.tester-overlay').classList.remove('open');
     }
 
+    // ---- Log ----
+    function addLog(msg, cls, color) {
+        const log = document.getElementById('log');
+        const div = document.createElement('div');
+        div.className = cls || '';
+        div.textContent = msg;
+        if (color) div.style.color = color;
+        log.prepend(div);
+        if (log.children.length > 80) log.lastChild.remove();
+    }
+
+    function addEvent(msg, cls) {
+        const log = document.getElementById('event-log');
+        const div = document.createElement('div');
+        div.className = 'evt ' + (cls || 'evt-sistema');
+        div.textContent = msg;
+        log.prepend(div);
+        while (log.children.length > 6) log.lastChild.remove();
+        setTimeout(() => {
+            div.style.transition = 'opacity 0.5s';
+            div.style.opacity = '0';
+            setTimeout(() => div.remove(), 500);
+        }, 6000);
+    }
+
+    // ---- AFK Roll ----
+    let afkActive = false;
+    let afkTimer = null;
+    const afkBtn = document.getElementById('afk-btn');
+
+    function setAfk(on) {
+        afkActive = on;
+        afkBtn.classList.toggle('active', on);
+        afkBtn.textContent = on ? '⏸ Detener AFK' : 'AFK Roll';
+        clearInterval(afkTimer);
+        if (on) {
+            afkTimer = setInterval(() => roll(), cooldownMs() + 50);
+        }
+    }
+    afkBtn.addEventListener('click', () => setAfk(!afkActive));
+
+    // ---- Controls ----
+    document.getElementById('roll-btn').addEventListener('click', () => roll());
+    document.getElementById('inventory-btn').addEventListener('click', openInventory);
+    document.getElementById('index-btn').addEventListener('click', openIndex);
+    document.getElementById('shop-btn-top').addEventListener('click', openShop);
+    document.getElementById('modal-close').addEventListener('click', closeInventory);
+    document.getElementById('shop-close').addEventListener('click', closeShop);
+    document.getElementById('modal-overlay').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeInventory();
+    });
+    document.getElementById('shop-overlay').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeShop();
+    });
     document.getElementById('tester-btn').addEventListener('click', openTester);
     document.getElementById('tester-close').addEventListener('click', closeTester);
+    document.getElementById('tester-pw-btn').addEventListener('click', tryTesterPassword);
+    document.getElementById('tester-pw-input').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') tryTesterPassword();
+    });
     document.querySelector('.tester-overlay').addEventListener('click', (e) => {
         if (e.target === e.currentTarget) closeTester();
     });
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeTester();
+        if (e.key === 'Escape') { closeInventory(); closeShop(); closeTester(); }
+    });
+
+    document.getElementById('reset-btn').addEventListener('click', () => {
+        if (!confirm('¿Seguro que quieres reiniciar TODO tu progreso?')) return;
+        localStorage.removeItem(SAVE_KEY);
+        state.rolls = 0; state.luck = 1; state.lucky = 0; state.owned = {};
+        state.coins = 0; state.totalCoins = 0;
+        state.shop = { rollSpeed: 0, luckBoost: 0, coinMulti: 0 };
+        updateTopStats();
+        addLog('Progreso reiniciado', 'log-legend');
+        addEvent('Progreso reiniciado', 'evt-sistema');
     });
 
     // ---- Background Music ----
