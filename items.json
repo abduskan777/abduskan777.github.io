@@ -1,0 +1,26 @@
+{
+    "version": 2,
+    "items": [
+        { "id": "albafuentes", "name": "Alba Fuentes", "chance": 1, "image": "img/albafuentes.png" },
+        { "id": "mejuto", "name": "Mejuto", "chance": 3, "image": "img/Mejuto.png" },
+        { "id": "gubby", "name": "Gubby", "chance": 6, "image": "img/gubby.png" },
+        { "id": "mdgago", "name": "MdGago", "chance": 10, "image": "img/mdgago.png" },
+        { "id": "tomas", "name": "Tomás", "chance": 18, "image": "img/tomas.png" },
+        { "id": "manuelfarina", "name": "Manuel Farina", "chance": 32, "image": "img/manuelfarina.png" },
+        { "id": "dianavilas", "name": "Diana Vilas", "chance": 64, "image": "img/dianavilas.png" },
+        { "id": "sorriso", "name": "Sorriso", "chance": 128, "image": "img/sorriso.png" },
+        { "id": "gubbyfeet", "name": "Gubby Feet", "chance": 300, "image": "img/gubbyfeet.png" },
+        { "id": "gubbypeanut", "name": "Gubby Peanut", "chance": 600, "image": "img/gubbypeanut.png" },
+        { "id": "goldenmejuto", "name": "Golden Mejuto", "chance": 1500, "image": "img/goldenmejuto.jfif" },
+        { "id": "goldenalba", "name": "Golden Alba", "chance": 3000, "image": "img/goldenalba.jfif" },
+        { "id": "rubyalba", "name": "Ruby Alba", "chance": 8000, "image": "img/rubyalba.jfif" },
+        { "id": "diamondalba", "name": "Diamond Alba", "chance": 25000, "image": "img/diamondalba.jfif" },
+        { "id": "idksterling", "name": "IDKsterling", "chance": 150000, "image": "img/idksterling.png", "epic": true, "epicBackground": "fondos/matrix.gif" },
+        { "id": "verity", "name": "Verity", "chance": 400000, "image": "img/verity.png", "epic": true, "epicBackground": "fondos/matrix.gif" },
+        { "id": "glitchedalba", "name": "Glitched Alba", "chance": 1200000, "image": "img/glitchedalba.jfif", "epic": true, "epicBackground": "fondos/matrix.gif" },
+        { "id": "lorceira", "name": "Lorceira", "chance": 5000000, "image": "img/lorceira.png", "epic": true, "epicBackground": "fondos/matrix.gif" },
+        { "id": "masona", "name": "Masona", "chance": 80000000, "image": "img/masona.png", "epic": true, "epicBackground": "fondos/matrix.gif" },
+        { "id": "unpvp", "name": "UnPvP", "chance": 400000000, "image": "img/unpvp.png", "epic": true, "epicBackground": "fondos/matrix.gif" },
+        { "id": "lmsilvares", "name": "LMSilvares", "chance": 1500000000, "image": "img/lmsilvares.png", "epic": true, "epicBackground": "fondos/matrix.gif" }
+    ]
+}

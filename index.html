@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valle RNG</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0a0f14 url('img/fondo.jpg') no-repeat center center / 100% 100%;
+            background-size: 100% 100%;
+            color: #e8e8e8;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        #top-bar {
+            width: 100%;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #10161d;
+            border-bottom: 2px solid #223040;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        #top-bar h1 {
+            font-size: 1.4rem;
+            background: linear-gradient(90deg, #7dd3fc, #a78bfa, #f472b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .stat { font-size: 0.9rem; color: #9fb3c8; }
+        .stat span { color: #fbbf24; font-weight: bold; }
+
+        #main { flex: 1; display: flex; width: 100%; overflow: hidden; }
+
+        #center {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 18px;
+            padding: 20px;
+            min-width: 0;
+            position: relative;
+        }
+        #display {
+            width: 190px;
+            height: 190px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            border: 2px solid #223040;
+            background: rgba(17, 26, 36, 0.7);
+            overflow: hidden;
+            box-shadow: 0 0 22px rgba(34, 211, 238, 0.08);
+            position: relative;
+        }
+        #display img { width: 100%; height: 100%; object-fit: fill; }
+        #new-badge {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            font-size: 1.6rem;
+            line-height: 1;
+            pointer-events: none;
+            display: none;
+            animation: newBadge 0.9s cubic-bezier(.36,.07,.19,.97) forwards;
+            filter: drop-shadow(0 0 6px rgba(34, 211, 238, 0.8));
+            z-index: 2;
+        }
+        @keyframes newBadge {
+            0%   { transform: scale(0.3) rotate(-12deg); opacity: 0; }
+            55%  { transform: scale(1.25) rotate(8deg); opacity: 1; }
+            70%  { transform: scale(0.95) rotate(-3deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+        #display.bounce { animation: bounce 0.7s cubic-bezier(.55,-0.45,.75,.95) forwards; }
+        @keyframes bounce {
+            0%   { transform: scale(1); }
+            25%  { transform: scale(0.05); }
+            55%  { transform: scale(1.35); }
+            70%  { transform: scale(0.8); }
+            85%  { transform: scale(1.12); }
+            100% { transform: scale(1); }
+        }
+        #item-name {
+            font-size: 1.8rem;
+            font-weight: bold;
+            text-align: center;
+            min-height: 2.4rem;
+            text-shadow: 0 0 14px currentColor;
+            background: rgba(0, 0, 0, 0.75);
+            border: 1px solid rgba(0, 0, 0, 0.4);
+            border-radius: 8px;
+            padding: 4px 18px;
+        }
+        #item-rarity {
+            font-size: 0.95rem;
+            color: #9fb3c8;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 8px;
+            padding: 4px 14px;
+        }
+        #buttons { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: center; }
+        #roll-btn {
+            padding: 16px 70px;
+            font-size: 1.4rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            background: linear-gradient(130deg, #22d3ee, #6366f1);
+            color: #fff;
+            box-shadow: 0 6px 20px rgba(34, 211, 238, 0.35);
+            transition: transform 0.08s, box-shadow 0.2s;
+            user-select: none;
+        }
+        #roll-btn:active { transform: scale(0.95); }
+        #roll-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .tool-btn {
+            padding: 10px 20px;
+            font-size: 0.95rem;
+            border: 2px solid #223040;
+            border-radius: 8px;
+            background: transparent;
+            color: #cbd5e1;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .tool-btn:hover { border-color: #22d3ee; color: #22d3ee; }
+        .tool-btn.active { border-color: #22d3ee; color: #22d3ee; background: #22d3ee22; }
+
+        #menu-btns {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            display: flex;
+            gap: 8px;
+        }
+        #inventory-btn, #index-btn {
+            padding: 10px 18px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            border: 2px solid #22c55e66;
+            border-radius: 8px;
+            background: #10161db0;
+            color: #4ade80;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        #index-btn { border-color: #22d3ee66; color: #22d3ee; }
+        #inventory-btn:hover { background: #22c55e33; }
+        #index-btn:hover { background: #22d3ee22; }
+
+        /* Modal inventario */
+        #modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(4, 8, 14, 0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            padding: 20px;
+        }
+        #modal-overlay.open { display: flex; }
+        #modal {
+            background: #0f1720;
+            border: 2px solid #223040;
+            border-radius: 14px;
+            width: 100%;
+            max-width: 640px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        #modal-header {
+            padding: 14px 18px;
+            border-bottom: 1px solid #223040;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #modal-header h3 { color: #4ade80; font-size: 1.1rem; }
+        #modal-close {
+            background: none;
+            border: none;
+            color: #9fb3c8;
+            font-size: 1.4rem;
+            cursor: pointer;
+            padding: 0 6px;
+        }
+        #modal-close:hover { color: #f87171; }
+        #modal-body {
+            padding: 16px;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 12px;
+        }
+        .inv-card {
+            background: #131c28;
+            border: 1px solid #223040;
+            border-radius: 10px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            text-align: center;
+        }
+        .inv-card img { width: 56px; height: 56px; object-fit: fill; }
+        .inv-card .inv-name { font-size: 0.75rem; color: #e8e8e8; font-weight: bold; }
+        .inv-card .inv-count { font-size: 0.9rem; color: #fbbf24; font-weight: bold; }
+        .inv-empty { color: #64748b; text-align: center; padding: 30px; font-size: 0.9rem; }
+
+        .index-card {
+            background: #111a24;
+            border: 1px solid #223040;
+            border-radius: 10px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            text-align: center;
+        }
+        .index-card .idx-img {
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            object-fit: fill;
+        }
+        .index-card .idx-img.locked {
+            background: #000;
+            color: #445;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 6px;
+            border: 1px solid #1a2634;
+        }
+        .index-card .idx-name { font-size: 0.75rem; font-weight: bold; color: #e8e8e8; }
+        .index-card .idx-name.locked { color: #64748b; }
+        .index-card .idx-chance { font-size: 0.7rem; color: #9fb3c8; }
+        .index-card .idx-rarity { font-size: 0.68rem; font-weight: bold; }
+
+        #prestige-panel {
+            background: rgba(20, 14, 38, 0.8);
+            border: 2px solid #7c3aed;
+            border-radius: 12px;
+            padding: 14px 20px;
+            width: 300px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(124, 58, 237, 0.25);
+        }
+        #prestige-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #a78bfa;
+        }
+        #prestige-title span { color: #fbbf24; }
+        .prestige-goal, .prestige-run, .prestige-reward {
+            font-size: 0.85rem;
+            color: #cbd5e1;
+        }
+        .prestige-goal span, .prestige-run span { font-weight: bold; color: #4ade80; }
+        .prestige-reward span { font-weight: bold; color: #fbbf24; }
+        #prestige-btn {
+            margin-top: 8px;
+            padding: 10px;
+            font-size: 1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: linear-gradient(90deg, #a855f7, #6366f1);
+            color: #fff;
+            transition: transform 0.1s, box-shadow 0.2s;
+        }
+        #prestige-btn:active { transform: scale(0.96); }
+        #prestige-btn:disabled { opacity: 0.5; cursor: not-allowed; background: #333; }
+
+        #event-log {
+            position: absolute;
+            top: 56px;
+            left: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-width: 280px;
+            pointer-events: none;
+            z-index: 5;
+        }
+        .evt {
+            background: rgba(13, 20, 30, 0.85);
+            border-left: 4px solid #223040;
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 0.82rem;
+            font-weight: bold;
+            color: #e2e8f0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+            animation: evtIn 0.4s cubic-bezier(.36,.07,.19,.97);
+        }
+        @keyframes evtIn {
+            0% { transform: translateX(-30px); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+        .evt-nuevo { border-left-color: #22d3ee; color: #7dd3fc; }
+        .evt-raro { border-left-color: #a78bfa; color: #c4b5fd; }
+        .evt-legend { border-left-color: #fbbf24; color: #fde68a; }
+        .evt-god { border-left-color: #f472b6; color: #f9a8d4; text-shadow: 0 0 8px rgba(244, 114, 182, 0.7); }
+        .evt-prestige { border-left-color: #4ade80; color: #86efac; font-size: 0.95rem; text-shadow: 0 0 10px rgba(74, 222, 128, 0.6); }
+        .evt-sistema { border-left-color: #94a3b8; color: #cbd5e1; font-weight: normal; }
+
+        #log {
+            position: fixed;
+            top: 60px;
+            left: 0;
+            width: 360px;
+            min-width: 180px;
+            max-width: 60vw;
+            height: 140px;
+            min-height: 60px;
+            max-height: 70vh;
+            background: rgba(10, 15, 20, 0.88);
+            border-top: 2px solid rgba(26, 38, 52, 0.8);
+            border-right: 2px solid rgba(26, 38, 52, 0.8);
+            padding: 8px 16px;
+            overflow-y: auto;
+            font-size: 0.75rem;
+            color: #7d8ca1;
+            resize: both;
+            border-top-right-radius: 10px;
+            z-index: 40;
+        }
+        #log div { padding: 2px 0; }
+        .log-rare { color: #22d3ee; }
+        .log-epic { color: #a78bfa; }
+        .log-legend { color: #fbbf24; }
+        .log-myth { color: #f472b6; font-weight: bold; }
+
+        .rarity-tag {
+            display: inline-block;
+            font-size: 0.72rem;
+            padding: 1px 8px;
+            border-radius: 10px;
+            border: 1px solid currentColor;
+        }
+
+        /* --- Menú Tester --- */
+        .tester-overlay { z-index: 60; }
+        #tester-body {
+            padding: 16px;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 10px;
+            max-height: 60vh;
+        }
+        .tester-btn-item {
+            background: #131c28;
+            border: 2px solid #223040;
+            border-radius: 10px;
+            padding: 8px 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: all 0.15s;
+            text-align: center;
+        }
+        .tester-btn-item:hover { transform: scale(1.05); border-color: #7c3aed; }
+        .tester-epic { position: relative; border-width: 3px; box-shadow: 0 0 14px rgba(244, 114, 182, 0.4); }
+        .t-epic-badge {
+            position: absolute;
+            top: 2px;
+            right: 4px;
+            font-size: 1rem;
+            filter: drop-shadow(0 0 6px rgba(244, 114, 182, 0.9));
+        }
+        .tester-btn-item img, .tester-btn-item .tester-noimg {
+            width: 52px;
+            height: 52px;
+            object-fit: fill;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #0b1017;
+        }
+        .tester-btn-item .t-name { font-size: 0.72rem; font-weight: bold; color: #e8e8e8; }
+        .tester-btn-item .t-chance { font-size: 0.65rem; color: #9fb3c8; }
+
+        /* --- Pantalla épica --- */
+        #epic-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            opacity: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        #epic-screen.on { opacity: 1; pointer-events: auto; }
+        .epic-name {
+            position: relative;
+            font-size: 3.2rem;
+            font-weight: 900;
+            letter-spacing: 3px;
+            text-align: center;
+            padding: 0 20px;
+            text-shadow: 0 0 30px currentColor, 0 0 60px currentColor;
+            animation: epicTextIn 0.8s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+            z-index: 2;
+        }
+        .epic-sub {
+            position: relative;
+            font-size: 1rem;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            color: #e2c04c;
+            text-shadow: 0 0 18px rgba(255, 215, 0, 0.8);
+            animation: epicTextIn 0.8s 0.15s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+            z-index: 2;
+        }
+        @keyframes epicTextIn {
+            0% { transform: scale(0.1) rotate(-8deg); opacity: 0; filter: blur(12px); }
+            60% { transform: scale(1.15) rotate(1deg); opacity: 1; filter: blur(0); }
+            100% { transform: scale(1) rotate(0); opacity: 1; }
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-thumb { background: #223040; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div id="top-bar">
+        <h1>🌿 Valle RNG</h1>
+        <div class="stat">Rolls: <span id="roll-count">0</span></div>
+        <div class="stat">Suerte: <span id="luck">1.0x</span></div>
+        <div class="stat">Raros: <span id="lucky-count">0</span></div>
+        <div class="stat">Desbloqueados: <span id="unlocked-count">0</span>/<span id="total-items">0</span></div>
+    </div>
+
+    <div id="main">
+        <div id="center">
+            <div id="menu-btns">
+                <button id="inventory-btn">🎒 Inventario</button>
+                <button id="index-btn">📖 Índice</button>
+            </div>
+            <div id="event-log"></div>
+            <div id="display"><span id="new-badge">🆕</span></div>
+            <div id="item-name">-</div>
+            <div id="item-rarity"></div>
+            <div id="buttons">
+                <button id="roll-btn">Roll</button>
+                <button id="afk-btn" class="tool-btn" style="border-color:#f59e0b;color:#fbbf24;">AFK Roll</button>
+            </div>
+            <div id="prestige-panel">
+                <div id="prestige-title">Renacimiento <span id="prestige-level">1</span></div>
+                <div class="prestige-goal">Objetivo: desbloquear <span id="goal-unlock">0</span> items distintos</div>
+                <div class="prestige-run">Progreso: <span id="run-unlock">0</span></div>
+                <div class="prestige-reward">Recompensa: +<span id="prestige-bonus">0</span>x suerte permanente</div>
+                <button id="prestige-btn" disabled>Renacer</button>
+            </div>
+            <div id="buttons">
+                <button id="reset-btn" class="tool-btn" style="border-color:#7f1d1d;color:#f87171;">Reiniciar</button>
+                <button id="tester-btn" class="tool-btn" style="border-color:#7c3aed;color:#a78bfa;">🧪 Tester</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="log"></div>
+
+    <div id="modal-overlay">
+        <div id="modal">
+            <div id="modal-header">
+                <h3 id="modal-title">🎒 Mi Inventario</h3>
+                <button id="modal-close">✕</button>
+            </div>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <!-- Menú Tester -->
+    <div id="modal-overlay" class="tester-overlay">
+        <div id="modal">
+            <div id="modal-header">
+                <h3 id="tester-title">🧪 Tester: Elige qué te toque</h3>
+                <button id="tester-close">✕</button>
+            </div>
+            <div id="tester-body"></div>
+        </div>
+    </div>
+
+    <!-- Pantalla negra épica -->
+    <div id="epic-screen">
+        <div class="epic-name">-</div>
+        <div class="epic-sub">-</div>
+    </div>
+
+    <audio id="bg-music" preload="auto"></audio>
+
+    <script>
+    const SAVE_KEY = 'valle-rng-save-v3';
+
+    const COOLDOWN_MS = 800;
+
+    const state = {
+        rolls: 0,
+        luck: 1,
+        lucky: 0,
+        owned: {},
+        rolling: false,
+        cooldownUntil: 0,
+        prestige: 0,
+        prestigeLuck: 1,
+        runUnlocks: 0,
+    };
+
+    let ITEMS = [];
+
+    function save() {
+        try {
+            localStorage.setItem(SAVE_KEY, JSON.stringify({
+                rolls: state.rolls,
+                luck: state.luck,
+                lucky: state.lucky,
+                owned: state.owned,
+                prestige: state.prestige,
+                prestigeLuck: state.prestigeLuck,
+                runUnlocks: state.runUnlocks,
+            }));
+        } catch (e) {}
+    }
+
+    function load() {
+        try {
+            const raw = localStorage.getItem(SAVE_KEY);
+            if (!raw) return;
+            const d = JSON.parse(raw);
+            state.rolls = d.rolls || 0;
+            state.luck = d.luck || 1;
+            state.lucky = d.lucky || 0;
+            state.owned = d.owned || {};
+            state.prestige = d.prestige || 0;
+            state.prestigeLuck = d.prestigeLuck || 1;
+            state.runUnlocks = d.runUnlocks || 0;
+        } catch (e) {}
+    }
+
+    async function loadItems() {
+        const res = await fetch('items.json');
+        const data = await res.json();
+        ITEMS = data.items;
+        updateTopStats();
+        renderPrestige();
+    }
+
+    const RARITY_TIERS = [
+        { label: 'Común',   color: '#9aa5b1' },
+        { label: 'Raro',    color: '#4ade80' },
+        { label: 'Épico',   color: '#22d3ee' },
+        { label: 'Legendary',  color: '#a78bfa' },
+        { label: 'Mítico',  color: '#fbbf24' },
+        { label: 'Godly',   color: '#f472b6' },
+    ];
+    function colorFor(item) {
+        const c = item.chance;
+        if (c <= 128) return RARITY_TIERS[0].color;
+        if (c <= 4096) return RARITY_TIERS[1].color;
+        if (c <= 100000) return RARITY_TIERS[2].color;
+        if (c <= 10000000) return RARITY_TIERS[3].color;
+        if (c <= 1000000000) return RARITY_TIERS[4].color;
+        return RARITY_TIERS[5].color;
+    }
+
+    function effLuck() {
+        const l = (state.luck || 1) * (state.prestigeLuck || 1);
+        return Math.max(1, l);
+    }
+
+    function effLuckTotal() {
+        let total = 0;
+        for (const it of ITEMS) total += effLuck() / it.chance;
+        return total;
+    }
+
+    function prestigeGoal() {
+        // Items únicos que hay que desbloquear en esta run para poder renacer.
+        // Sube con cada renacimiento, limitado al total de items.
+        return Math.min(1 + state.prestige, ITEMS.length);
+    }
+
+    function renderPrestige() {
+        const level = state.prestige + 1;
+        document.getElementById('prestige-level').textContent = level;
+        document.getElementById('goal-unlock').textContent = prestigeGoal();
+        document.getElementById('run-unlock').textContent = state.runUnlocks;
+        const bonus = (state.prestigeLuck - 1) * 100;
+        document.getElementById('prestige-bonus').textContent = Math.round(bonus);
+        const btn = document.getElementById('prestige-btn');
+        btn.disabled = !(state.runUnlocks >= prestigeGoal());
+    }
+
+    function doPrestige() {
+        if ((state.runUnlocks || 0) < prestigeGoal()) return;
+        state.prestige = (state.prestige || 0) + 1;
+        state.prestigeLuck = (state.prestigeLuck || 1) + 0.25;
+        state.luck = 1;
+        state.owned = {};
+        state.runUnlocks = 0;
+        state.lucky = 0;
+
+        addEvent(`🔄 Renacimiento ${state.prestige}! Suerte permanente +25% (${Math.round((state.prestigeLuck - 1) * 100)}%)`, 'evt-prestige');
+        addLog(`RENACISTE → Renacimiento ${state.prestige}`, 'log-legend');
+
+        document.getElementById('display').innerHTML = '<span id="new-badge" style="display:none">🆕</span>';
+        document.getElementById('item-name').textContent = '-';
+        document.getElementById('item-name').style.color = '';
+        document.getElementById('item-rarity').textContent = '';
+        document.getElementById('modal-overlay').classList.remove('open');
+
+        updateTopStats();
+        renderPrestige();
+        save();
+    }
+
+    async function roll() {
+        if (state.rolling || ITEMS.length === 0) return;
+        const now = Date.now();
+        if (now < state.cooldownUntil) return;
+        state.rolling = true;
+        const btn = document.getElementById('roll-btn');
+        btn.disabled = true;
+
+        const rollVal = Math.random() * effLuckTotal();
+        let picked = ITEMS[0];
+        let acc = 0;
+        for (const it of ITEMS) {
+            acc += effLuck() / it.chance;
+            if (rollVal < acc) { picked = it; break; }
+        }
+
+        state.rolls++;
+        const isNew = !state.owned[picked.id];
+        state.owned[picked.id] = (state.owned[picked.id] || 0) + 1;
+        if (isNew) state.runUnlocks++;
+        if (picked.epic) state.lucky++;
+
+        clearEpicScreen();
+        revertEpicBackground();
+        revealItem(picked, isNew);
+
+        updateTopStats();
+        renderPrestige();
+        save();
+
+        state.cooldownUntil = Date.now() + COOLDOWN_MS;
+        setTimeout(() => {
+            state.rolling = false;
+            btn.disabled = false;
+        }, 200);
+        return picked;
+    }
+
+    function revealItem(picked, isNew) {
+        const display = document.getElementById('display');
+        display.classList.remove('bounce');
+        void display.offsetWidth;
+        display.classList.add('bounce');
+
+        const isEpic = !!picked.epic;
+
+        setTimeout(() => {
+            const col = colorFor(picked);
+            if (!isEpic) {
+                display.innerHTML = '';
+                const img = document.createElement('img');
+                img.src = picked.image;
+                img.onerror = () => { display.textContent = '🌿'; };
+                display.appendChild(img);
+
+                const badge = document.createElement('span');
+                badge.id = 'new-badge';
+                badge.textContent = '🆕';
+                badge.style.display = isNew ? 'block' : 'none';
+                display.appendChild(badge);
+
+                display.style.borderColor = col;
+                display.style.boxShadow = `0 0 ${picked.chance >= 10000000 ? 40 : 22}px ${col}44`;
+
+                document.getElementById('item-name').textContent = picked.name;
+                document.getElementById('item-name').style.color = col;
+                const chanceStr = picked.chance < 1000 ? `1 en ${picked.chance}` : `1 en ${picked.chance.toLocaleString()}`;
+                document.getElementById('item-rarity').innerHTML =
+                    `<span class="rarity-tag" style="color:${col}">${tierOf(picked)}</span> &nbsp; Chance: ${chanceStr}`;
+            } else {
+                // Épico: no revelar aún quién tocó (se muestra en el fade out)
+                document.getElementById('item-name').textContent = '???';
+                document.getElementById('item-name').style.color = '#9aa5b1';
+                document.getElementById('item-rarity').textContent = '???';
+            }
+
+            const colCls = picked.chance >= 1000000 ? 'evt-god' : picked.chance >= 100000 ? 'evt-legend' : picked.chance >= 10000 ? 'evt-raro' : 'evt-nuevo';
+            if (picked.chance >= 100000) {
+                addLog(isNew ? `🔮 ¡NUEVO! Conseguiste ${picked.name} (1 en ${picked.chance.toLocaleString()})` : `Conseguiste ${picked.name} (1 en ${picked.chance.toLocaleString()})`, 'log-' + rarityClass(picked));
+                if (isNew) {
+                    addEvent(`🎉 Nuevo item: ${picked.name} (1 en ${picked.chance.toLocaleString()})`, colCls);
+                }
+            } else if (isNew) {
+                addEvent(`Nuevo: ${picked.name}`, 'evt-nuevo');
+            }
+            const clsLog = picked.chance >= 1000000 ? 'log-myth' : picked.chance >= 100000 ? 'log-legend' : picked.chance >= 10000 ? 'log-epic' : picked.chance > 2 ? 'log-rare' : '';
+            addLog(`${picked.name} (1 en ${picked.chance})`, clsLog);
+
+            if (isEpic) showEpicScreen(picked, picked.epicBackground);
+        }, 165);
+    }
+
+    function showEpicScreen(item, backgroundPath) {
+        const screen = document.getElementById('epic-screen');
+        const col = colorFor(item);
+        const bg = backgroundPath || 'fondos/matrix.gif';
+
+        screen.style.background = '#000';
+        screen.querySelector('.epic-name').textContent = '';
+        screen.querySelector('.epic-sub').textContent = '';
+
+        screen.classList.add('on');
+        screen.style.transition = 'none';
+        screen.style.opacity = '0';
+        void screen.offsetWidth;
+        // Fade in lento a negro: aún no se ve quién tocó
+        screen.style.transition = 'opacity 2.2s';
+        screen.style.opacity = '1';
+
+        setTimeout(() => {
+            applyEpicBackground(bg);
+            revealEpicItem(item, col);
+            // Fade out: se revela el fondo matrix y el personaje
+            screen.style.transition = 'opacity 2.6s';
+            screen.style.opacity = '0';
+            setTimeout(() => {
+                clearEpicScreen();
+                const display = document.getElementById('display');
+                display.classList.remove('bounce');
+                void display.offsetWidth;
+                display.classList.add('bounce');
+            }, 2750);
+        }, 2400);
+    }
+
+    const originalBodyStyle = { bg: '', border: '', shadow: '' };
+    function applyEpicBackground(path) {
+        if (!path) return;
+        const body = document.body;
+        originalBodyStyle.bg = body.style.background;
+        body.style.transition = 'background 3s';
+        body.style.background = `#0a0f14 url('${path}') no-repeat center center / 100% 100%`;
+    }
+    function revertEpicBackground() {
+        const body = document.body;
+        body.style.transition = '';
+        body.style.background = originalBodyStyle.bg || '';
+        originalBodyStyle.bg = '';
+    }
+
+    function revealEpicItem(item, col) {
+        const display = document.getElementById('display');
+        display.innerHTML = '';
+        const img = document.createElement('img');
+        img.src = item.image;
+        img.onerror = () => { display.textContent = '🌿'; };
+        display.appendChild(img);
+        const badge = document.createElement('span');
+        badge.id = 'new-badge';
+        badge.textContent = '🆕';
+        badge.style.display = 'block';
+        display.appendChild(badge);
+
+        display.style.borderColor = col;
+        display.style.boxShadow = `0 0 ${item.chance >= 10000000 ? 40 : 22}px ${col}44`;
+        document.getElementById('item-name').textContent = item.name;
+        document.getElementById('item-name').style.color = col;
+        const chanceStr = item.chance < 1000 ? `1 en ${item.chance}` : `1 en ${item.chance.toLocaleString()}`;
+        document.getElementById('item-rarity').innerHTML =
+            `<span class="rarity-tag" style="color:${col}">${tierOf(item)}</span> &nbsp; Chance: ${chanceStr}`;
+    }
+
+    function clearEpicScreen() {
+        const screen = document.getElementById('epic-screen');
+        screen.classList.remove('on');
+        screen.style.transition = 'none';
+        screen.style.opacity = '0';
+    }
+
+    function tierOf(item) {
+        const c = item.chance;
+        if (c <= 128) return RARITY_TIERS[0].label;
+        if (c <= 4096) return RARITY_TIERS[1].label;
+        if (c <= 100000) return RARITY_TIERS[2].label;
+        if (c <= 10000000) return RARITY_TIERS[3].label;
+        if (c <= 1000000000) return RARITY_TIERS[4].label;
+        return RARITY_TIERS[5].label;
+    }
+
+    function rarityClass(item) {
+        const c = item.chance;
+        if (c <= 4096) return 'rare';
+        if (c <= 100000) return 'epic';
+        if (c <= 10000000) return 'legend';
+        return 'myth';
+    }
+
+    function doScreenShake(item) {
+        if (!item.epic) return;
+        const body = document.body;
+        body.style.animation = 'none';
+        void body.offsetWidth;
+        const intensity = item.chance >= 100000000 ? 10 : 5;
+        body.style.animation = `shake ${Math.min(intensity, 8) * 0.05}s ${intensity} linear`;
+    }
+
+    const styleShake = document.createElement('style');
+    styleShake.textContent = `@keyframes shake { 0%,100%{transform:translate(0,0)} 25%{transform:translate(-8px,4px)} 50%{transform:translate(8px,-4px)} 75%{transform:translate(-6px,-3px)} }`;
+    document.head.appendChild(styleShake);
+
+    function updateTopStats() {
+        document.getElementById('roll-count').textContent = state.rolls.toLocaleString();
+        const eff = effLuck();
+        document.getElementById('luck').textContent = eff.toLocaleString('es', { maximumFractionDigits: 2 }) + 'x';
+        document.getElementById('lucky-count').textContent = state.lucky.toLocaleString();
+        const un = Object.keys(state.owned).filter(id => state.owned[id] > 0).length;
+        document.getElementById('unlocked-count').textContent = un;
+        document.getElementById('total-items').textContent = ITEMS.length;
+    }
+
+    // ---- Inventory / Index modal ----
+    function setModalTitle(text) {
+        document.getElementById('modal-title').textContent = text;
+    }
+
+    function chanceStr(c) {
+        return c < 1000 ? `1 en ${c}` : `1 en ${c.toLocaleString()}`;
+    }
+
+    let invRefreshInterval = null;
+
+    function buildInvCard(item) {
+        const count = state.owned[item.id] || 0;
+        const card = document.createElement('div');
+        card.className = 'inv-card';
+        card.dataset.itemId = item.id;
+        const img = document.createElement('img');
+        img.src = item.image;
+        img.onerror = () => { img.outerHTML = '<div style="font-size:2rem">🌿</div>'; };
+        card.appendChild(img);
+        const name = document.createElement('div');
+        name.className = 'inv-name';
+        name.style.color = colorFor(item);
+        name.textContent = item.name;
+        const cnt = document.createElement('div');
+        cnt.className = 'inv-count';
+        cnt.textContent = 'x' + count;
+        card.appendChild(name);
+        card.appendChild(cnt);
+        return card;
+    }
+
+    function refreshInventory() {
+        const body = document.getElementById('modal-body');
+        const sorted = [...ITEMS].sort((a, b) => a.chance - b.chance);
+        sorted.forEach(item => {
+            const count = state.owned[item.id] || 0;
+            if (count === 0) return;
+            let card = body.querySelector(`[data-item-id="${item.id}"]`);
+            if (!card) {
+                card = buildInvCard(item);
+                body.appendChild(card);
+            } else {
+                card.querySelector('.inv-count').textContent = 'x' + count;
+            }
+        });
+        const hasItems = body.querySelector('.inv-card');
+        let empty = body.querySelector('.inv-empty');
+        if (!hasItems && !empty) {
+            body.innerHTML = '<div class="inv-empty">Aún no tienes items. ¡Haz roll!</div>';
+        }
+    }
+
+    function openInventory() {
+        setModalTitle('🎒 Mi Inventario');
+        document.getElementById('modal-body').innerHTML = '';
+        const unlockedCount = Object.keys(state.owned).filter(id => state.owned[id] > 0).length;
+        if (unlockedCount === 0) {
+            document.getElementById('modal-body').innerHTML = '<div class="inv-empty">Aún no tienes items. ¡Haz roll!</div>';
+        } else {
+            const sorted = [...ITEMS].sort((a, b) => a.chance - b.chance);
+            sorted.forEach(item => {
+                const count = state.owned[item.id] || 0;
+                if (count === 0) return;
+                document.getElementById('modal-body').appendChild(buildInvCard(item));
+            });
+        }
+        document.getElementById('modal-overlay').classList.add('open');
+        clearInterval(invRefreshInterval);
+        invRefreshInterval = setInterval(refreshInventory, 300);
+    }
+
+    function openIndex() {
+        setModalTitle('📖 Índice de Personajes');
+        document.getElementById('modal-body').innerHTML = '';
+        const sorted = [...ITEMS].sort((a, b) => b.chance - a.chance);
+        sorted.forEach(item => {
+            const have = (state.owned[item.id] || 0) > 0;
+            const col = colorFor(item);
+            const rar = tierOf(item);
+
+            const card = document.createElement('div');
+            card.className = 'index-card';
+
+            // Imagen: si no lo tienes, caja negra con ???
+            if (have) {
+                const img = document.createElement('img');
+                img.className = 'idx-img';
+                img.src = item.image;
+                img.onerror = () => { img.outerHTML = '<div style="font-size:2rem">🌿</div>'; };
+                card.appendChild(img);
+            } else {
+                const locked = document.createElement('div');
+                locked.className = 'idx-img locked';
+                locked.textContent = '???';
+                card.appendChild(locked);
+            }
+
+            const name = document.createElement('div');
+            name.className = have ? 'idx-name' : 'idx-name locked';
+            name.textContent = have ? item.name : '???';
+            card.appendChild(name);
+
+            const rarity = document.createElement('div');
+            rarity.className = 'idx-rarity';
+            rarity.style.color = have ? col : '#64748b';
+            rarity.textContent = have ? rar : '???';
+            card.appendChild(rarity);
+
+            // La probabilidad SIEMPRE se muestra, esté o no desbloqueado
+            const chance = document.createElement('div');
+            chance.className = 'idx-chance';
+            chance.textContent = chanceStr(item.chance);
+            card.appendChild(chance);
+
+            document.getElementById('modal-body').appendChild(card);
+        });
+        document.getElementById('modal-overlay').classList.add('open');
+    }
+    function closeInventory() {
+        clearInterval(invRefreshInterval);
+        document.getElementById('modal-overlay').classList.remove('open');
+    }
+
+    function addLog(msg, cls) {
+        const log = document.getElementById('log');
+        const div = document.createElement('div');
+        div.className = cls || '';
+        div.textContent = msg;
+        log.prepend(div);
+        if (log.children.length > 80) log.lastChild.remove();
+    }
+
+    function addEvent(msg, cls) {
+        const log = document.getElementById('event-log');
+        const div = document.createElement('div');
+        div.className = 'evt ' + (cls || 'evt-sistema');
+        div.textContent = msg;
+        log.prepend(div);
+        while (log.children.length > 6) log.lastChild.remove();
+        setTimeout(() => {
+            div.style.transition = 'opacity 0.5s';
+            div.style.opacity = '0';
+            setTimeout(() => div.remove(), 500);
+        }, 6000);
+    }
+
+    // ---- AFK Roll ----
+    let afkActive = false;
+    let afkTimer = null;
+    const afkBtn = document.getElementById('afk-btn');
+
+    function setAfk(on) {
+        afkActive = on;
+        afkBtn.classList.toggle('active', on);
+        afkBtn.textContent = on ? '⏸ Detener AFK' : 'AFK Roll';
+        clearInterval(afkTimer);
+        if (on) {
+            afkTimer = setInterval(() => roll(), COOLDOWN_MS + 50);
+        }
+    }
+    afkBtn.addEventListener('click', () => setAfk(!afkActive));
+
+    // ---- Controls ----
+    document.getElementById('roll-btn').addEventListener('click', () => roll());
+    document.getElementById('inventory-btn').addEventListener('click', openInventory);
+    document.getElementById('index-btn').addEventListener('click', openIndex);
+    document.getElementById('modal-close').addEventListener('click', closeInventory);
+    document.getElementById('modal-overlay').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeInventory();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeInventory();
+    });
+
+    document.getElementById('reset-btn').addEventListener('click', () => {
+        if (!confirm('¿Seguro que quieres reiniciar TODO tu progreso? (incluidos renacimientos)')) return;
+        localStorage.removeItem(SAVE_KEY);
+        state.rolls = 0; state.luck = 1; state.lucky = 0; state.owned = {};
+        state.prestige = 0; state.prestigeLuck = 1; state.runUnlocks = 0;
+        updateTopStats();
+        renderPrestige();
+        addLog('Progreso reiniciado', 'log-legend');
+        addEvent('Progreso reiniciado', 'evt-sistema');
+    });
+
+    document.getElementById('prestige-btn').addEventListener('click', () => {
+        if (state.rolling) return;
+        doPrestige();
+    });
+
+    // ---- Tester ----
+    function openTester() {
+        const body = document.getElementById('tester-body');
+        body.innerHTML = '';
+        const sorted = [...ITEMS].sort((a, b) => b.chance - a.chance);
+        sorted.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'tester-btn-item';
+            card.style.borderColor = colorFor(item);
+
+            if (item.epic) {
+                card.classList.add('tester-epic');
+                const badge = document.createElement('div');
+                badge.className = 't-epic-badge';
+                badge.textContent = '⚡';
+                card.appendChild(badge);
+            }
+
+            const img = document.createElement('img');
+            img.src = item.image;
+            img.onerror = () => {
+                const fallback = document.createElement('div');
+                fallback.className = 'tester-noimg';
+                fallback.textContent = '🌿';
+                img.replaceWith(fallback);
+            };
+            card.appendChild(img);
+
+            const name = document.createElement('div');
+            name.className = 't-name';
+            name.style.color = colorFor(item);
+            name.textContent = item.name;
+            card.appendChild(name);
+
+            const chance = document.createElement('div');
+            chance.className = 't-chance';
+            chance.textContent = chanceStr(item.chance);
+            card.appendChild(chance);
+
+            const rarity = document.createElement('div');
+            rarity.className = 't-chance';
+            rarity.style.color = colorFor(item);
+            rarity.style.fontWeight = 'bold';
+            rarity.textContent = tierOf(item);
+            card.appendChild(rarity);
+
+            card.addEventListener('click', () => {
+                state.rolls++;
+                const isNew = !state.owned[item.id];
+                state.owned[item.id] = (state.owned[item.id] || 0) + 1;
+                if (isNew) state.runUnlocks++;
+                if (item.epic) state.lucky++;
+
+                closeTester();
+                revealItem(item, isNew);
+                updateTopStats();
+                renderPrestige();
+                save();
+            });
+
+            body.appendChild(card);
+        });
+        document.querySelector('.tester-overlay').classList.add('open');
+    }
+
+    function closeTester() {
+        document.querySelector('.tester-overlay').classList.remove('open');
+    }
+
+    document.getElementById('tester-btn').addEventListener('click', openTester);
+    document.getElementById('tester-close').addEventListener('click', closeTester);
+    document.querySelector('.tester-overlay').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeTester();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeTester();
+    });
+
+    // ---- Background Music ----
+    let musicPlaylist = [];
+    let musicIndex = 0;
+    const bgMusic = document.getElementById('bg-music');
+    bgMusic.volume = 0.35;
+
+    function shuffle(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    function playNextTrack() {
+        if (musicPlaylist.length === 0) return;
+        if (musicIndex >= musicPlaylist.length) {
+            shuffle(musicPlaylist);
+            musicIndex = 0;
+        }
+        bgMusic.src = 'music/' + encodeURIComponent(musicPlaylist[musicIndex]);
+        bgMusic.play().catch(() => {});
+        musicIndex++;
+    }
+
+    bgMusic.addEventListener('ended', playNextTrack);
+
+    async function initMusic() {
+        try {
+            const res = await fetch('/api/music');
+            const files = await res.json();
+            if (files.length === 0) return;
+            shuffle(files);
+            musicPlaylist = files;
+            musicIndex = 0;
+            playNextTrack();
+        } catch (e) {}
+    }
+
+    document.addEventListener('click', function firstClick() {
+        initMusic();
+        document.removeEventListener('click', firstClick);
+    }, { once: true });
+    document.addEventListener('keydown', function firstKey() {
+        initMusic();
+        document.removeEventListener('keydown', firstKey);
+    }, { once: true });
+
+    load();
+    loadItems();
+    </script>
+</body>
+</html>
