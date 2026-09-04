@@ -1,0 +1,23 @@
+{
+  "tatatoad": {
+    "username": "tatatoad",
+    "salt": "5ac71c3264e11c2e8a5ce26fc076d103",
+    "hash": "c59a68a9a5e9a2cde6d50eec7c8045dc26f6bfbd518a2af451be223f1563fcd8e93aa314061a989c66ec362503524ad5e45e0f1972dde1f72f8e2f17d82a2e56",
+    "token": "5a967de41ac20bc8d8f73be56140424fc923860275bae05b7b4e62de8d8d5197",
+    "data": {
+      "rolls": 0,
+      "luck": 1,
+      "lucky": 0,
+      "owned": {},
+      "coins": 0,
+      "totalCoins": 0,
+      "shop": {
+        "rollSpeed": 0,
+        "luckBoost": 0,
+        "coinMulti": 0
+      },
+      "autoSell": false
+    },
+    "lastSeen": 1788559162442
+  }
+}
