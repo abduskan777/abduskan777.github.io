@@ -1,11 +1,10 @@
-
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
 const ROOT = __dirname;
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 const USERS_FILE = path.join(ROOT, 'users.json');
 const ONLINE_WINDOW_MS = 120000;
 

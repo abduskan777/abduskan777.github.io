@@ -1,0 +1,9 @@
+{
+  "name": "valle-rng",
+  "version": "1.0.0",
+  "description": "Valle RNG - juego gacha con cuentas y comercio",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  }
+}
