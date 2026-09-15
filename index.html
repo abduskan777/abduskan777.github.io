@@ -642,6 +642,40 @@
         }
         #tester-pw-btn:hover { background: #7c3aed44; }
         .tester-pw-error { color: #f87171; font-size: 0.8rem; }
+        .tester-coins {
+            grid-column: 1 / -1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 8px;
+            border-bottom: 1px solid #22304055;
+            flex-wrap: wrap;
+        }
+        .tester-coins label { color: #fbbf24; font-weight: bold; font-size: 0.9rem; }
+        #tester-coin-add {
+            width: 140px;
+            padding: 8px 10px;
+            border: 1px solid #fbbf2466;
+            border-radius: 8px;
+            background: #0f1720;
+            color: #fbbf24;
+            text-align: center;
+            font-size: 0.9rem;
+            outline: none;
+        }
+        #tester-coin-add:focus { border-color: #fbbf24; }
+        #tester-coin-btn {
+            padding: 8px 18px;
+            border: 1px solid #fbbf2466;
+            border-radius: 8px;
+            background: #fbbf2422;
+            color: #fbbf24;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        #tester-coin-btn:hover { background: #fbbf2444; }
         #tester-body {
             padding: 16px;
             overflow-y: auto;
@@ -2314,6 +2348,37 @@
         const body = document.getElementById('tester-body');
         body.innerHTML = '';
         body.style.display = 'grid';
+
+        const coinsRow = document.createElement('div');
+        coinsRow.className = 'tester-coins';
+        const cLabel = document.createElement('label');
+        cLabel.textContent = '🪙 Añadir monedas:';
+        const cInput = document.createElement('input');
+        cInput.type = 'number';
+        cInput.id = 'tester-coin-add';
+        cInput.min = '0';
+        cInput.value = '1000';
+        const cBtn = document.createElement('button');
+        cBtn.id = 'tester-coin-btn';
+        cBtn.textContent = 'Añadir';
+        cBtn.addEventListener('click', () => {
+            const amt = Math.max(0, Math.floor(Number(cInput.value) || 0));
+            if (amt <= 0) return;
+            state.coins += amt;
+            state.totalCoins += amt;
+            updateTopStats();
+            addEvent('🪙 +' + amt.toLocaleString() + ' monedas', 'evt-sistema');
+            cInput.value = '';
+            save();
+        });
+        cInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') cBtn.click();
+        });
+        coinsRow.appendChild(cLabel);
+        coinsRow.appendChild(cInput);
+        coinsRow.appendChild(cBtn);
+        body.appendChild(coinsRow);
+
         const sorted = [...ITEMS].sort((a, b) => b.chance - a.chance);
         sorted.forEach(item => {
             const card = document.createElement('div');
