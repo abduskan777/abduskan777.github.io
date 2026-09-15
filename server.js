@@ -362,6 +362,14 @@ function completeTrade(t, fromU, toU, users) {
         cancelTrade(t, invalid);
         return;
     }
+    const fCoins = (fromU.data && typeof fromU.data.coins === 'number') ? fromU.data.coins : 0;
+    const tCoins = (toU.data && typeof toU.data.coins === 'number') ? toU.data.coins : 0;
+    const fOffered = t.coinsFrom || 0;
+    const tOffered = t.coinsTo || 0;
+    if (fOffered > fCoins || tOffered > tCoins) {
+        cancelTrade(t, 'Uno de los jugadores ya no tiene suficientes monedas');
+        return;
+    }
     for (const item in t.offerFrom) {
         fOwned[item] = (fOwned[item] || 0) - t.offerFrom[item];
         tOwned[item] = (tOwned[item] || 0) + t.offerFrom[item];
@@ -374,6 +382,8 @@ function completeTrade(t, fromU, toU, users) {
     cleanupOwned(tOwned);
     fromU.data.owned = fOwned;
     toU.data.owned = tOwned;
+    fromU.data.coins = fCoins - fOffered + tOffered;
+    toU.data.coins = tCoins - tOffered + fOffered;
     saveUsers(users);
     t.status = 'completed';
     delete activeTrades[t.id];
@@ -505,7 +515,7 @@ function handleTradeRequest(req, res) {
         if (anyTradeOf(target.username)) return sendJson(res, 400, { error: 'Ese jugador ya tiene una solicitud pendiente o un trade activo' });
         from.lastSeen = Date.now();
         saveUsers(users);
-        const t = { id: makeToken(), from: from.username, to: target.username, status: 'pending', createdAt: Date.now() };
+        const t = { id: makeToken(), from: from.username, to: target.username, status: 'pending', createdAt: Date.now(), coinsFrom: 0, coinsTo: 0 };
         activeTrades[t.id] = t;
         pushToUser(target.username, { type: 'request', trade: { id: t.id, from: t.from } });
         sendJson(res, 200, { ok: true, tradeId: t.id });
@@ -559,6 +569,8 @@ function handleTradeAccept(req, res) {
             t.status = 'active';
             t.offerFrom = {};
             t.offerTo = {};
+            t.coinsFrom = 0;
+            t.coinsTo = 0;
             t.acceptFrom = false;
             t.acceptTo = false;
             pushToUser(t.from, { type: 'trade', trade: t });
@@ -593,7 +605,7 @@ function handleTradeOffer(req, res) {
     readBody(req).then(body => {
         let parsed;
         try { parsed = JSON.parse(body || '{}'); } catch (e) { parsed = {}; }
-        const { token, tradeId, item, delta } = parsed;
+        const { token, tradeId, item, delta, coins } = parsed;
         const user = findUserByToken(token);
         if (!user) return sendJson(res, 401, { error: 'Sesión inválida' });
         const t = activeTrades[tradeId];
@@ -602,11 +614,27 @@ function handleTradeOffer(req, res) {
         const isFrom = String(t.from).toLowerCase() === meKey;
         const isTo = String(t.to).toLowerCase() === meKey;
         if (!isFrom && !isTo) return sendJson(res, 400, { error: 'No formas parte de este trade' });
-        const d = parseInt(delta, 10);
-        if (!Number.isInteger(d) || (d !== 1 && d !== -1)) return sendJson(res, 400, { error: 'Acción inválida' });
         const users = loadUsers();
         const u = users[meKey];
         if (!u) return sendJson(res, 401, { error: 'Sesión inválida' });
+
+        if (coins !== undefined) {
+            const c = parseInt(coins, 10);
+            if (!Number.isInteger(c) || c < 0) return sendJson(res, 400, { error: 'Cantidad de monedas inválida' });
+            const myCoins = (u.data && typeof u.data.coins === 'number') ? u.data.coins : 0;
+            if (c > myCoins) return sendJson(res, 400, { error: 'No tienes tantas monedas' });
+            if (isFrom) t.coinsFrom = c; else t.coinsTo = c;
+            t.acceptFrom = false;
+            t.acceptTo = false;
+            u.lastSeen = Date.now();
+            saveUsers(users);
+            pushToUser(t.from, { type: 'trade', trade: t });
+            pushToUser(t.to, { type: 'trade', trade: t });
+            return sendJson(res, 200, { ok: true, trade: t });
+        }
+
+        const d = parseInt(delta, 10);
+        if (!Number.isInteger(d) || (d !== 1 && d !== -1)) return sendJson(res, 400, { error: 'Acción inválida' });
         const offer = isFrom ? t.offerFrom : t.offerTo;
         const owned = (u.data && u.data.owned) || {};
         const cur = offer[item] || 0;

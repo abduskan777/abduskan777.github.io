@@ -293,6 +293,26 @@
             font-weight: bold; font-size: 0.8rem; display: flex; align-items: center; justify-content: center;
         }
         .tw-empty-txt { color: #334155; font-size: 0.6rem; }
+        .tw-coins {
+            background: #0f1720; border: 1px solid #223040; border-radius: 10px; padding: 8px;
+            display: flex; flex-direction: column; gap: 6px;
+        }
+        .tw-coins-offered { font-size: 0.78rem; font-weight: bold; color: #fbbf24; }
+        .tw-coins-row { display: flex; gap: 6px; align-items: center; }
+        .tw-coins-row input {
+            flex: 1; min-width: 0; padding: 6px 8px; border-radius: 6px; border: 1px solid #223040;
+            background: #0b1118; color: #fbbf24; font-size: 0.82rem; outline: none;
+        }
+        .tw-coins-row input:focus { border-color: #fbbf2466; }
+        .tw-coins-btn {
+            padding: 6px 10px; border-radius: 6px; border: 1px solid #fbbf2466; background: #fbbf2422;
+            color: #fbbf24; font-size: 0.75rem; font-weight: bold; cursor: pointer; white-space: nowrap;
+        }
+        .tw-coins-btn:hover { background: #fbbf2444; }
+        .tw-coins-btn.red { border-color: #f8717166; background: #f8717122; color: #fca5a5; }
+        .tw-coins-btn.red:hover { background: #f8717144; }
+        .tw-coins-owned { font-size: 0.68rem; color: #9fb3c8; }
+        .tw-coins-other { font-size: 0.78rem; font-weight: bold; color: #fbbf24; }
         .tw-owned {
             background: #0f1720; border: 1px solid #223040; border-radius: 10px; padding: 8px;
             max-height: 170px; overflow-y: auto;
@@ -1784,6 +1804,14 @@
         return String(t.from).toLowerCase() === String(authUsername || '').toLowerCase() ? t.offerTo : t.offerFrom;
     }
 
+    function tradeMyCoins(t) {
+        return String(t.from).toLowerCase() === String(authUsername || '').toLowerCase() ? (t.coinsFrom || 0) : (t.coinsTo || 0);
+    }
+
+    function tradeOtherCoins(t) {
+        return String(t.from).toLowerCase() === String(authUsername || '').toLowerCase() ? (t.coinsTo || 0) : (t.coinsFrom || 0);
+    }
+
     function tradeMyAccept(t) {
         return String(t.from).toLowerCase() === String(authUsername || '').toLowerCase() ? t.acceptFrom : t.acceptTo;
     }
@@ -1914,6 +1942,50 @@
         title.textContent = isMy ? 'TU OFERTA' : ('OFERTA DE ' + tradeOtherName(t).toUpperCase());
         side.appendChild(title);
         side.appendChild(slotHtmlFor(isMy ? tradeMyOffer(t) : tradeOtherOffer(t), isMy));
+        if (isMy) {
+            const coinsBox = document.createElement('div');
+            coinsBox.className = 'tw-coins';
+            const off = document.createElement('div');
+            off.className = 'tw-coins-offered';
+            off.textContent = '🪙 Ofreces: ' + tradeMyCoins(t) + ' monedas';
+            coinsBox.appendChild(off);
+            const row = document.createElement('div');
+            row.className = 'tw-coins-row';
+            const myOwned = Math.max(0, Math.floor(state.coins || 0));
+            const inp = document.createElement('input');
+            inp.type = 'number';
+            inp.min = '0';
+            inp.max = String(myOwned);
+            inp.value = String(Math.min(tradeMyCoins(t), myOwned));
+            const add = document.createElement('button');
+            add.className = 'tw-coins-btn';
+            add.textContent = 'Añadir';
+            add.addEventListener('click', () => {
+                const v = Math.max(0, Math.floor(parseInt(inp.value, 10) || 0));
+                updateOfferCoins(Math.min(v, myOwned));
+            });
+            const clear = document.createElement('button');
+            clear.className = 'tw-coins-btn red';
+            clear.textContent = 'Quitar';
+            clear.addEventListener('click', () => updateOfferCoins(0));
+            row.appendChild(inp);
+            row.appendChild(add);
+            row.appendChild(clear);
+            coinsBox.appendChild(row);
+            const ownedTxt = document.createElement('div');
+            ownedTxt.className = 'tw-coins-owned';
+            ownedTxt.textContent = 'Tienes: ' + myOwned.toLocaleString('es-ES') + ' monedas';
+            coinsBox.appendChild(ownedTxt);
+            side.appendChild(coinsBox);
+        } else if (tradeOtherCoins(t) > 0) {
+            const coinsBox = document.createElement('div');
+            coinsBox.className = 'tw-coins';
+            const off = document.createElement('div');
+            off.className = 'tw-coins-other';
+            off.textContent = '🪙 Ofrece: ' + tradeOtherCoins(t) + ' monedas';
+            coinsBox.appendChild(off);
+            side.appendChild(coinsBox);
+        }
         const owned = document.createElement('div');
         owned.className = 'tw-owned';
         if (isMy) {
@@ -1984,10 +2056,26 @@
         }
     }
 
+    async function updateOfferCoins(amount) {
+        const t = currentTrade;
+        if (!t || t.status !== 'active') return;
+        try {
+            const res = await fetch(API_BASE + '/api/trade/offer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: authToken, tradeId: t.id, coins: amount }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.ok) return showTradeToast('⚠️ ' + (data.error || 'Error'));
+        } catch (e) {
+            showTradeToast('⚠️ No se pudo conectar con el servidor');
+        }
+    }
+
     async function toggleAccept() {
         const t = currentTrade;
         if (!t || t.status !== 'active') return;
-        if (!Object.keys(tradeMyOffer(t)).length) return showTradeToast('⚠️ Añade al menos un personaje');
+        if (!Object.keys(tradeMyOffer(t)).length && !tradeMyCoins(t)) return showTradeToast('⚠️ Añade al menos un personaje o monedas');
         try {
             const res = await fetch(API_BASE + '/api/trade/accept', {
                 method: 'POST',
