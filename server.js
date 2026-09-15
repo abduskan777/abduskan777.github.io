@@ -69,6 +69,20 @@ async function persistToDb(users) {
     );
 }
 
+function saveChat(chat) {
+    chatMessages = chat;
+    if (dbPool) {
+        const snapshot = JSON.stringify(chat);
+        dbWriteChain = dbWriteChain
+            .catch(() => {})
+            .then(() => dbPool.query(
+                'INSERT INTO app_kv (k, v) VALUES (\'chat\', $1) ON CONFLICT (k) DO UPDATE SET v = EXCLUDED.v',
+                [snapshot]
+            ));
+        dbWriteChain.catch(e => console.error('DB chat save error:', e.message));
+    }
+}
+
 async function initDatabase() {
     if (!process.env.DATABASE_URL) {
         console.log('Sin DATABASE_URL: los usuarios se guardan en users.json');
@@ -87,7 +101,11 @@ async function initDatabase() {
         usersCache = readUsersFileSync();
         await persistToDb(usersCache);
     }
-    console.log('PostgreSQL conectado: ' + (Object.keys(usersCache).length) + ' usuarios cargados');
+    const chatRes = await dbPool.query("SELECT v FROM app_kv WHERE k = 'chat'");
+    if (chatRes.rows[0]) {
+        try { chatMessages = JSON.parse(chatRes.rows[0].v); } catch (e) { chatMessages = []; }
+    }
+    console.log('PostgreSQL conectado: ' + (Object.keys(usersCache).length) + ' usuarios cargados, ' + chatMessages.length + ' mensajes de chat');
     return true;
 }
 
@@ -278,6 +296,17 @@ function cleanupOwned(owned) {
 let activeTrades = {};
 const sseClients = {};
 
+const CHAT_MAX = 100;
+let chatMessages = [];
+const chatSseClients = new Set();
+
+function pushChatToClients(obj) {
+    const msg = 'data: ' + JSON.stringify(obj) + '\n\n';
+    for (const conn of chatSseClients) {
+        try { conn.res.write(msg); } catch (e) { chatSseClients.delete(conn); }
+    }
+}
+
 function pushToUser(username, obj) {
     const key = String(username || '').toLowerCase();
     const conns = sseClients[key] || [];
@@ -383,6 +412,63 @@ function handleTradeStream(req, res) {
         sseClients[key] = (sseClients[key] || []).filter(c => c !== conn);
         if (sseClients[key].length === 0) delete sseClients[key];
     });
+}
+
+function handleChatStream(req, res) {
+    const url = new URL(req.url, 'http://localhost');
+    const token = url.searchParams.get('token') || '';
+    const user = findUserByToken(token);
+    if (!user) {
+        res.writeHead(401, { 'Content-Type': 'text/plain' });
+        return res.end('401');
+    }
+    res.writeHead(200, {
+        'Content-Type': 'text/event-stream; charset=utf-8',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'Access-Control-Allow-Origin': '*',
+    });
+    res.write('retry: 3000\n\n');
+    const conn = { res };
+    chatSseClients.add(conn);
+    res.write('data: ' + JSON.stringify({ type: 'history', messages: chatMessages }) + '\n\n');
+    const ping = setInterval(() => {
+        try { res.write(': ping\n\n'); } catch (e) {}
+    }, 25000);
+    res.on('close', () => {
+        clearInterval(ping);
+        chatSseClients.delete(conn);
+    });
+}
+
+let chatLastSent = {};
+
+function handleChatSend(req, res) {
+    readBody(req).then(body => {
+        let parsed;
+        try { parsed = JSON.parse(body || '{}'); } catch (e) { parsed = {}; }
+        const user = findUserByToken(parsed.token);
+        if (!user) return sendJson(res, 401, { error: 'Sesión inválida' });
+        if (!isOnline(user)) return sendJson(res, 403, { error: 'Solo los jugadores conectados al juego pueden escribir' });
+        const text = String(parsed.text || '').trim();
+        if (!text) return sendJson(res, 400, { error: 'Mensaje vacío' });
+        if (text.length > 300) return sendJson(res, 400, { error: 'El mensaje es demasiado largo' });
+        const users = loadUsers();
+        const me = users[user.username.toLowerCase()];
+        if (!me) return sendJson(res, 401, { error: 'Sesión inválida' });
+        const key = user.username.toLowerCase();
+        const now = Date.now();
+        if (chatLastSent[key] && now - chatLastSent[key] < 1500) {
+            return sendJson(res, 429, { error: 'Espera un momento antes de seguir escribiendo' });
+        }
+        chatLastSent[key] = now;
+        chatMessages.push({ user: me.username, text: text, at: now });
+        if (chatMessages.length > CHAT_MAX) chatMessages = chatMessages.slice(-CHAT_MAX);
+        const message = chatMessages[chatMessages.length - 1];
+        pushChatToClients({ type: 'msg', message: message });
+        saveChat(chatMessages);
+        sendJson(res, 200, { ok: true });
+    }).catch(() => sendJson(res, 500, { error: 'Error interno' }));
 }
 
 function handleTradeOnline(req, res) {
@@ -630,6 +716,12 @@ const server = http.createServer((req, res) => {
     }
     if (urlPath === '/api/trade/stream' && req.method === 'GET') {
         return handleTradeStream(req, res);
+    }
+    if (urlPath === '/api/chat/stream' && req.method === 'GET') {
+        return handleChatStream(req, res);
+    }
+    if (urlPath === '/api/chat/send' && req.method === 'POST') {
+        return handleChatSend(req, res);
     }
     if (urlPath === '/api/trade/online' && req.method === 'POST') {
         return handleTradeOnline(req, res);

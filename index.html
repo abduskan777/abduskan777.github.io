@@ -101,6 +101,81 @@
             border: 1px solid #fecaca;
             box-shadow: 0 0 8px rgba(239,68,68,0.6);
         }
+        #chat-btn {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, #10b98122, #05966922);
+            border: 1px solid #34d399;
+            color: #6ee7b7;
+            border-radius: 10px;
+            padding: 8px 14px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all .25s ease;
+            box-shadow: 0 0 12px rgba(52,211,153,0.25), inset 0 0 8px rgba(52,211,153,0.1);
+            text-shadow: 0 0 6px rgba(52,211,153,0.7);
+        }
+        #chat-btn:hover {
+            background: linear-gradient(135deg, #10b98144, #05966944);
+            box-shadow: 0 0 20px rgba(52,211,153,0.5), inset 0 0 10px rgba(52,211,153,0.2);
+            transform: translateY(-1px);
+        }
+        #chat-btn:active { transform: translateY(0); }
+        #chat-badge {
+            position: absolute;
+            top: -7px;
+            right: -7px;
+            background: linear-gradient(135deg, #ef4444, #b91c1c);
+            color: #fff;
+            font-size: 0.65rem;
+            font-weight: 800;
+            min-width: 17px;
+            height: 17px;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+            border: 1px solid #fecaca;
+            box-shadow: 0 0 8px rgba(239,68,68,0.6);
+        }
+        .chat-messages {
+            height: 320px;
+            overflow-y: auto;
+            background: #0b1118;
+            border: 1px solid #223040;
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .chat-line {
+            font-size: 0.85rem;
+            color: #cbd5e1;
+            line-height: 1.35;
+            word-break: break-word;
+        }
+        .chat-user { font-weight: bold; color: #6ee7b7; }
+        .chat-own .chat-user { color: #38bdf8; }
+        .chat-time { color: #475569; font-size: 0.7rem; margin-left: 6px; }
+        .chat-sys { color: #fbbf24; font-style: italic; font-size: 0.8rem; }
+        .chat-input-row { display: flex; gap: 8px; }
+        .chat-input-row input {
+            flex: 1;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid #223040;
+            background: #0b1118;
+            color: #e8e8e8;
+            font-size: 0.9rem;
+            outline: none;
+        }
+        .chat-input-row input:focus { border-color: #34d39966; }
 
         .auth-overlay {
             position: fixed;
@@ -843,6 +918,7 @@
             <button id="auth-btn">👤 Iniciar sesión</button>
             <button id="logout-btn" style="display:none;">Cerrar sesión</button>
             <button id="trade-btn" style="display:none;"><span style="font-size:1.1rem;">🤝</span><span>Comercio</span><span id="trade-badge" style="display:none;"></span></button>
+            <button id="chat-btn" style="display:none;"><span style="font-size:1.1rem;">💬</span><span>Chat</span><span id="chat-badge" style="display:none;"></span></button>
         </div>
     </div>
 
@@ -958,6 +1034,25 @@
                     </div>
                 </div>
                 <div id="trade-error" style="display:none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat en vivo -->
+    <div id="chat-overlay" class="trade-overlay">
+        <div id="modal">
+            <div id="modal-header" style="border-color:#34d399;">
+                <h3 style="color:#34d399;">💬 Chat en vivo</h3>
+                <button id="chat-close">✕</button>
+            </div>
+            <div id="chat-body">
+                <div id="chat-messages" class="chat-messages"><div class="chat-line chat-sys">Conectando al chat...</div></div>
+                <div class="chat-input-row">
+                    <input type="text" id="chat-input" maxlength="300" placeholder="Escribe un mensaje..." autocomplete="off">
+                    <button id="chat-send" class="trade-btn green" style="white-space:nowrap;">Enviar</button>
+                </div>
+                <div id="chat-error" class="trade-msg" style="display:none;margin-top:6px;color:#f87171;"></div>
+                <div class="chat-line chat-sys" style="margin-top:6px;">Solo pueden escribir los jugadores registrados que estén conectados.</div>
             </div>
         </div>
     </div>
@@ -1139,20 +1234,26 @@
         const authBtn = document.getElementById('auth-btn');
         const logoutBtn = document.getElementById('logout-btn');
         const tradeBtn = document.getElementById('trade-btn');
+        const chatBtn = document.getElementById('chat-btn');
         if (username) {
             userEl.textContent = '👤 ' + username;
             userEl.style.display = 'inline';
             authBtn.style.display = 'none';
             logoutBtn.style.display = 'inline-block';
             tradeBtn.style.display = 'inline-block';
+            chatBtn.style.display = 'inline-block';
             initTradeStream();
+            initChatStream();
             refreshTradeMenu();
         } else {
             userEl.style.display = 'none';
             authBtn.style.display = 'inline-block';
             logoutBtn.style.display = 'none';
             tradeBtn.style.display = 'none';
+            chatBtn.style.display = 'none';
             stopTradeStream();
+            stopChatStream();
+            closeChat();
             closeTradeWindow();
             closeTrade();
         }
@@ -1241,6 +1342,10 @@
     // ---- Comercio (Trade) v2 (estilo Adopt Me) ----
     let tradeStream = null;
     let currentTrade = null;
+    let chatStream = null;
+    let chatOpen = false;
+    let chatHistory = [];
+    let chatUnread = 0;
 
     function itemById(id) {
         return ITEMS.find(i => i.id === id) || null;
@@ -1509,6 +1614,124 @@
     function stopTradeStream() {
         if (heartbeatTimer) { clearInterval(heartbeatTimer); heartbeatTimer = null; }
         if (tradeStream) { tradeStream.close(); tradeStream = null; }
+    }
+
+    // ---- Chat en vivo ----
+    function fmtChatTime(at) {
+        const d = new Date(at);
+        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function renderChat() {
+        const box = document.getElementById('chat-messages');
+        box.innerHTML = '';
+        if (chatHistory.length === 0) {
+            box.innerHTML = '<div class="chat-line chat-sys">No hay mensajes todavía. ¡Saluda!</div>';
+            return;
+        }
+        const myKey = String(authUsername || '').toLowerCase();
+        for (const m of chatHistory) {
+            const div = document.createElement('div');
+            div.className = 'chat-line' + (String(m.user).toLowerCase() === myKey ? ' chat-own' : '');
+            const u = document.createElement('span');
+            u.className = 'chat-user';
+            u.textContent = m.user + ':';
+            const t = document.createElement('span');
+            t.textContent = m.text;
+            const time = document.createElement('span');
+            time.className = 'chat-time';
+            time.textContent = fmtChatTime(m.at);
+            div.appendChild(u);
+            div.appendChild(t);
+            div.appendChild(time);
+            box.appendChild(div);
+        }
+        box.scrollTop = box.scrollHeight;
+    }
+
+    function handleChatEvent(msg) {
+        if (msg.type === 'history' && Array.isArray(msg.messages)) {
+            chatHistory = msg.messages.slice(-100);
+            if (chatOpen) renderChat();
+            return;
+        }
+        if (msg.type === 'msg' && msg.message) {
+            chatHistory.push(msg.message);
+            if (chatHistory.length > 100) chatHistory = chatHistory.slice(-100);
+            if (chatOpen) {
+                renderChat();
+            } else {
+                chatUnread++;
+                const badge = document.getElementById('chat-badge');
+                badge.textContent = chatUnread > 99 ? '99+' : chatUnread;
+                badge.style.display = 'flex';
+            }
+        }
+    }
+
+    function initChatStream() {
+        if (chatStream) stopChatStream();
+        if (!authToken) return;
+        try {
+            chatStream = new EventSource(API_BASE + '/api/chat/stream?token=' + encodeURIComponent(authToken));
+            chatStream.onmessage = (e) => {
+                let msg = {};
+                try { msg = JSON.parse(e.data); } catch (_) { return; }
+                handleChatEvent(msg);
+            };
+            chatStream.onerror = () => {
+                const box = document.getElementById('chat-messages');
+                if (box && chatOpen && chatHistory.length === 0) {
+                    box.innerHTML = '<div class="chat-line chat-sys">Reconectando al chat...</div>';
+                }
+            };
+        } catch (e) {}
+    }
+
+    function stopChatStream() {
+        if (chatStream) { chatStream.close(); chatStream = null; }
+    }
+
+    function openChat() {
+        chatOpen = true;
+        document.getElementById('chat-overlay').classList.add('open');
+        chatUnread = 0;
+        const badge = document.getElementById('chat-badge');
+        badge.style.display = 'none';
+        badge.textContent = '0';
+        renderChat();
+        setTimeout(() => document.getElementById('chat-input').focus(), 50);
+    }
+
+    function closeChat() {
+        chatOpen = false;
+        document.getElementById('chat-overlay').classList.remove('open');
+    }
+
+    function chatErr(msg) {
+        const el = document.getElementById('chat-error');
+        el.textContent = msg || '';
+        el.style.display = msg ? 'block' : 'none';
+        if (msg) setTimeout(() => { el.style.display = 'none'; }, 4000);
+    }
+
+    async function sendChat() {
+        const input = document.getElementById('chat-input');
+        const text = input.value.trim();
+        if (!text || !authToken) return;
+        try {
+            const res = await fetch(API_BASE + '/api/chat/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: authToken, text: text }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.ok) return chatErr(data.error || 'Error');
+            input.value = '';
+            chatErr('');
+        } catch (e) {
+            chatErr('No se pudo conectar con el servidor');
+        }
     }
 
     function handleTradeEvent(msg) {
@@ -2563,6 +2786,15 @@
     document.getElementById('trade-btn').addEventListener('click', openTrade);
     document.getElementById('trade-close').addEventListener('click', closeTrade);
     document.getElementById('trade-refresh').addEventListener('click', refreshTradeMenu);
+    document.getElementById('chat-btn').addEventListener('click', openChat);
+    document.getElementById('chat-close').addEventListener('click', closeChat);
+    document.getElementById('chat-send').addEventListener('click', sendChat);
+    document.getElementById('chat-input').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') sendChat();
+    });
+    document.getElementById('chat-overlay').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeChat();
+    });
     document.getElementById('trade-overlay').addEventListener('click', (e) => {
         if (e.target === e.currentTarget) closeTrade();
     });
@@ -2570,7 +2802,7 @@
         if (e.target === e.currentTarget) cancelActiveTrade();
     });
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') { closeInventory(); closeShop(); closeTester(); closeAuth(); closeTrade(); cancelActiveTrade(); }
+        if (e.key === 'Escape') { closeInventory(); closeShop(); closeTester(); closeAuth(); closeTrade(); closeChat(); cancelActiveTrade(); }
     });
 
     document.getElementById('reset-btn').addEventListener('click', () => {
