@@ -6,3 +6,12 @@ services:
     buildCommand: npm install
     startCommand: npm start
     autoDeploy: true
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: valle-rng-db
+          property: connectionString
+
+databases:
+  - name: valle-rng-db
+    plan: free
