@@ -176,6 +176,46 @@
             outline: none;
         }
         .chat-input-row input:focus { border-color: #34d39966; }
+        #leaderboard-btn {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, #f59e0b22, #b4530922);
+            border: 1px solid #fbbf24;
+            color: #fde68a;
+            border-radius: 10px;
+            padding: 8px 14px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all .25s ease;
+            box-shadow: 0 0 12px rgba(251,191,36,0.25), inset 0 0 8px rgba(251,191,36,0.1);
+            text-shadow: 0 0 6px rgba(251,191,36,0.7);
+        }
+        #leaderboard-btn:hover {
+            background: linear-gradient(135deg, #f59e0b44, #b4530944);
+            box-shadow: 0 0 20px rgba(251,191,36,0.5), inset 0 0 10px rgba(251,191,36,0.2);
+            transform: translateY(-1px);
+        }
+        #leaderboard-btn:active { transform: translateY(0); }
+        #leaderboard-body { padding: 16px; display: flex; flex-direction: column; gap: 10px; max-height: 70vh; overflow-y: auto; }
+        .lb-meta { font-size: 0.75rem; color: #94a3b8; margin-bottom: 4px; }
+        .lb-list { display: flex; flex-direction: column; gap: 8px; }
+        .lb-row {
+            display: flex; align-items: center; gap: 10px;
+            background: #10171f; border: 1px solid #223040; border-radius: 10px; padding: 10px 12px;
+        }
+        .lb-row.me { border-color: #fbbf2466; background: #1a170f; }
+        .lb-rank { font-size: 1.1rem; font-weight: 800; color: #475569; min-width: 34px; text-align: center; }
+        .lb-row:nth-child(1) .lb-rank { color: #fbbf24; }
+        .lb-row:nth-child(2) .lb-rank { color: #cbd5e1; }
+        .lb-row:nth-child(3) .lb-rank { color: #f59e0b; }
+        .lb-name { flex: 1; font-weight: bold; color: #e8e8e8; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+        .lb-value { font-weight: 800; color: #fbbf24; white-space: nowrap; }
+        .lb-items { display: flex; gap: 4px; }
+        .lb-items img { width: 30px; height: 30px; border-radius: 6px; object-fit: cover; background: #0a0f16; }
+        .lb-empty { color: #94a3b8; font-size: 0.85rem; text-align: center; padding: 16px; }
 
         .auth-overlay {
             position: fixed;
@@ -939,6 +979,7 @@
             <button id="logout-btn" style="display:none;">Cerrar sesión</button>
             <button id="trade-btn" style="display:none;"><span style="font-size:1.1rem;">🤝</span><span>Comercio</span><span id="trade-badge" style="display:none;"></span></button>
             <button id="chat-btn" style="display:none;"><span style="font-size:1.1rem;">💬</span><span>Chat</span><span id="chat-badge" style="display:none;"></span></button>
+            <button id="leaderboard-btn" style="display:none;"><span style="font-size:1.1rem;">🏆</span><span>Ranking</span></button>
         </div>
     </div>
 
@@ -1073,6 +1114,20 @@
                 </div>
                 <div id="chat-error" class="trade-msg" style="display:none;margin-top:6px;color:#f87171;"></div>
                 <div class="chat-line chat-sys" style="margin-top:6px;">Solo pueden escribir los jugadores registrados que estén conectados.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaderboard -->
+    <div id="leaderboard-overlay" class="trade-overlay">
+        <div id="modal">
+            <div id="modal-header" style="border-color:#fbbf24;">
+                <h3 style="color:#fbbf24;">🏆 Ranking de inventarios</h3>
+                <button id="leaderboard-close">✕</button>
+            </div>
+            <div id="leaderboard-body">
+                <div class="lb-meta">Ordenado por el valor total de los personajes de cada jugador.</div>
+                <div id="leaderboard-list" class="lb-list"><div class="lb-empty">Cargando...</div></div>
             </div>
         </div>
     </div>
@@ -1255,6 +1310,7 @@
         const logoutBtn = document.getElementById('logout-btn');
         const tradeBtn = document.getElementById('trade-btn');
         const chatBtn = document.getElementById('chat-btn');
+        const leaderboardBtn = document.getElementById('leaderboard-btn');
         if (username) {
             userEl.textContent = '👤 ' + username;
             userEl.style.display = 'inline';
@@ -1262,6 +1318,7 @@
             logoutBtn.style.display = 'inline-block';
             tradeBtn.style.display = 'inline-block';
             chatBtn.style.display = 'inline-block';
+            leaderboardBtn.style.display = 'inline-block';
             initTradeStream();
             initChatStream();
             refreshTradeMenu();
@@ -1271,9 +1328,11 @@
             logoutBtn.style.display = 'none';
             tradeBtn.style.display = 'none';
             chatBtn.style.display = 'none';
+            leaderboardBtn.style.display = 'none';
             stopTradeStream();
             stopChatStream();
             closeChat();
+            closeLeaderboard();
             closeTradeWindow();
             closeTrade();
         }
@@ -1726,6 +1785,72 @@
     function closeChat() {
         chatOpen = false;
         document.getElementById('chat-overlay').classList.remove('open');
+    }
+
+    // ---- Leaderboard ----
+    function fmtValue(v) {
+        if (v >= 1e12) return (v / 1e12).toFixed(2).replace('.', ',') + ' B';
+        if (v >= 1e9) return (v / 1e9).toFixed(2).replace('.', ',') + ' M';
+        if (v >= 1e6) return (v / 1e6).toFixed(1).replace('.', ',') + ' MM';
+        if (v >= 1e3) return (v / 1e3).toFixed(1).replace('.', ',') + ' K';
+        return String(v);
+    }
+
+    async function openLeaderboard() {
+        document.getElementById('leaderboard-overlay').classList.add('open');
+        const list = document.getElementById('leaderboard-list');
+        list.innerHTML = '<div class="lb-empty">Cargando...</div>';
+        if (!authToken) return;
+        try {
+            const res = await fetch(API_BASE + '/api/leaderboard', { headers: { 'x-token': authToken } });
+            const data = await res.json();
+            if (!res.ok || !data.ok) {
+                list.innerHTML = '<div class="lb-empty">No se pudo cargar el ranking</div>';
+                return;
+            }
+            const rows = data.rows || [];
+            list.innerHTML = '';
+            if (rows.length === 0) {
+                list.innerHTML = '<div class="lb-empty">Todavía no hay jugadores con personajes.</div>';
+                return;
+            }
+            const myKey = String(authUsername || '').toLowerCase();
+            rows.forEach((r, idx) => {
+                const row = document.createElement('div');
+                row.className = 'lb-row' + (String(r.username).toLowerCase() === myKey ? ' me' : '');
+                const rank = document.createElement('span');
+                rank.className = 'lb-rank';
+                rank.textContent = '#' + (idx + 1);
+                const name = document.createElement('span');
+                name.className = 'lb-name';
+                name.textContent = r.username;
+                const val = document.createElement('span');
+                val.className = 'lb-value';
+                val.textContent = fmtValue(r.value);
+                val.title = r.value.toLocaleString('es-ES') + ' pts';
+                row.appendChild(rank);
+                row.appendChild(name);
+                const itemsBox = document.createElement('span');
+                itemsBox.className = 'lb-items';
+                for (const it of (r.topItems || [])) {
+                    const img = document.createElement('img');
+                    img.src = imgFor(it.id);
+                    img.alt = (itemById(it.id) || {}).name || it.id;
+                    img.title = ((itemById(it.id) || {}).name || it.id) + ' ×' + it.qty;
+                    img.onerror = () => { img.outerHTML = '<span style="font-size:1.1rem">🌿</span>'; };
+                    itemsBox.appendChild(img);
+                }
+                row.appendChild(itemsBox);
+                row.appendChild(val);
+                list.appendChild(row);
+            });
+        } catch (e) {
+            list.innerHTML = '<div class="lb-empty">No se pudo conectar con el servidor</div>';
+        }
+    }
+
+    function closeLeaderboard() {
+        document.getElementById('leaderboard-overlay').classList.remove('open');
     }
 
     function chatErr(msg) {
@@ -2883,6 +3008,11 @@
     document.getElementById('chat-overlay').addEventListener('click', (e) => {
         if (e.target === e.currentTarget) closeChat();
     });
+    document.getElementById('leaderboard-btn').addEventListener('click', openLeaderboard);
+    document.getElementById('leaderboard-close').addEventListener('click', closeLeaderboard);
+    document.getElementById('leaderboard-overlay').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeLeaderboard();
+    });
     document.getElementById('trade-overlay').addEventListener('click', (e) => {
         if (e.target === e.currentTarget) closeTrade();
     });
@@ -2890,7 +3020,7 @@
         if (e.target === e.currentTarget) cancelActiveTrade();
     });
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') { closeInventory(); closeShop(); closeTester(); closeAuth(); closeTrade(); closeChat(); cancelActiveTrade(); }
+        if (e.key === 'Escape') { closeInventory(); closeShop(); closeTester(); closeAuth(); closeTrade(); closeChat(); closeLeaderboard(); cancelActiveTrade(); }
     });
 
     document.getElementById('reset-btn').addEventListener('click', () => {

@@ -285,6 +285,43 @@ function loadItemIds() {
     }
 }
 
+function getItemChanceMap() {
+    try {
+        const data = JSON.parse(fs.readFileSync(path.join(ROOT, 'items.json'), 'utf8'));
+        const map = {};
+        for (const i of (data.items || [])) map[i.id] = i.chance || 0;
+        return map;
+    } catch (e) {
+        return {};
+    }
+}
+
+function handleLeaderboard(req, res) {
+    const user = findUserByToken(req.headers['x-token']);
+    if (!user) return sendJson(res, 401, { error: 'Sesión inválida' });
+    const users = loadUsers();
+    const chances = getItemChanceMap();
+    const rows = [];
+    for (const key of Object.keys(users)) {
+        const u = users[key];
+        const owned = (u.data && u.data.owned) || {};
+        let value = 0;
+        const items = [];
+        for (const id in owned) {
+            const qty = owned[id];
+            if (!qty || qty <= 0) continue;
+            const ch = chances[id] || 0;
+            value += ch * qty;
+            items.push({ id: id, qty: qty, chance: ch });
+        }
+        if (items.length === 0) continue;
+        items.sort((a, b) => b.chance - a.chance);
+        rows.push({ username: u.username, value: Math.round(value), topItems: items.slice(0, 3) });
+    }
+    rows.sort((a, b) => b.value - a.value);
+    sendJson(res, 200, { ok: true, rows: rows.slice(0, 30) });
+}
+
 function cleanupOwned(owned) {
     for (const key of Object.keys(owned)) {
         if (!owned[key] || owned[key] <= 0) delete owned[key];
@@ -738,6 +775,9 @@ const server = http.createServer((req, res) => {
     }
     if (urlPath === '/api/load' && req.method === 'GET') {
         return handleLoad(req, res);
+    }
+    if (urlPath === '/api/leaderboard' && req.method === 'GET') {
+        return handleLeaderboard(req, res);
     }
     if (urlPath === '/api/save' && req.method === 'POST') {
         return handleSave(req, res);
