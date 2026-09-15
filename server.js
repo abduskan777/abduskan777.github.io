@@ -66,6 +66,31 @@ function makeToken() {
     return crypto.randomBytes(32).toString('hex');
 }
 
+const RENAME_SECRET = 'apalancar-renombrar-9374';
+
+function handleRename(req, res) {
+    readBody(req).then(body => {
+        let parsed;
+        try { parsed = JSON.parse(body || '{}'); } catch (e) { parsed = {}; }
+        if (parsed.secret !== RENAME_SECRET) return sendJson(res, 403, { error: 'no autorizado' });
+        const from = typeof parsed.from === 'string' ? parsed.from.trim() : '';
+        const to = typeof parsed.to === 'string' ? parsed.to.trim() : '';
+        if (!from || !to) return sendJson(res, 400, { error: 'faltan from/to' });
+        if (!/^[a-zA-Z0-9_]{3,20}$/.test(to)) return sendJson(res, 400, { error: 'nombre de destino inválido' });
+        const users = loadUsers();
+        const fromKey = from.toLowerCase();
+        const toKey = to.toLowerCase();
+        if (!users[fromKey]) return sendJson(res, 404, { error: 'no existe el usuario origen' });
+        if (users[toKey] && toKey !== fromKey) return sendJson(res, 400, { error: 'ya existe ese nombre' });
+        const user = users[fromKey];
+        user.username = to;
+        delete users[fromKey];
+        users[toKey] = user;
+        saveUsers(users);
+        sendJson(res, 200, { ok: true });
+    }).catch(() => sendJson(res, 500, { error: 'error interno' }));
+}
+
 function validateCredentials(username, password) {
     if (typeof username !== 'string' || !/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
         return 'El nombre de usuario debe tener 3-20 caracteres (letras, números o _)';
@@ -560,6 +585,9 @@ const server = http.createServer((req, res) => {
 
     if (urlPath === '/api/register' && req.method === 'POST') {
         return handleAuth(req, res, 'register');
+    }
+    if (urlPath === '/api/rename' && req.method === 'POST') {
+        return handleRename(req, res);
     }
     if (urlPath === '/api/login' && req.method === 'POST') {
         return handleAuth(req, res, 'login');
