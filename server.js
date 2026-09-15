@@ -27,7 +27,10 @@ const MIME = {
     '.wav': 'audio/wav',
 };
 
-function loadUsers() {
+let usersCache = null;
+let dbPool = null;
+
+function readUsersFileSync() {
     try {
         return JSON.parse(fs.readFileSync(USERS_FILE, 'utf8'));
     } catch (e) {
@@ -35,8 +38,49 @@ function loadUsers() {
     }
 }
 
+function loadUsers() {
+    if (usersCache) return usersCache;
+    usersCache = readUsersFileSync();
+    return usersCache;
+}
+
 function saveUsers(users) {
-    fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+    usersCache = users;
+    if (dbPool) {
+        persistToDb(users).catch(e => console.error('DB save error:', e.message));
+    } else {
+        try { fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2)); } catch (e) {}
+    }
+}
+
+async function persistToDb(users) {
+    if (!dbPool) return;
+    await dbPool.query(
+        'INSERT INTO app_kv (k, v) VALUES (\'users\', $1) ON CONFLICT (k) DO UPDATE SET v = EXCLUDED.v',
+        [JSON.stringify(users)]
+    );
+}
+
+async function initDatabase() {
+    if (!process.env.DATABASE_URL) {
+        console.log('Sin DATABASE_URL: los usuarios se guardan en users.json');
+        return false;
+    }
+    const { Pool } = require('pg');
+    dbPool = new Pool({
+        connectionString: process.env.DATABASE_URL,
+        ssl: { rejectUnauthorized: false },
+    });
+    await dbPool.query('CREATE TABLE IF NOT EXISTS app_kv (k text PRIMARY KEY, v text)');
+    const res = await dbPool.query("SELECT v FROM app_kv WHERE k = 'users'");
+    if (res.rows[0]) {
+        try { usersCache = JSON.parse(res.rows[0].v); } catch (e) { usersCache = {}; }
+    } else {
+        usersCache = readUsersFileSync();
+        await persistToDb(usersCache);
+    }
+    console.log('PostgreSQL conectado: ' + (Object.keys(usersCache).length) + ' usuarios cargados');
+    return true;
 }
 
 function readBody(req) {
@@ -620,7 +664,14 @@ const server = http.createServer((req, res) => {
     });
 });
 
-server.listen(PORT, () => {
-    console.log(`Servidor corriendo en http://localhost:${PORT}`);
-    console.log('Presiona Ctrl+C para detener');
+initDatabase().then(() => {
+    server.listen(PORT, () => {
+        console.log(`Servidor corriendo en http://localhost:${PORT}`);
+        console.log('Presiona Ctrl+C para detener');
+    });
+}).catch((e) => {
+    console.error('Error inicializando la base de datos:', e.message);
+    server.listen(PORT, () => {
+        console.log(`Servidor corriendo en http://localhost:${PORT} (sin base de datos)`);
+    });
 });
