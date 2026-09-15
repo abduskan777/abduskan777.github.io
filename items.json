@@ -17,6 +17,7 @@
         { "id": "rodrigorey", "name": "Rodrigo Rey", "chance": 6000, "image": "img/rodrigorey.png" },
         { "id": "manuelcocinillas", "name": "Manuel Cocinillas", "chance": 6500, "image": "img/manuelcocinillas.jpeg" },
         { "id": "diamondalba", "name": "Diamond Alba", "chance": 25000, "image": "img/diamondalba.jfif" },
+        { "id": "valleinclan", "name": "Valle Inclán", "chance": 50000, "image": "img/valle_inclan.jpg" },
         { "id": "idksterling", "name": "IDKsterling", "chance": 150000, "image": "img/idksterling.png", "epic": true, "epicBackground": "fondos/matrix.gif" },
         { "id": "verity", "name": "Verity", "chance": 400000, "image": "img/verity.png", "epic": true, "epicBackground": "fondos/matrix.gif" },
         { "id": "glitchedalba", "name": "Glitched Alba", "chance": 1200000, "image": "img/glitchedalba.jfif", "epic": true, "epicBackground": "fondos/matrix.gif" },
