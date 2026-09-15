@@ -49,7 +49,12 @@ function readBody(req) {
 }
 
 function sendJson(res, code, obj) {
-    res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.writeHead(code, {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type, x-token',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    });
     res.end(JSON.stringify(obj));
 }
 
@@ -307,6 +312,7 @@ function handleTradeStream(req, res) {
         'Content-Type': 'text/event-stream; charset=utf-8',
         'Cache-Control': 'no-cache',
         'Connection': 'keep-alive',
+        'Access-Control-Allow-Origin': '*',
     });
     res.write('retry: 3000\n\n');
     const key = user.username.toLowerCase();
@@ -530,6 +536,15 @@ setInterval(() => {
 const server = http.createServer((req, res) => {
     let urlPath = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
     if (urlPath === '/') urlPath = '/index.html';
+
+    if (req.method === 'OPTIONS') {
+        res.writeHead(204, {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'Content-Type, x-token',
+            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        });
+        return res.end();
+    }
 
     if (urlPath === '/api/music') {
         const musicDir = path.join(ROOT, 'music');

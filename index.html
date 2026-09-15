@@ -947,6 +947,8 @@
     const SAVE_KEY = 'valle-rng-save-v4';
     const AUTH_TOKEN_KEY = 'valle-rng-auth-token';
     const BASE_COOLDOWN_MS = 800;
+    const BACKEND_URL = 'https://valle-rng.onrender.com';
+    const API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? '' : BACKEND_URL;
     let authToken = null;
     let authUsername = null;
     let authMode = 'login';
@@ -1031,7 +1033,7 @@
     async function save() {
         if (authToken) {
             try {
-                await fetch('/api/save', {
+                await fetch(API_BASE + '/api/save', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'x-token': authToken },
                     body: JSON.stringify(buildSaveData()),
@@ -1047,7 +1049,7 @@
     async function load() {
         if (authToken) {
             try {
-                const res = await fetch('/api/load', { headers: { 'x-token': authToken } });
+                const res = await fetch(API_BASE + '/api/load', { headers: { 'x-token': authToken } });
                 const data = await res.json();
                 if (data.ok) {
                     applySaveData(data.data);
@@ -1122,7 +1124,7 @@
             errEl.style.display = 'block';
             return;
         }
-        const endpoint = authMode === 'login' ? '/api/login' : '/api/register';
+        const endpoint = API_BASE + (authMode === 'login' ? '/api/login' : '/api/register');
         try {
             const res = await fetch(endpoint, {
                 method: 'POST',
@@ -1153,7 +1155,7 @@
 
     async function logout() {
         try {
-            await fetch('/api/logout', {
+            await fetch(API_BASE + '/api/logout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ token: authToken }),
@@ -1221,7 +1223,7 @@
     }
 
     async function fetchOnline() {
-        const res = await fetch('/api/trade/online', {
+        const res = await fetch(API_BASE + '/api/trade/online', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ token: authToken }),
@@ -1235,7 +1237,7 @@
         if (!authToken) return;
         tradeErr(null);
         try {
-            const res = await fetch('/api/trade/requests', {
+            const res = await fetch(API_BASE + '/api/trade/requests', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ token: authToken }),
@@ -1352,7 +1354,7 @@
         if (!authToken) return;
         if (btn) btn.disabled = true;
         try {
-            const res = await fetch('/api/trade/request', {
+            const res = await fetch(API_BASE + '/api/trade/request', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ token: authToken, to }),
@@ -1371,7 +1373,7 @@
 
     async function acceptTradeInvite(id) {
         try {
-            const res = await fetch('/api/trade/accept', {
+            const res = await fetch(API_BASE + '/api/trade/accept', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ token: authToken, tradeId: id }),
@@ -1387,7 +1389,7 @@
 
     async function declineTradeRequest(id) {
         try {
-            const res = await fetch('/api/trade/decline', {
+            const res = await fetch(API_BASE + '/api/trade/decline', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ token: authToken, tradeId: id }),
@@ -1402,7 +1404,7 @@
 
     async function cancelTradeReq(id) {
         try {
-            const res = await fetch('/api/trade/cancel', {
+            const res = await fetch(API_BASE + '/api/trade/cancel', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ token: authToken, tradeId: id }),
@@ -1422,14 +1424,14 @@
         if (tradeStream) stopTradeStream();
         if (!authToken) return;
         heartbeatTimer = setInterval(() => {
-            fetch('/api/heartbeat', {
+            fetch(API_BASE + '/api/heartbeat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ token: authToken }),
             }).catch(() => {});
         }, 10000);
         try {
-            tradeStream = new EventSource('/api/trade/stream?token=' + encodeURIComponent(authToken));
+            tradeStream = new EventSource(API_BASE + '/api/trade/stream?token=' + encodeURIComponent(authToken));
             tradeStream.onmessage = (e) => {
                 let msg = {};
                 try { msg = JSON.parse(e.data); } catch (_) { return; }
@@ -1684,7 +1686,7 @@
         const t = currentTrade;
         if (!t || t.status !== 'active') return;
         try {
-            const res = await fetch('/api/trade/offer', {
+            const res = await fetch(API_BASE + '/api/trade/offer', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ token: authToken, tradeId: t.id, item, delta }),
@@ -1701,7 +1703,7 @@
         if (!t || t.status !== 'active') return;
         if (!Object.keys(tradeMyOffer(t)).length) return showTradeToast('⚠️ Añade al menos un personaje');
         try {
-            const res = await fetch('/api/trade/accept', {
+            const res = await fetch(API_BASE + '/api/trade/accept', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ token: authToken, tradeId: t.id }),
@@ -1723,7 +1725,7 @@
         const t = currentTrade;
         if (!t) return;
         try {
-            await fetch('/api/trade/cancel', {
+            await fetch(API_BASE + '/api/trade/cancel', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ token: authToken, tradeId: t.id }),
@@ -2518,7 +2520,7 @@
 
     async function initMusic() {
         try {
-            const res = await fetch('/api/music');
+            const res = await fetch(API_BASE + '/api/music');
             const files = await res.json();
             if (files.length === 0) return;
             shuffle(files);
