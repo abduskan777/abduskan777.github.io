@@ -1064,18 +1064,40 @@
         updateTopStats();
     }
 
+    function writeLocalBackup(data) {
+        try {
+            localStorage.setItem(SAVE_KEY, JSON.stringify({ user: authUsername || null, data: data }));
+        } catch (e) {}
+    }
+
+    function readLocalBackup() {
+        try {
+            const raw = localStorage.getItem(SAVE_KEY);
+            if (!raw) return { user: null, data: null };
+            const parsed = JSON.parse(raw);
+            if (parsed && parsed.data && typeof parsed.data === 'object') return { user: parsed.user || null, data: parsed.data };
+            return { user: null, data: parsed };
+        } catch (e) {
+            return { user: null, data: null };
+        }
+    }
+
+    function hasProgress(d) {
+        if (!d) return false;
+        const ownedKeys = (d.owned && typeof d.owned === 'object') ? Object.keys(d.owned) : [];
+        return (d.coins > 0) || ownedKeys.length > 0;
+    }
+
     async function save() {
+        const data = buildSaveData();
+        writeLocalBackup(data);
         if (authToken) {
             try {
                 await fetch(API_BASE + '/api/save', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'x-token': authToken },
-                    body: JSON.stringify(buildSaveData()),
+                    body: JSON.stringify(data),
                 });
-            } catch (e) {}
-        } else {
-            try {
-                localStorage.setItem(SAVE_KEY, JSON.stringify(buildSaveData()));
             } catch (e) {}
         }
     }
@@ -1086,21 +1108,28 @@
                 const res = await fetch(API_BASE + '/api/load', { headers: { 'x-token': authToken } });
                 const data = await res.json();
                 if (data.ok) {
+                    const serverName = data.username || authUsername || null;
+                    const backup = readLocalBackup();
+                    if (!hasProgress(data.data) && hasProgress(backup.data) && backup.user === serverName) {
+                        applySaveData(backup.data);
+                        setAuthUI(serverName);
+                        writeLocalBackup(buildSaveData());
+                        await save();
+                        addEvent('Progreso restaurado desde este dispositivo', 'evt-sistema');
+                        return;
+                    }
                     applySaveData(data.data);
-                    setAuthUI(data.username);
-                } else {
-                    authToken = null;
-                    localStorage.removeItem(AUTH_TOKEN_KEY);
-                    setAuthUI(null);
+                    setAuthUI(serverName);
+                    writeLocalBackup(data.data);
+                    return;
                 }
-            } catch (e) {}
-        } else {
-            try {
-                const raw = localStorage.getItem(SAVE_KEY);
-                if (!raw) return;
-                applySaveData(JSON.parse(raw));
+                authToken = null;
+                localStorage.removeItem(AUTH_TOKEN_KEY);
+                setAuthUI(null);
             } catch (e) {}
         }
+        const backup = readLocalBackup();
+        if (backup.data) applySaveData(backup.data);
     }
 
     // ---- Auth (Login / Registro) ----
