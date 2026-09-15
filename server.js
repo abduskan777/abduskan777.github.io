@@ -29,6 +29,7 @@ const MIME = {
 
 let usersCache = null;
 let dbPool = null;
+let dbWriteChain = Promise.resolve();
 
 function readUsersFileSync() {
     try {
@@ -47,7 +48,14 @@ function loadUsers() {
 function saveUsers(users) {
     usersCache = users;
     if (dbPool) {
-        persistToDb(users).catch(e => console.error('DB save error:', e.message));
+        const snapshot = JSON.stringify(users);
+        dbWriteChain = dbWriteChain
+            .catch(() => {})
+            .then(() => dbPool.query(
+                'INSERT INTO app_kv (k, v) VALUES (\'users\', $1) ON CONFLICT (k) DO UPDATE SET v = EXCLUDED.v',
+                [snapshot]
+            ));
+        dbWriteChain.catch(e => console.error('DB save error:', e.message));
     } else {
         try { fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2)); } catch (e) {}
     }
