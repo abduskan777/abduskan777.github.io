@@ -3362,7 +3362,6 @@
     const WHEEL_DUR_S = 3.2;
     let caseCtx = null;
     function caseAudio() {
-        if (musicMuted) return null;
         try {
             if (!caseCtx) {
                 const AC = window.AudioContext || window.webkitAudioContext;
