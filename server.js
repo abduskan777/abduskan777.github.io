@@ -257,9 +257,29 @@ function handleHeartbeat(req, res) {
     }).catch(() => sendJson(res, 500, { error: 'Error interno' }));
 }
 
+const ADMIN_ACCOUNT = 'ricardoadmin67';
+const INFINITE_CAP = 999999999;
+
 function handleLoad(req, res) {
     const user = findUserByToken(req.headers['x-token']);
     if (!user) return sendJson(res, 401, { error: 'Sesión inválida' });
+    if (user.username.toLowerCase() === ADMIN_ACCOUNT) {
+        const owned = {};
+        for (const id of loadItemIds()) owned[id] = INFINITE_CAP;
+        return sendJson(res, 200, {
+            ok: true, username: user.username,
+            data: {
+                rolls: (user.data && user.data.rolls) || 0,
+                luck: 1,
+                lucky: Object.keys(owned).length,
+                owned: owned,
+                coins: INFINITE_CAP,
+                totalCoins: INFINITE_CAP,
+                shop: { rollSpeed: 5, luckBoost: 10, coinMulti: 5 },
+                autoSell: false,
+            },
+        });
+    }
     sendJson(res, 200, { ok: true, username: user.username, data: user.data || {} });
 }
 

@@ -2647,7 +2647,7 @@
 
     function updateTopStats() {
         document.getElementById('roll-count').textContent = state.rolls.toLocaleString();
-        document.getElementById('coins').textContent = Math.floor(state.coins).toLocaleString();
+        document.getElementById('coins').textContent = Math.floor(state.coins) >= INFINITE_CAP ? '∞' : Math.floor(state.coins).toLocaleString();
         const eff = effLuck();
         document.getElementById('luck').textContent = eff.toLocaleString('es', { maximumFractionDigits: 2 }) + 'x';
         document.getElementById('lucky-count').textContent = state.lucky.toLocaleString();
@@ -2659,6 +2659,9 @@
     function chanceStr(c) {
         return c < 1000 ? `1 en ${c}` : `1 en ${c.toLocaleString()}`;
     }
+
+    const INFINITE_CAP = 999999999;
+    function qtyText(q) { return q >= INFINITE_CAP ? '∞' : String(q); }
 
     // ---- Modals ----
     let invRefreshInterval = null;
@@ -2713,7 +2716,7 @@
         name.textContent = item.name;
         const cnt = document.createElement('div');
         cnt.className = 'inv-count';
-        cnt.textContent = 'x' + count;
+        cnt.textContent = 'x' + qtyText(count);
         card.appendChild(name);
         card.appendChild(cnt);
         const value = document.createElement('div');
@@ -2749,7 +2752,7 @@
                 card = buildInvCard(item);
                 body.appendChild(card);
             } else {
-                card.querySelector('.inv-count').textContent = 'x' + count;
+                card.querySelector('.inv-count').textContent = 'x' + qtyText(count);
                 card.querySelectorAll('.inv-sell').forEach(b => b.disabled = count <= 1);
             }
         });
@@ -2842,7 +2845,7 @@
         body.innerHTML = '';
         const coinEl = document.createElement('div');
         coinEl.style.cssText = 'text-align:center;font-size:1.1rem;font-weight:bold;color:#fbbf24;padding:8px;background:#1a2535;border-radius:8px;';
-        coinEl.textContent = '🪙 ' + Math.floor(state.coins).toLocaleString() + ' monedas';
+        coinEl.textContent = '🪙 ' + (Math.floor(state.coins) >= INFINITE_CAP ? '∞ monedas' : Math.floor(state.coins).toLocaleString() + ' monedas');
         body.appendChild(coinEl);
 
         SHOP_DEFS.forEach(def => {
