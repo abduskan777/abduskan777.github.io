@@ -3056,7 +3056,7 @@
                 icons.appendChild(ci);
             }
             card.appendChild(icons);
-            if (canAfford) card.addEventListener('click', () => openCase(c));
+            card.addEventListener('click', () => openCase(c, card));
             grid.appendChild(card);
         }
         body.appendChild(grid);
@@ -3164,8 +3164,12 @@
         return pool[Math.floor(Math.random() * pool.length)];
     }
 
-    function openCase(c) {
-        if (state.coins < c.price) return;
+    function openCase(c, el) {
+        if (state.coins < c.price) {
+            if (el) { el.style.animation = 'none'; void el.offsetWidth; el.style.animation = 'shake 0.4s linear'; }
+            addEvent('⚠️ Saldo insuficiente: te faltan 🪙 ' + (c.price - state.coins).toLocaleString('es-ES') + ' para abrir ' + c.name, 'evt-sistema');
+            return;
+        }
         state.coins -= c.price;
         const won = rollCase(c);
         state.owned[won.id] = (state.owned[won.id] || 0) + 1;
