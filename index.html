@@ -898,6 +898,22 @@
             box-shadow: 0 0 8px rgba(34,197,94,0.6);
             z-index: 2;
         }
+        .t-qty-input {
+            width: 56px;
+            padding: 4px 6px;
+            border: 1px solid #34d39944;
+            border-radius: 6px;
+            background: #0b1017;
+            color: #6ee7b7;
+            text-align: center;
+            font-size: 0.85rem;
+            font-weight: bold;
+            outline: none;
+            -moz-appearance: textfield;
+        }
+        .t-qty-input::-webkit-outer-spin-button,
+        .t-qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .t-qty-input:focus { border-color: #34d399; }
         .tester-cart {
             grid-column: 1 / -1;
             display: flex;
@@ -3382,6 +3398,8 @@
             document.querySelectorAll('.tester-btn-item').forEach(c => {
                 const b = c.querySelector('.t-qty');
                 if (b) b.style.display = 'none';
+                const inp = c.querySelector('.t-qty-input');
+                if (inp) inp.value = '';
             });
         });
         const spawnBtn = document.createElement('button');
@@ -3436,24 +3454,38 @@
             rarity.textContent = tierOf(item);
             card.appendChild(rarity);
 
+            const qInput = document.createElement('input');
+            qInput.type = 'number';
+            qInput.min = '0';
+            qInput.step = '1';
+            qInput.className = 't-qty-input';
+            qInput.placeholder = '0';
+            qInput.title = 'Escribe la cantidad a añadir';
+            card.appendChild(qInput);
+
             const badge = document.createElement('div');
             badge.className = 't-qty';
             badge.style.display = 'none';
             card.appendChild(badge);
 
-            card.addEventListener('click', () => {
-                testerCart[item.id] = (testerCart[item.id] || 0) + 1;
+            qInput.addEventListener('click', (e) => e.stopPropagation());
+            qInput.addEventListener('dblclick', (e) => e.stopPropagation());
+            qInput.addEventListener('contextmenu', (e) => e.stopPropagation());
+            qInput.addEventListener('input', () => {
+                const v = Math.max(0, Math.floor(Number(qInput.value) || 0));
+                if (v > 0) testerCart[item.id] = v;
+                else delete testerCart[item.id];
                 updateCardBadge(item, card);
                 renderTesterCart();
+                if (qInput.value && Number(qInput.value) !== v) qInput.value = v;
             });
-            card.addEventListener('contextmenu', (e) => {
-                e.preventDefault();
-                if ((testerCart[item.id] || 0) > 0) {
-                    testerCart[item.id]--;
-                    if (!testerCart[item.id]) delete testerCart[item.id];
-                    updateCardBadge(item, card);
-                    renderTesterCart();
-                }
+
+            card.addEventListener('click', () => {
+                const v = (testerCart[item.id] || 0) + 1;
+                testerCart[item.id] = v;
+                qInput.value = v;
+                updateCardBadge(item, card);
+                renderTesterCart();
             });
 
             body.appendChild(card);
