@@ -1479,7 +1479,7 @@
                 { id: 'rodrigorey', slot: 'blue' }, { id: 'manuelcocinillas', slot: 'blue' }, { id: 'diamondalba', slot: 'blue' },
                 { id: 'idksterling', slot: 'purple' }, { id: 'verity', slot: 'purple' }, { id: 'glitchedalba', slot: 'purple' },
                 { id: 'lorceira', slot: 'pink' }, { id: 'rodrigopsoe', slot: 'pink' },
-                { id: 'ramonsupersayan', slot: 'red' }, { id: 'dianadelaperla', slot: 'red' },
+                { id: 'ramonsupersayan', slot: 'red', allowMythic: true }, { id: 'dianadelaperla', slot: 'red' },
                 { id: 'masona', slot: 'gold' },
             ],
         },
@@ -3310,7 +3310,9 @@
     function caseEligibleItems(c) {
         return c.items.filter(it => {
             const def = itemById(it.id);
-            return !!def && tierIndex(def) < 5;
+            if (!def) return false;
+            if (tierIndex(def) < 5) return true;
+            return it.allowMythic === true;
         });
     }
 
