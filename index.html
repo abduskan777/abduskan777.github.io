@@ -2922,7 +2922,8 @@
             card.appendChild(head);
             const odds = document.createElement('div');
             odds.className = 'case-odds';
-            const present = CASE_SLOTS.filter(s => c.items.some(it => it.slot === s.slot));
+            const eligible = caseEligibleItems(c);
+            const present = CASE_SLOTS.filter(s => eligible.some(it => it.slot === s.slot));
             const totalRate = present.reduce((a, s) => a + s.rate, 0);
             for (const s of present) {
                 const bar = document.createElement('div');
@@ -2944,7 +2945,7 @@
             card.appendChild(legend);
             const icons = document.createElement('div');
             icons.className = 'case-icons';
-            for (const it of c.items) {
+            for (const it of eligible) {
                 const ci = document.createElement('div');
                 ci.className = 'ci';
                 const sDef = CASE_SLOTS.find(s => s.slot === it.slot);
@@ -2973,13 +2974,21 @@
     }
 
     // ---- Cajas ----
+    function caseEligibleItems(c) {
+        return c.items.filter(it => {
+            const def = itemById(it.id);
+            return !!def && tierIndex(def) < 5;
+        });
+    }
+
     function rollCase(c) {
-        const present = CASE_SLOTS.filter(s => c.items.some(it => it.slot === s.slot));
+        const eligible = caseEligibleItems(c);
+        const present = CASE_SLOTS.filter(s => eligible.some(it => it.slot === s.slot));
         const totalRate = present.reduce((a, s) => a + s.rate, 0);
         let r = Math.random() * totalRate;
         let slot = present[0].slot;
         for (const s of present) { r -= s.rate; if (r <= 0) { slot = s.slot; break; } }
-        const pool = c.items.filter(it => it.slot === slot);
+        const pool = eligible.filter(it => it.slot === slot);
         return pool[Math.floor(Math.random() * pool.length)];
     }
 
