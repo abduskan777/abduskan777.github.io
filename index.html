@@ -3359,6 +3359,82 @@
         return cells;
     }
 
+    const WHEEL_DUR_S = 3.2;
+    let caseCtx = null;
+    function caseAudio() {
+        if (musicMuted) return null;
+        try {
+            if (!caseCtx) {
+                const AC = window.AudioContext || window.webkitAudioContext;
+                if (!AC) return null;
+                caseCtx = new AC();
+            }
+            if (caseCtx.state === 'suspended') caseCtx.resume();
+            return caseCtx;
+        } catch (e) { return null; }
+    }
+    function cubicBezierT(x) {
+        const p1x = 0.12, p2x = 0.3;
+        let lo = 0, hi = 1, t = 0.5;
+        for (let i = 0; i < 24; i++) {
+            t = (lo + hi) / 2;
+            const bx = 3 * (1 - t) * (1 - t) * t * p1x + 3 * (1 - t) * t * t * p2x + t * t * t;
+            if (bx < x) lo = t; else hi = t;
+        }
+        return t;
+    }
+    function solveTickTime(progress) {
+        const p1y = 0.82, p2y = 1;
+        let lo = 0, hi = 1, T = 0.5;
+        for (let i = 0; i < 40; i++) {
+            T = (lo + hi) / 2;
+            const t = cubicBezierT(T);
+            const y = 3 * (1 - t) * (1 - t) * t * p1y + 3 * (1 - t) * t * t * p2y + t * t * t;
+            if (y < progress) lo = T; else hi = T;
+        }
+        return T;
+    }
+    function rouletteTick(ctx, time, pitch) {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = 'square';
+        o.frequency.value = pitch;
+        g.gain.setValueAtTime(0.2, time);
+        g.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
+        o.connect(g); g.connect(ctx.destination);
+        o.start(time); o.stop(time + 0.06);
+    }
+    function playCaseWheel(target) {
+        const ctx = caseAudio();
+        if (!ctx) return;
+        const disp = Math.abs(target);
+        const step = 92;
+        const n = Math.floor(disp / step);
+        for (let i = 1; i <= n; i++) {
+            const x = (i * step) / disp;
+            const T = solveTickTime(Math.min(0.9999, x));
+            const time = ctx.currentTime + T * WHEEL_DUR_S;
+            rouletteTick(ctx, time, (i % 2) ? 2100 : 1750);
+        }
+    }
+    function playCaseReveal() {
+        const ctx = caseAudio();
+        if (!ctx) return;
+        const base = ctx.currentTime + 0.05;
+        [523.25, 783.99, 1046.5].forEach((f, i) => {
+            const o = ctx.createOscillator();
+            const g = ctx.createGain();
+            o.type = 'triangle';
+            o.frequency.value = f;
+            const start = base + i * 0.09;
+            g.gain.setValueAtTime(0.0001, start);
+            g.gain.exponentialRampToValueAtTime(0.24, start + 0.02);
+            g.gain.exponentialRampToValueAtTime(0.001, start + 0.5);
+            o.connect(g); g.connect(ctx.destination);
+            o.start(start); o.stop(start + 0.55);
+        });
+    }
+
     function renderCaseReveal(c, won) {
         const body = document.getElementById('shop-body');
         body.innerHTML = '';
@@ -3447,11 +3523,13 @@
         const target = VW / 2 - 51 - CASE_WIN_INDEX * 92;
         requestAnimationFrame(() => {
             void track.offsetWidth;
-            track.style.transition = 'transform 3.2s cubic-bezier(.12,.82,.3,1)';
+            track.style.transition = 'transform ' + WHEEL_DUR_S + 's cubic-bezier(.12,.82,.3,1)';
             track.style.transform = 'translateX(' + target + 'px)';
+            playCaseWheel(target);
         });
         track.addEventListener('transitionend', (e) => {
             if (e.propertyName !== 'transform') return;
+            playCaseReveal();
             const wonCell = track.querySelector('.roulette-cell[data-won="1"]');
             if (wonCell) wonCell.classList.add('won');
             rTitle.textContent = '🏆 Resultado: ' + c.name;
