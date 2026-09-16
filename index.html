@@ -2946,11 +2946,6 @@
         coinEl.textContent = '🪙 ' + (Math.floor(state.coins) >= INFINITE_CAP ? '∞ monedas' : Math.floor(state.coins).toLocaleString() + ' monedas');
         body.appendChild(coinEl);
 
-        const dailyCard = document.createElement('div');
-        dailyCard.id = 'daily-card';
-        body.appendChild(dailyCard);
-        renderDailyCard();
-
         SHOP_DEFS.forEach(def => {
             const lvl = state.shop[def.id] || 0;
             const maxed = lvl >= def.maxLevel;
@@ -3069,6 +3064,12 @@
             grid.appendChild(card);
         }
         body.appendChild(grid);
+
+        const dailyCard = document.createElement('div');
+        dailyCard.id = 'daily-card';
+        dailyCard.style.marginTop = '10px';
+        body.appendChild(dailyCard);
+        renderDailyCard();
     }
 
     function openShop() {
