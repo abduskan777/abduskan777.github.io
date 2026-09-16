@@ -1030,6 +1030,7 @@
             <button id="trade-btn" style="display:none;"><span style="font-size:1.1rem;">🤝</span><span>Comercio</span><span id="trade-badge" style="display:none;"></span></button>
             <button id="chat-btn" style="display:none;"><span style="font-size:1.1rem;">💬</span><span>Chat</span><span id="chat-badge" style="display:none;"></span></button>
             <button id="leaderboard-btn" style="display:none;"><span style="font-size:1.1rem;">🏆</span><span>Ranking</span></button>
+            <button id="codes-btn" style="display:none;"><span style="font-size:1.1rem;">🎫</span><span>Códigos</span></button>
         </div>
     </div>
 
@@ -1186,6 +1187,25 @@
     <div id="trade-win-overlay" class="trade-overlay">
         <div id="twbox">
             <div id="trade-win"></div>
+        </div>
+    </div>
+
+    <!-- Códigos -->
+    <div id="codes-overlay" class="trade-overlay">
+        <div id="modal">
+            <div id="modal-header" style="border-color:#f472b6;">
+                <h3 style="color:#f472b6;">🎫 Canjear código</h3>
+                <button id="codes-close">✕</button>
+            </div>
+            <div id="codes-body">
+                <div class="trade-msg">Introduce un código para recibir tu recompensa.</div>
+                <div class="chat-input-row" style="margin-top:10px;">
+                    <input type="text" id="codes-input" placeholder="Ej: PRUEBA1000" maxlength="30" autocomplete="off" style="text-transform:uppercase;">
+                    <button id="codes-submit" class="trade-btn green" style="white-space:nowrap;">Canjear</button>
+                </div>
+                <div id="codes-error" class="trade-msg" style="display:none;margin-top:8px;color:#f87171;"></div>
+                <div id="codes-result" class="trade-msg" style="display:none;margin-top:8px;color:#34d399;"></div>
+            </div>
         </div>
     </div>
 
@@ -1405,6 +1425,7 @@
         const tradeBtn = document.getElementById('trade-btn');
         const chatBtn = document.getElementById('chat-btn');
         const leaderboardBtn = document.getElementById('leaderboard-btn');
+        const codesBtn = document.getElementById('codes-btn');
         if (username) {
             userEl.textContent = '👤 ' + username;
             userEl.style.display = 'inline';
@@ -1414,6 +1435,7 @@
             tradeBtn.style.display = 'inline-block';
             chatBtn.style.display = 'inline-block';
             leaderboardBtn.style.display = 'inline-block';
+            codesBtn.style.display = 'inline-block';
             initTradeStream();
             initChatStream();
             refreshTradeMenu();
@@ -1425,6 +1447,7 @@
             tradeBtn.style.display = 'none';
             chatBtn.style.display = 'none';
             leaderboardBtn.style.display = 'none';
+            codesBtn.style.display = 'none';
             stopTradeStream();
             stopChatStream();
             closeChat();
@@ -1533,6 +1556,70 @@
         });
         writeLocalBackup(buildSaveData());
         addEvent('🔄 Progreso de ' + authUsername + ' reiniciado', 'evt-sistema');
+    }
+
+    function openCodes() {
+        document.getElementById('codes-overlay').classList.add('open');
+        document.getElementById('codes-error').style.display = 'none';
+        document.getElementById('codes-result').style.display = 'none';
+        document.getElementById('codes-input').value = '';
+        setTimeout(() => document.getElementById('codes-input').focus(), 50);
+    }
+
+    function closeCodes() {
+        document.getElementById('codes-overlay').classList.remove('open');
+    }
+
+    async function redeemCode() {
+        const input = document.getElementById('codes-input');
+        const code = input.value.trim().toUpperCase();
+        const errEl = document.getElementById('codes-error');
+        const resEl = document.getElementById('codes-result');
+        errEl.style.display = 'none';
+        resEl.style.display = 'none';
+        if (!authToken) {
+            errEl.textContent = 'Inicia sesión para canjear códigos';
+            errEl.style.display = 'block';
+            return;
+        }
+        if (!code) {
+            errEl.textContent = 'Escribe un código';
+            errEl.style.display = 'block';
+            return;
+        }
+        input.disabled = true;
+        try {
+            const res = await fetch(API_BASE + '/api/code/redeem', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: authToken, code }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.ok) {
+                errEl.textContent = data.error || 'Error desconocido';
+                errEl.style.display = 'block';
+                return;
+            }
+            const parts = [];
+            if (data.reward && data.reward.coins > 0) parts.push(data.reward.coins.toLocaleString() + ' 🪙');
+            if (data.reward && data.reward.items) {
+                for (const id in data.reward.items) {
+                    const it = itemById(id);
+                    parts.push('×' + data.reward.items[id] + ' ' + (it ? it.name : id));
+                }
+            }
+            resEl.textContent = '✅ Código canjeado: recibiste ' + (parts.join(' y ') || 'la recompensa');
+            resEl.style.display = 'block';
+            input.value = '';
+            addEvent('🎫 Canjeaste el código ' + code, 'evt-sistema');
+            if (authToken) load();
+        } catch (e) {
+            errEl.textContent = 'No se pudo conectar con el servidor';
+            errEl.style.display = 'block';
+        } finally {
+            input.disabled = false;
+            input.focus();
+        }
     }
 
     function restoreAuth() {
@@ -3262,6 +3349,15 @@
     document.getElementById('auth-close').addEventListener('click', closeAuth);
     document.getElementById('logout-btn').addEventListener('click', logout);
     document.getElementById('reset-btn').addEventListener('click', resetAccount);
+    document.getElementById('codes-btn').addEventListener('click', openCodes);
+    document.getElementById('codes-close').addEventListener('click', closeCodes);
+    document.getElementById('codes-overlay').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeCodes();
+    });
+    document.getElementById('codes-submit').addEventListener('click', redeemCode);
+    document.getElementById('codes-input').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') redeemCode();
+    });
     document.getElementById('auth-overlay').addEventListener('click', (e) => {
         if (e.target === e.currentTarget) closeAuth();
     });
@@ -3298,7 +3394,7 @@
         if (e.target === e.currentTarget) cancelActiveTrade();
     });
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') { closeInventory(); closeShop(); closeTester(); closeAuth(); closeTrade(); closeChat(); closeLeaderboard(); cancelActiveTrade(); }
+        if (e.key === 'Escape') { closeInventory(); closeShop(); closeTester(); closeAuth(); closeTrade(); closeChat(); closeLeaderboard(); closeCodes(); cancelActiveTrade(); }
     });
 
     document.getElementById('reset-btn').addEventListener('click', () => {

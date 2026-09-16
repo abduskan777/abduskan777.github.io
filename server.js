@@ -228,6 +228,52 @@ function handleResetData(req, res) {
     }).catch(() => sendJson(res, 500, { error: 'Error interno' }));
 }
 
+function loadCodes() {
+    try {
+        const data = JSON.parse(fs.readFileSync(path.join(ROOT, 'codes.json'), 'utf8'));
+        return data && typeof data === 'object' && !Array.isArray(data) ? data : {};
+    } catch (e) {
+        return {};
+    }
+}
+
+function handleCodeRedeem(req, res) {
+    readBody(req).then(body => {
+        let parsed;
+        try { parsed = JSON.parse(body || '{}'); } catch (e) { parsed = {}; }
+        const user = findUserByToken(parsed.token);
+        if (!user) return sendJson(res, 401, { error: 'Sesión inválida' });
+        const code = String(parsed.code || '').trim().toUpperCase();
+        if (!code) return sendJson(res, 400, { error: 'Escribe un código' });
+        const codes = loadCodes();
+        const entry = codes[code];
+        if (!entry) return sendJson(res, 400, { error: 'Ese código no existe o ha caducado' });
+        const users = loadUsers();
+        const me = users[user.username.toLowerCase()];
+        if (!me) return sendJson(res, 401, { error: 'Sesión inválida' });
+        const redeemed = Array.isArray(me.redeemedCodes) ? me.redeemedCodes : [];
+        if (redeemed.includes(code)) return sendJson(res, 400, { error: 'Ya has canjeado este código' });
+        me.redeemedCodes = redeemed.concat(code);
+        if (!me.data || typeof me.data !== 'object') me.data = {};
+        const reward = { coins: 0, items: {} };
+        if (typeof entry.coins === 'number' && Number.isFinite(entry.coins) && entry.coins > 0) {
+            me.data.coins = (me.data.coins || 0) + Math.floor(entry.coins);
+            me.data.totalCoins = (me.data.totalCoins || 0) + Math.floor(entry.coins);
+            reward.coins = Math.floor(entry.coins);
+        }
+        if (entry.items && typeof entry.items === 'object') {
+            if (!me.data.owned || typeof me.data.owned !== 'object') me.data.owned = {};
+            for (const id in entry.items) {
+                const qty = Math.max(1, Math.floor(Number(entry.items[id]) || 0));
+                me.data.owned[id] = (me.data.owned[id] || 0) + qty;
+                reward.items[id] = (reward.items[id] || 0) + qty;
+            }
+        }
+        saveUsers(users);
+        sendJson(res, 200, { ok: true, reward: reward });
+    }).catch(() => sendJson(res, 500, { error: 'Error interno' }));
+}
+
 function findUserByToken(token) {
     if (!token) return null;
     const users = loadUsers();
@@ -816,6 +862,9 @@ if (urlPath === '/api/logout' && req.method === 'POST') {
             }
             if (urlPath === '/api/reset-data' && req.method === 'POST') {
                 return handleResetData(req, res);
+            }
+            if (urlPath === '/api/code/redeem' && req.method === 'POST') {
+                return handleCodeRedeem(req, res);
             }
     if (urlPath === '/api/heartbeat' && req.method === 'POST') {
         return handleHeartbeat(req, res);
