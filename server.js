@@ -369,8 +369,16 @@ let activeTrades = {};
 const sseClients = {};
 
 const CHAT_MAX = 100;
+const CHAT_TTL_MS = 24 * 60 * 60 * 1000;
 let chatMessages = [];
 const chatSseClients = new Set();
+
+function pruneChat() {
+    const cutoff = Date.now() - CHAT_TTL_MS;
+    chatMessages = chatMessages.filter(m => m && m.at && m.at >= cutoff);
+    if (chatMessages.length > CHAT_MAX) chatMessages = chatMessages.slice(-CHAT_MAX);
+    return chatMessages;
+}
 
 function pushChatToClients(obj) {
     const msg = 'data: ' + JSON.stringify(obj) + '\n\n';
@@ -513,7 +521,7 @@ function handleChatStream(req, res) {
     res.write('retry: 3000\n\n');
     const conn = { res };
     chatSseClients.add(conn);
-    res.write('data: ' + JSON.stringify({ type: 'history', messages: chatMessages }) + '\n\n');
+    res.write('data: ' + JSON.stringify({ type: 'history', messages: pruneChat() }) + '\n\n');
     const ping = setInterval(() => {
         try { res.write(': ping\n\n'); } catch (e) {}
     }, 25000);
@@ -544,6 +552,7 @@ function handleChatSend(req, res) {
             return sendJson(res, 429, { error: 'Espera un momento antes de seguir escribiendo' });
         }
         chatLastSent[key] = now;
+        pruneChat();
         chatMessages.push({ user: me.username, text: text, at: now });
         if (chatMessages.length > CHAT_MAX) chatMessages = chatMessages.slice(-CHAT_MAX);
         const message = chatMessages[chatMessages.length - 1];
@@ -881,3 +890,9 @@ initDatabase().then(() => {
         console.log(`Servidor corriendo en http://localhost:${PORT} (sin base de datos)`);
     });
 });
+
+setInterval(() => {
+    const before = chatMessages.length;
+    pruneChat();
+    if (chatMessages.length !== before) saveChat(chatMessages);
+}, 6 * 60 * 60 * 1000);
