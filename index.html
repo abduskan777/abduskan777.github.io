@@ -946,6 +946,55 @@
         }
         .shop-cost.cant { color: #f87171; }
 
+        .cases-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; }
+        .case-card {
+            background: #10171f; border: 1px solid #223040; border-radius: 12px; padding: 12px;
+            cursor: pointer; transition: all .2s; display: flex; flex-direction: column; gap: 8px;
+        }
+        .case-card:hover { border-color: #70a5ff; transform: translateY(-2px); box-shadow: 0 6px 18px rgba(70,130,255,.15); }
+        .case-card.cant { opacity: .55; cursor: not-allowed; }
+        .case-card.cant:hover { transform: none; border-color: #223040; box-shadow: none; }
+        .case-head { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+        .case-name { font-weight: bold; font-size: 0.9rem; color: #e8e8e8; }
+        .case-price { font-size: 0.85rem; font-weight: 800; color: #fbbf24; white-space: nowrap; }
+        .case-price.cant { color: #f87171; }
+        .case-odds { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: #0a0f16; }
+        .case-odds div { height: 100%; }
+        .case-legend { display: flex; flex-wrap: wrap; gap: 6px; font-size: 0.62rem; }
+        .case-legend span { padding: 2px 6px; border-radius: 6px; font-weight: bold; }
+        .case-icons { display: flex; flex-wrap: wrap; gap: 4px; }
+        .case-icons .ci {
+            width: 38px; height: 38px; border-radius: 8px; border: 2px solid; overflow: hidden;
+            background: #0a0f16; display: flex; align-items: center; justify-content: center;
+        }
+        .case-icons .ci img { width: 100%; height: 100%; object-fit: cover; }
+        .case-reveal { text-align: center; }
+        .case-reveal-title { font-size: 0.85rem; color: #9fb3c8; margin-bottom: 4px; }
+        .case-reveal-box {
+            width: 170px; height: 170px; margin: 14px auto; border-radius: 16px; border: 3px solid;
+            display: flex; align-items: center; justify-content: center; overflow: hidden;
+            background: #0a0f16; transition: box-shadow .3s;
+        }
+        .case-reveal-box img { width: 100%; height: 100%; object-fit: cover; border-radius: 12px; }
+        .case-reveal-name { font-size: 1.2rem; font-weight: 800; margin-top: 6px; }
+        .case-reveal-slot { font-size: 0.8rem; font-weight: bold; margin-top: 2px; }
+        .case-reveal-note { font-size: 0.72rem; color: #64748b; margin-top: 8px; }
+        .case-reveal-btns { display: flex; gap: 10px; justify-content: center; margin-top: 14px; }
+        .case-btn {
+            padding: 9px 16px; border-radius: 10px; border: 1px solid #70a5ff66; background: #70a5ff22;
+            color: #93c5fd; font-weight: bold; cursor: pointer; font-size: 0.85rem;
+        }
+        .case-btn:hover { background: #70a5ff44; }
+        .case-btn.ghost { border-color: #334155; background: transparent; color: #9fb3c8; }
+        .case-btn.ghost:hover { background: #22304055; }
+        .reveal-pop { animation: revealPop .45s cubic-bezier(.2,1.6,.4,1); }
+        @keyframes revealPop {
+            0% { transform: scale(.6); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .reveal-blind { animation: blindCycle .09s linear; }
+        @keyframes blindCycle { from { transform: rotate(-1.5deg) scale(1.02); } to { transform: rotate(1.5deg) scale(.98); } }
+
         .coins-float {
             position: fixed;
             pointer-events: none;
@@ -1175,6 +1224,59 @@
             desc: '+50% monedas al vender personajes',
             maxLevel: 5, baseCost: 150, costMult: 3.5,
             effect: (lvl) => 1 + lvl * 0.5,
+        },
+    ];
+
+    const CASE_SLOTS = [
+        { slot: 'blue', label: 'Mil-Spec', color: '#4b69ff', rate: 79.92 },
+        { slot: 'purple', label: 'Restringido', color: '#b865f4', rate: 15.98 },
+        { slot: 'pink', label: 'Clasificado', color: '#d32ce6', rate: 3.20 },
+        { slot: 'red', label: 'Secreto', color: '#eb4b4b', rate: 0.64 },
+        { slot: 'gold', label: 'Dorado ★', color: '#ffd700', rate: 0.26 },
+    ];
+
+    const CASES = [
+        {
+            id: 'caja_basica', name: 'Caja Básica', price: 100, icon: '🎁',
+            items: [
+                { id: 'tomas', slot: 'blue' }, { id: 'manuelfarina', slot: 'blue' },
+                { id: 'dianavilas', slot: 'blue' }, { id: 'sorriso', slot: 'blue' },
+                { id: 'gubbyfeet', slot: 'purple' }, { id: 'gubbypeanut', slot: 'purple' },
+                { id: 'goldenmejuto', slot: 'purple' },
+                { id: 'goldenalba', slot: 'pink' }, { id: 'rodrigorey', slot: 'pink' },
+                { id: 'manuelcocinillas', slot: 'red' }, { id: 'diamondalba', slot: 'red' },
+                { id: 'idksterling', slot: 'gold' },
+            ],
+        },
+        {
+            id: 'caja_selecta', name: 'Caja Selecta', price: 1500, icon: '🧨',
+            items: [
+                { id: 'goldenmejuto', slot: 'blue' }, { id: 'goldenalba', slot: 'blue' }, { id: 'rodrigorey', slot: 'blue' },
+                { id: 'diamondalba', slot: 'purple' }, { id: 'idksterling', slot: 'purple' }, { id: 'verity', slot: 'purple' },
+                { id: 'glitchedalba', slot: 'pink' }, { id: 'lorceira', slot: 'pink' },
+                { id: 'rodrigopsoe', slot: 'red' }, { id: 'ramonsupersayan', slot: 'red' },
+                { id: 'dianadelaperla', slot: 'gold' },
+            ],
+        },
+        {
+            id: 'caja_elite', name: 'Caja Élite', price: 20000, icon: '💎',
+            items: [
+                { id: 'rodrigorey', slot: 'blue' }, { id: 'manuelcocinillas', slot: 'blue' }, { id: 'diamondalba', slot: 'blue' },
+                { id: 'idksterling', slot: 'purple' }, { id: 'verity', slot: 'purple' }, { id: 'glitchedalba', slot: 'purple' },
+                { id: 'lorceira', slot: 'pink' }, { id: 'rodrigopsoe', slot: 'pink' },
+                { id: 'ramonsupersayan', slot: 'red' }, { id: 'dianadelaperla', slot: 'red' },
+                { id: 'masona', slot: 'gold' },
+            ],
+        },
+        {
+            id: 'caja_legendaria', name: 'Caja Legendaria', price: 150000, icon: '👑',
+            items: [
+                { id: 'ramonsupersayan', slot: 'blue' }, { id: 'dianadelaperla', slot: 'blue' },
+                { id: 'masona', slot: 'purple' }, { id: 'unpvp', slot: 'purple' },
+                { id: 'lmsilvares', slot: 'pink' },
+                { id: 'rubyalba', slot: 'red' }, { id: 'rubymejuto', slot: 'red' },
+                { id: 'rubymejuto', slot: 'gold' },
+            ],
         },
     ];
 
@@ -2770,6 +2872,73 @@
 
             body.appendChild(item);
         });
+
+        const divider = document.createElement('div');
+        divider.style.cssText = 'border-top:1px solid #223040;margin:12px 0 4px;';
+        body.appendChild(divider);
+        const casesTitle = document.createElement('div');
+        casesTitle.style.cssText = 'font-size:0.85rem;font-weight:bold;color:#70a5ff;padding-bottom:4px;';
+        casesTitle.textContent = '🎁 Cajas Calidad-Precio';
+        body.appendChild(casesTitle);
+        const grid = document.createElement('div');
+        grid.className = 'cases-grid';
+        for (const c of CASES) {
+            const canAfford = state.coins >= c.price;
+            const card = document.createElement('div');
+            card.className = 'case-card' + (canAfford ? '' : ' cant');
+            const head = document.createElement('div');
+            head.className = 'case-head';
+            const name = document.createElement('span');
+            name.className = 'case-name';
+            name.textContent = c.icon + ' ' + c.name;
+            const price = document.createElement('span');
+            price.className = 'case-price' + (canAfford ? '' : ' cant');
+            price.textContent = '🪙 ' + c.price.toLocaleString('es-ES');
+            head.appendChild(name);
+            head.appendChild(price);
+            card.appendChild(head);
+            const odds = document.createElement('div');
+            odds.className = 'case-odds';
+            const present = CASE_SLOTS.filter(s => c.items.some(it => it.slot === s.slot));
+            const totalRate = present.reduce((a, s) => a + s.rate, 0);
+            for (const s of present) {
+                const bar = document.createElement('div');
+                bar.style.width = ((s.rate / totalRate) * 100).toFixed(2) + '%';
+                bar.style.background = s.color;
+                bar.title = s.label + ': ' + ((s.rate / totalRate) * 100).toFixed(2) + '%';
+                odds.appendChild(bar);
+            }
+            card.appendChild(odds);
+            const legend = document.createElement('div');
+            legend.className = 'case-legend';
+            for (const s of present) {
+                const sp = document.createElement('span');
+                sp.style.background = s.color + '22';
+                sp.style.color = s.color;
+                sp.textContent = s.label + ' ' + ((s.rate / totalRate) * 100).toFixed(2) + '%';
+                legend.appendChild(sp);
+            }
+            card.appendChild(legend);
+            const icons = document.createElement('div');
+            icons.className = 'case-icons';
+            for (const it of c.items) {
+                const ci = document.createElement('div');
+                ci.className = 'ci';
+                const sDef = CASE_SLOTS.find(s => s.slot === it.slot);
+                ci.style.borderColor = sDef ? sDef.color : '#555';
+                const img = document.createElement('img');
+                img.src = imgFor(it.id);
+                const itDef = itemById(it.id);
+                ci.title = itDef ? itDef.name : it.id;
+                img.onerror = () => { img.outerHTML = '<span style="font-size:1rem">🌿</span>'; };
+                ci.appendChild(img);
+                icons.appendChild(ci);
+            }
+            card.appendChild(icons);
+            if (canAfford) card.addEventListener('click', () => openCase(c));
+            grid.appendChild(card);
+        }
+        body.appendChild(grid);
     }
 
     function openShop() {
@@ -2778,6 +2947,79 @@
     }
     function closeShop() {
         document.getElementById('shop-overlay').classList.remove('open');
+    }
+
+    // ---- Cajas ----
+    function rollCase(c) {
+        const present = CASE_SLOTS.filter(s => c.items.some(it => it.slot === s.slot));
+        const totalRate = present.reduce((a, s) => a + s.rate, 0);
+        let r = Math.random() * totalRate;
+        let slot = present[0].slot;
+        for (const s of present) { r -= s.rate; if (r <= 0) { slot = s.slot; break; } }
+        const pool = c.items.filter(it => it.slot === slot);
+        return pool[Math.floor(Math.random() * pool.length)];
+    }
+
+    function openCase(c) {
+        if (state.coins < c.price) return;
+        state.coins -= c.price;
+        const won = rollCase(c);
+        state.owned[won.id] = (state.owned[won.id] || 0) + 1;
+        updateTopStats();
+        addEvent('🎁 Abrió ' + c.name + ' → ' + ((itemById(won.id) || {}).name || won.id) + '!', 'evt-sistema');
+        renderCaseReveal(c, won);
+        save();
+    }
+
+    function renderCaseReveal(c, won) {
+        const body = document.getElementById('shop-body');
+        body.innerHTML = '';
+        const reveal = document.createElement('div');
+        reveal.className = 'case-reveal';
+        const rTitle = document.createElement('div');
+        rTitle.className = 'case-reveal-title';
+        rTitle.textContent = 'Abrir ' + c.name;
+        reveal.appendChild(rTitle);
+        const slotDef = CASE_SLOTS.find(s => s.slot === won.slot);
+        const color = slotDef ? slotDef.color : '#9fb3c8';
+        const box = document.createElement('div');
+        box.className = 'case-reveal-box';
+        box.style.borderColor = color;
+        box.style.boxShadow = '0 0 40px ' + color + '88';
+        const img = document.createElement('img');
+        img.src = imgFor(won.id);
+        img.onerror = () => { img.outerHTML = '<span style="font-size:2.5rem">🌿</span>'; };
+        box.appendChild(img);
+        reveal.appendChild(box);
+        const n = document.createElement('div');
+        n.className = 'case-reveal-name';
+        n.style.color = color;
+        n.textContent = (itemById(won.id) || {}).name || won.id;
+        reveal.appendChild(n);
+        const sl = document.createElement('div');
+        sl.className = 'case-reveal-slot';
+        sl.style.color = color;
+        sl.textContent = slotDef ? (slotDef.label + (won.slot === 'gold' ? ' ★' : '')) : won.slot;
+        reveal.appendChild(sl);
+        const note = document.createElement('div');
+        note.className = 'case-reveal-note';
+        note.textContent = 'Personaje añadido a tu inventario.';
+        reveal.appendChild(note);
+        const btns = document.createElement('div');
+        btns.className = 'case-reveal-btns';
+        const again = document.createElement('button');
+        again.className = 'case-btn';
+        again.textContent = '🔄 Otra vez';
+        again.addEventListener('click', () => renderShop());
+        btns.appendChild(again);
+        const close = document.createElement('button');
+        close.className = 'case-btn ghost';
+        close.textContent = 'Cerrar';
+        close.addEventListener('click', closeShop);
+        btns.appendChild(close);
+        reveal.appendChild(btns);
+        body.appendChild(reveal);
+        requestAnimationFrame(() => { box.classList.add('reveal-pop'); n.classList.add('reveal-pop'); });
     }
 
     // ---- Tester ----
