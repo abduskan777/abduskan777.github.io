@@ -199,6 +199,29 @@
             transform: translateY(-1px);
         }
         #leaderboard-btn:active { transform: translateY(0); }
+        #codes-btn {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, #ec489922, #be185d22);
+            border: 1px solid #f472b6;
+            color: #f9a8d4;
+            border-radius: 10px;
+            padding: 8px 14px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all .25s ease;
+            box-shadow: 0 0 12px rgba(244,114,182,0.25), inset 0 0 8px rgba(244,114,182,0.1);
+            text-shadow: 0 0 6px rgba(244,114,182,0.7);
+        }
+        #codes-btn:hover {
+            background: linear-gradient(135deg, #ec489944, #be185d44);
+            box-shadow: 0 0 20px rgba(244,114,182,0.5), inset 0 0 10px rgba(244,114,182,0.2);
+            transform: translateY(-1px);
+        }
+        #codes-btn:active { transform: translateY(0); }
         #leaderboard-body { padding: 16px; display: flex; flex-direction: column; gap: 10px; max-height: 70vh; overflow-y: auto; }
         .lb-meta { font-size: 0.75rem; color: #94a3b8; margin-bottom: 4px; }
         .lb-list { display: flex; flex-direction: column; gap: 8px; }
@@ -1037,7 +1060,6 @@
             <span id="auth-username" class="auth-username" style="display:none;"></span>
             <button id="auth-btn">👤 Iniciar sesión</button>
             <button id="logout-btn" style="display:none;">Cerrar sesión</button>
-            <button id="reset-btn" style="display:none;" title="Borrar todo el progreso de esta cuenta">🔄 Reiniciar cuenta</button>
             <button id="trade-btn" style="display:none;"><span style="font-size:1.1rem;">🤝</span><span>Comercio</span><span id="trade-badge" style="display:none;"></span></button>
             <button id="chat-btn" style="display:none;"><span style="font-size:1.1rem;">💬</span><span>Chat</span><span id="chat-badge" style="display:none;"></span></button>
             <button id="leaderboard-btn" style="display:none;"><span style="font-size:1.1rem;">🏆</span><span>Ranking</span></button>
@@ -1432,7 +1454,6 @@
         const userEl = document.getElementById('auth-username');
         const authBtn = document.getElementById('auth-btn');
         const logoutBtn = document.getElementById('logout-btn');
-        const resetBtn = document.getElementById('reset-btn');
         const tradeBtn = document.getElementById('trade-btn');
         const chatBtn = document.getElementById('chat-btn');
         const leaderboardBtn = document.getElementById('leaderboard-btn');
@@ -1442,7 +1463,6 @@
             userEl.style.display = 'inline';
             authBtn.style.display = 'none';
             logoutBtn.style.display = 'inline-block';
-            resetBtn.style.display = 'inline-block';
             tradeBtn.style.display = 'inline-block';
             chatBtn.style.display = 'inline-block';
             leaderboardBtn.style.display = 'inline-block';
@@ -1454,7 +1474,6 @@
             userEl.style.display = 'none';
             authBtn.style.display = 'inline-block';
             logoutBtn.style.display = 'none';
-            resetBtn.style.display = 'none';
             tradeBtn.style.display = 'none';
             chatBtn.style.display = 'none';
             leaderboardBtn.style.display = 'none';
@@ -1544,29 +1563,6 @@
         setAuthUI(null);
         load();
         addEvent('Sesión cerrada. Volviendo a la partida local', 'evt-sistema');
-    }
-
-    async function resetAccount() {
-        if (!authToken) return;
-        if (!confirm('¿Seguro que quieres borrar TODO el progreso de la cuenta ' + authUsername + '? Esta acción no se puede deshacer.')) return;
-        try {
-            const res = await fetch(API_BASE + '/api/reset-data', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token: authToken }),
-            });
-            const data = await res.json();
-            if (!res.ok || !data.ok) throw new Error(data.error || 'Error');
-        } catch (e) {
-            addEvent('⚠️ No se pudo reiniciar la cuenta: ' + e.message, 'evt-sistema');
-            return;
-        }
-        applySaveData({
-            rolls: 0, luck: 1, lucky: 0, owned: {}, coins: 0, totalCoins: 0,
-            shop: { rollSpeed: 0, luckBoost: 0, coinMulti: 0 }, autoSell: false,
-        });
-        writeLocalBackup(buildSaveData());
-        addEvent('🔄 Progreso de ' + authUsername + ' reiniciado', 'evt-sistema');
     }
 
     function openCodes() {
@@ -3434,7 +3430,6 @@
     document.getElementById('auth-btn').addEventListener('click', openAuth);
     document.getElementById('auth-close').addEventListener('click', closeAuth);
     document.getElementById('logout-btn').addEventListener('click', logout);
-    document.getElementById('reset-btn').addEventListener('click', resetAccount);
     document.getElementById('codes-btn').addEventListener('click', openCodes);
     document.getElementById('codes-close').addEventListener('click', closeCodes);
     document.getElementById('codes-overlay').addEventListener('click', (e) => {
