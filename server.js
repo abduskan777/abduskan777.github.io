@@ -213,6 +213,21 @@ function handleLogout(req, res) {
     }).catch(() => sendJson(res, 500, { error: 'Error interno' }));
 }
 
+function handleResetData(req, res) {
+    readBody(req).then(body => {
+        let parsed;
+        try { parsed = JSON.parse(body || '{}'); } catch (e) { parsed = {}; }
+        const user = findUserByToken(parsed.token);
+        if (!user) return sendJson(res, 401, { error: 'Sesión inválida' });
+        const users = loadUsers();
+        const me = users[user.username.toLowerCase()];
+        if (!me) return sendJson(res, 500, { error: 'Error interno' });
+        me.data = {};
+        saveUsers(users);
+        sendJson(res, 200, { ok: true });
+    }).catch(() => sendJson(res, 500, { error: 'Error interno' }));
+}
+
 function findUserByToken(token) {
     if (!token) return null;
     const users = loadUsers();
@@ -767,9 +782,12 @@ const server = http.createServer((req, res) => {
     if (urlPath === '/api/login' && req.method === 'POST') {
         return handleAuth(req, res, 'login');
     }
-    if (urlPath === '/api/logout' && req.method === 'POST') {
-        return handleLogout(req, res);
-    }
+if (urlPath === '/api/logout' && req.method === 'POST') {
+                return handleLogout(req, res);
+            }
+            if (urlPath === '/api/reset-data' && req.method === 'POST') {
+                return handleResetData(req, res);
+            }
     if (urlPath === '/api/heartbeat' && req.method === 'POST') {
         return handleHeartbeat(req, res);
     }

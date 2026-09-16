@@ -1026,6 +1026,7 @@
             <span id="auth-username" class="auth-username" style="display:none;"></span>
             <button id="auth-btn">👤 Iniciar sesión</button>
             <button id="logout-btn" style="display:none;">Cerrar sesión</button>
+            <button id="reset-btn" style="display:none;" title="Borrar todo el progreso de esta cuenta">🔄 Reiniciar cuenta</button>
             <button id="trade-btn" style="display:none;"><span style="font-size:1.1rem;">🤝</span><span>Comercio</span><span id="trade-badge" style="display:none;"></span></button>
             <button id="chat-btn" style="display:none;"><span style="font-size:1.1rem;">💬</span><span>Chat</span><span id="chat-badge" style="display:none;"></span></button>
             <button id="leaderboard-btn" style="display:none;"><span style="font-size:1.1rem;">🏆</span><span>Ranking</span></button>
@@ -1400,6 +1401,7 @@
         const userEl = document.getElementById('auth-username');
         const authBtn = document.getElementById('auth-btn');
         const logoutBtn = document.getElementById('logout-btn');
+        const resetBtn = document.getElementById('reset-btn');
         const tradeBtn = document.getElementById('trade-btn');
         const chatBtn = document.getElementById('chat-btn');
         const leaderboardBtn = document.getElementById('leaderboard-btn');
@@ -1408,6 +1410,7 @@
             userEl.style.display = 'inline';
             authBtn.style.display = 'none';
             logoutBtn.style.display = 'inline-block';
+            resetBtn.style.display = 'inline-block';
             tradeBtn.style.display = 'inline-block';
             chatBtn.style.display = 'inline-block';
             leaderboardBtn.style.display = 'inline-block';
@@ -1418,6 +1421,7 @@
             userEl.style.display = 'none';
             authBtn.style.display = 'inline-block';
             logoutBtn.style.display = 'none';
+            resetBtn.style.display = 'none';
             tradeBtn.style.display = 'none';
             chatBtn.style.display = 'none';
             leaderboardBtn.style.display = 'none';
@@ -1475,6 +1479,11 @@
             authToken = data.token;
             localStorage.setItem(AUTH_TOKEN_KEY, authToken);
             if (authMode === 'register') {
+                authUsername = data.username;
+                applySaveData({
+                    rolls: 0, luck: 1, lucky: 0, owned: {}, coins: 0, totalCoins: 0,
+                    shop: { rollSpeed: 0, luckBoost: 0, coinMulti: 0 }, autoSell: false,
+                });
                 await save();
             } else {
                 await load();
@@ -1501,6 +1510,29 @@
         setAuthUI(null);
         load();
         addEvent('Sesión cerrada. Volviendo a la partida local', 'evt-sistema');
+    }
+
+    async function resetAccount() {
+        if (!authToken) return;
+        if (!confirm('¿Seguro que quieres borrar TODO el progreso de la cuenta ' + authUsername + '? Esta acción no se puede deshacer.')) return;
+        try {
+            const res = await fetch(API_BASE + '/api/reset-data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: authToken }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.ok) throw new Error(data.error || 'Error');
+        } catch (e) {
+            addEvent('⚠️ No se pudo reiniciar la cuenta: ' + e.message, 'evt-sistema');
+            return;
+        }
+        applySaveData({
+            rolls: 0, luck: 1, lucky: 0, owned: {}, coins: 0, totalCoins: 0,
+            shop: { rollSpeed: 0, luckBoost: 0, coinMulti: 0 }, autoSell: false,
+        });
+        writeLocalBackup(buildSaveData());
+        addEvent('🔄 Progreso de ' + authUsername + ' reiniciado', 'evt-sistema');
     }
 
     function restoreAuth() {
@@ -3217,6 +3249,7 @@
     document.getElementById('auth-btn').addEventListener('click', openAuth);
     document.getElementById('auth-close').addEventListener('click', closeAuth);
     document.getElementById('logout-btn').addEventListener('click', logout);
+    document.getElementById('reset-btn').addEventListener('click', resetAccount);
     document.getElementById('auth-overlay').addEventListener('click', (e) => {
         if (e.target === e.currentTarget) closeAuth();
     });
