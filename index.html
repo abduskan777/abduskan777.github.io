@@ -1534,7 +1534,8 @@
 
     function imgFor(id) {
         const it = itemById(id);
-        return it && it.image ? 'img/' + it.image : '';
+        if (!it || !it.image) return '';
+        return it.image.startsWith('img/') ? it.image : 'img/' + it.image;
     }
 
     function openTrade() {
