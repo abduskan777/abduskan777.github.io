@@ -274,6 +274,85 @@ function handleCodeRedeem(req, res) {
     }).catch(() => sendJson(res, 500, { error: 'Error interno' }));
 }
 
+const DAILY_MAX_DAY = 31;
+const DAILY_MS = 24 * 60 * 60 * 1000;
+
+function loadNonRareItemIds() {
+    try {
+        const data = JSON.parse(fs.readFileSync(path.join(ROOT, 'items.json'), 'utf8'));
+        return (data.items || []).filter(i => i.chance <= 8000).map(i => i.id);
+    } catch (e) {
+        return [];
+    }
+}
+
+function dailyNextDay(state, now) {
+    if (!state || !state.last) return 1;
+    const elapsed = now - state.last;
+    if (elapsed >= DAILY_MS * 2) return 1;
+    if (elapsed >= DAILY_MS) {
+        const next = (state.streak || 0) + 1;
+        return next > DAILY_MAX_DAY ? 1 : next;
+    }
+    return 0;
+}
+
+function dailyRewardForDay(day) {
+    const reward = { coins: 0, items: {} };
+    if (day >= DAILY_MAX_DAY) {
+        reward.items.glitchedalba = 1;
+        return reward;
+    }
+    const pool = loadNonRareItemIds();
+    const itemChance = Math.min(45, 10 + day);
+    if (Math.random() * 100 < itemChance && pool.length > 0) {
+        const pick = pool[Math.floor(Math.random() * pool.length)];
+        reward.items[pick] = 1;
+    } else {
+        reward.coins = Math.floor((60 + Math.random() * 140) * (1 + (day - 1) * 0.08));
+    }
+    return reward;
+}
+
+function handleDailyStatus(req, res) {
+    const user = findUserByToken(req.headers['x-token']);
+    if (!user) return sendJson(res, 401, { error: 'Sesión inválida' });
+    const users = loadUsers();
+    const me = users[user.username.toLowerCase()];
+    if (!me) return sendJson(res, 500, { error: 'Error interno' });
+    const now = Date.now();
+    const day = dailyNextDay(me.dailyReward, now);
+    sendJson(res, 200, { ok: true, canClaim: day > 0, day: day, claimed: day === 0 });
+}
+
+function handleDailyClaim(req, res) {
+    readBody(req).then(body => {
+        let parsed;
+        try { parsed = JSON.parse(body || '{}'); } catch (e) { parsed = {}; }
+        const user = findUserByToken(parsed.token);
+        if (!user) return sendJson(res, 401, { error: 'Sesión inválida' });
+        const users = loadUsers();
+        const me = users[user.username.toLowerCase()];
+        if (!me) return sendJson(res, 500, { error: 'Error interno' });
+        const now = Date.now();
+        const day = dailyNextDay(me.dailyReward, now);
+        if (day === 0) return sendJson(res, 400, { error: 'Ya reclamaste hoy. Vuelve mañana' });
+        const reward = dailyRewardForDay(day);
+        if (!me.data || typeof me.data !== 'object') me.data = {};
+        if (reward.coins > 0) {
+            me.data.coins = (me.data.coins || 0) + reward.coins;
+            me.data.totalCoins = (me.data.totalCoins || 0) + reward.coins;
+        }
+        for (const id in reward.items) {
+            if (!me.data.owned || typeof me.data.owned !== 'object') me.data.owned = {};
+            me.data.owned[id] = (me.data.owned[id] || 0) + reward.items[id];
+        }
+        me.dailyReward = { last: now, streak: day };
+        saveUsers(users);
+        sendJson(res, 200, { ok: true, day: day, reward: reward });
+    }).catch(() => sendJson(res, 500, { error: 'Error interno' }));
+}
+
 function findUserByToken(token) {
     if (!token) return null;
     const users = loadUsers();
@@ -865,6 +944,12 @@ if (urlPath === '/api/logout' && req.method === 'POST') {
             }
             if (urlPath === '/api/code/redeem' && req.method === 'POST') {
                 return handleCodeRedeem(req, res);
+            }
+            if (urlPath === '/api/daily/status' && req.method === 'GET') {
+                return handleDailyStatus(req, res);
+            }
+            if (urlPath === '/api/daily/claim' && req.method === 'POST') {
+                return handleDailyClaim(req, res);
             }
     if (urlPath === '/api/heartbeat' && req.method === 'POST') {
         return handleHeartbeat(req, res);

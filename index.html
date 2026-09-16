@@ -946,6 +946,17 @@
         }
         .shop-cost.cant { color: #f87171; }
 
+        .daily-card {
+            border: 1px solid #3b82f6; background: #1a2535; border-radius: 10px;
+            padding: 10px 12px; margin-bottom: 10px;
+            display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+        }
+        .daily-title { font-weight: bold; color: #60a5fa; font-size: 0.95rem; }
+        .daily-msg { font-size: 0.8rem; color: #9fb3c8; }
+        .daily-btn { background: #2563eb; color: #fff; border: none; border-radius: 8px; padding: 8px 14px; font-weight: bold; cursor: pointer; }
+        .daily-btn:hover { background: #1d4ed8; }
+        .daily-btn:disabled { background: #334155; cursor: default; }
+
         .cases-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; }
         .case-card {
             background: #10171f; border: 1px solid #223040; border-radius: 12px; padding: 12px;
@@ -2935,6 +2946,11 @@
         coinEl.textContent = '🪙 ' + (Math.floor(state.coins) >= INFINITE_CAP ? '∞ monedas' : Math.floor(state.coins).toLocaleString() + ' monedas');
         body.appendChild(coinEl);
 
+        const dailyCard = document.createElement('div');
+        dailyCard.id = 'daily-card';
+        body.appendChild(dailyCard);
+        renderDailyCard();
+
         SHOP_DEFS.forEach(def => {
             const lvl = state.shop[def.id] || 0;
             const maxed = lvl >= def.maxLevel;
@@ -3061,6 +3077,75 @@
     }
     function closeShop() {
         document.getElementById('shop-overlay').classList.remove('open');
+    }
+
+    // ---- Recompensa diaria ----
+    async function renderDailyCard() {
+        const card = document.getElementById('daily-card');
+        if (!card) return;
+        if (!authToken) {
+            card.style.display = 'none';
+            return;
+        }
+        card.style.display = 'flex';
+        card.innerHTML = '<div class="daily-title">🎁 Recompensa diaria</div><div class="daily-msg">Cargando...</div>';
+        try {
+            const res = await fetch(API_BASE + '/api/daily/status', { headers: { 'x-token': authToken } });
+            const data = await res.json();
+            if (!res.ok || !data.ok) {
+                card.innerHTML = '<div class="daily-title">🎁 Recompensa diaria</div><div class="daily-msg">No disponible</div>';
+                return;
+            }
+            if (!data.canClaim) {
+                card.innerHTML =
+                    '<div class="daily-title">🎁 Recompensa diaria</div>' +
+                    '<div class="daily-msg">Ya reclamaste hoy. Vuelve mañana (racha: día ' + data.day + ' de 31).</div>';
+                return;
+            }
+            const btn = document.createElement('button');
+            btn.className = 'daily-btn';
+            btn.textContent = 'Reclamar día ' + data.day;
+            btn.addEventListener('click', claimDaily);
+            card.appendChild(btn);
+        } catch (e) {
+            card.innerHTML = '<div class="daily-title">🎁 Recompensa diaria</div><div class="daily-msg">No se pudo conectar</div>';
+        }
+    }
+
+    async function claimDaily() {
+        if (!authToken) return;
+        const card = document.getElementById('daily-card');
+        const btn = card ? card.querySelector('.daily-btn') : null;
+        if (btn) btn.disabled = true;
+        try {
+            const res = await fetch(API_BASE + '/api/daily/claim', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: authToken }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.ok) {
+                if (card) card.innerHTML = '<div class="daily-title">🎁 Recompensa diaria</div><div class="daily-msg">' + (data.error || 'Error') + '</div>';
+                return;
+            }
+            const parts = [];
+            if (data.reward && data.reward.coins > 0) parts.push(data.reward.coins.toLocaleString() + ' 🪙');
+            if (data.reward && data.reward.items) {
+                for (const id in data.reward.items) {
+                    const it = itemById(id);
+                    parts.push('×' + data.reward.items[id] + ' ' + (it ? it.name : id));
+                }
+            }
+            addEvent('🎁 Recompensa diaria (día ' + data.day + '): recibiste ' + (parts.join(' y ') || 'nada'), 'evt-sistema');
+            await load();
+            if (card) {
+                card.innerHTML =
+                    '<div class="daily-title">🎁 Recompensa diaria</div>' +
+                    '<div class="daily-msg">Día ' + data.day + ' reclamado: ' + (parts.join(' y ') || 'nada') + '. Vuelve mañana por el día ' + (data.day >= 31 ? 1 : data.day + 1) + '.</div>';
+            }
+        } catch (e) {
+            if (btn) btn.disabled = false;
+        }
     }
 
     // ---- Cajas ----
