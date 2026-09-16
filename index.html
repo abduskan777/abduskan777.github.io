@@ -843,6 +843,7 @@
             max-height: 60vh;
         }
         .tester-btn-item {
+            position: relative;
             background: #131c28;
             border: 2px solid #223040;
             border-radius: 10px;
@@ -878,6 +879,60 @@
         }
         .tester-btn-item .t-name { font-size: 0.72rem; font-weight: bold; color: #e8e8e8; }
         .tester-btn-item .t-chance { font-size: 0.65rem; color: #9fb3c8; }
+        .t-qty {
+            position: absolute;
+            top: -6px;
+            left: -6px;
+            background: linear-gradient(135deg, #22c55e, #15803d);
+            color: #fff;
+            font-size: 0.7rem;
+            font-weight: 800;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+            border: 1px solid #bbf7d0;
+            box-shadow: 0 0 8px rgba(34,197,94,0.6);
+            z-index: 2;
+        }
+        .tester-cart {
+            grid-column: 1 / -1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 8px;
+            border-bottom: 1px solid #22304055;
+            border-top: 1px solid #22304055;
+            flex-wrap: wrap;
+        }
+        .tester-cart label { color: #4ade80; font-weight: bold; font-size: 0.9rem; }
+        #tester-cart-clear {
+            padding: 8px 16px;
+            border: 1px solid #f8717166;
+            border-radius: 8px;
+            background: #f8717122;
+            color: #fca5a5;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        #tester-cart-clear:hover:not(:disabled) { background: #f8717144; }
+        #tester-cart-spawn {
+            padding: 8px 16px;
+            border: 1px solid #34d39966;
+            border-radius: 8px;
+            background: #34d39922;
+            color: #6ee7b7;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        #tester-cart-spawn:hover:not(:disabled) { background: #34d39944; }
+        #tester-cart-clear:disabled, #tester-cart-spawn:disabled { opacity: 0.45; cursor: not-allowed; }
 
         /* Pantalla épica */
         #epic-screen {
@@ -3232,7 +3287,26 @@
 
     // ---- Tester ----
     const TESTER_PASSWORD = '31032016';
+    let testerCart = {};
+    function testerCartTotal() { return Object.values(testerCart).reduce((a, b) => a + b, 0); }
+    function renderTesterCart() {
+        const total = testerCartTotal();
+        const label = document.getElementById('tester-cart-label');
+        const spawn = document.getElementById('tester-cart-spawn');
+        const clear = document.getElementById('tester-cart-clear');
+        if (label) label.textContent = '🛒 Carrito: ' + total + ' ítems';
+        if (spawn) { spawn.textContent = '✨ Spawnear (' + total + ')'; spawn.disabled = total === 0; }
+        if (clear) clear.disabled = total === 0;
+    }
+    function updateCardBadge(item, card) {
+        const b = card.querySelector('.t-qty');
+        if (!b) return;
+        const q = testerCart[item.id] || 0;
+        b.textContent = q;
+        b.style.display = q > 0 ? 'flex' : 'none';
+    }
     function openTester() {
+        testerCart = {};
         const pw = document.getElementById('tester-pw');
         const body = document.getElementById('tester-body');
         const input = document.getElementById('tester-pw-input');
@@ -3294,6 +3368,32 @@
         coinsRow.appendChild(cBtn);
         body.appendChild(coinsRow);
 
+        const cartRow = document.createElement('div');
+        cartRow.className = 'tester-cart';
+        const cartLabel = document.createElement('label');
+        cartLabel.id = 'tester-cart-label';
+        cartLabel.textContent = '🛒 Carrito: 0 ítems';
+        const clearBtn = document.createElement('button');
+        clearBtn.id = 'tester-cart-clear';
+        clearBtn.textContent = '🗑️ Vaciar';
+        clearBtn.addEventListener('click', () => {
+            testerCart = {};
+            renderTesterCart();
+            document.querySelectorAll('.tester-btn-item').forEach(c => {
+                const b = c.querySelector('.t-qty');
+                if (b) b.style.display = 'none';
+            });
+        });
+        const spawnBtn = document.createElement('button');
+        spawnBtn.id = 'tester-cart-spawn';
+        spawnBtn.textContent = '✨ Spawnear (0)';
+        spawnBtn.disabled = true;
+        spawnBtn.addEventListener('click', spawnTesterCart);
+        cartRow.appendChild(cartLabel);
+        cartRow.appendChild(spawnBtn);
+        cartRow.appendChild(clearBtn);
+        body.appendChild(cartRow);
+
         const sorted = [...ITEMS].sort((a, b) => b.chance - a.chance);
         sorted.forEach(item => {
             const card = document.createElement('div');
@@ -3336,32 +3436,65 @@
             rarity.textContent = tierOf(item);
             card.appendChild(rarity);
 
-            card.addEventListener('click', () => {
-                state.rolls++;
-                const isNew = !state.owned[item.id];
-                state.owned[item.id] = (state.owned[item.id] || 0) + 1;
-                if (item.epic) state.lucky++;
-                if (isNew) {
-                    state.coins += 5;
-                    state.totalCoins += 5;
-                }
-                if (state.autoSell && !isNew) {
-                    const count = state.owned[item.id] || 0;
-                    state.owned[item.id] = count - 1;
-                    const value = sellValue(item);
-                    state.coins += value;
-                    state.totalCoins += value;
-                    addEvent(`💰 Auto Sell: ${item.name} (+${value.toLocaleString()} 🪙)`, 'evt-sistema');
-                }
+            const badge = document.createElement('div');
+            badge.className = 't-qty';
+            badge.style.display = 'none';
+            card.appendChild(badge);
 
-                closeTester();
-                revealItem(item, isNew);
-                updateTopStats();
-                save();
+            card.addEventListener('click', () => {
+                testerCart[item.id] = (testerCart[item.id] || 0) + 1;
+                updateCardBadge(item, card);
+                renderTesterCart();
+            });
+            card.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                if ((testerCart[item.id] || 0) > 0) {
+                    testerCart[item.id]--;
+                    if (!testerCart[item.id]) delete testerCart[item.id];
+                    updateCardBadge(item, card);
+                    renderTesterCart();
+                }
             });
 
             body.appendChild(card);
         });
+        renderTesterCart();
+    }
+
+    function spawnTesterCart() {
+        const ids = Object.keys(testerCart).filter(id => testerCart[id] > 0);
+        if (!ids.length) return;
+        let total = 0;
+        let best = null;
+        let bestIsNew = false;
+        const list = [];
+        for (const id of ids) {
+            const q = testerCart[id] || 0;
+            const item = itemById(id);
+            if (!item) continue;
+            for (let i = 0; i < q; i++) {
+                state.rolls++;
+                const isNew = !state.owned[id];
+                state.owned[id] = (state.owned[id] || 0) + 1;
+                if (item.epic) state.lucky++;
+                if (isNew) { state.coins += 5; state.totalCoins += 5; }
+                if (state.autoSell && !isNew) {
+                    state.owned[id] = (state.owned[id] || 0) - 1;
+                    const value = sellValue(item);
+                    state.coins += value;
+                    state.totalCoins += value;
+                }
+                total++;
+                if (!best || item.chance < best.chance) { best = item; bestIsNew = isNew; }
+            }
+            list.push(item.name + ' x' + q);
+        }
+        testerCart = {};
+        closeTester();
+        if (best) revealItem(best, bestIsNew);
+        updateTopStats();
+        addEvent('🧪 Tester: ' + list.join(' · '), 'evt-sistema');
+        save();
     }
 
     function closeTester() {
