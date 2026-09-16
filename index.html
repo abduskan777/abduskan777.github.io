@@ -1097,6 +1097,67 @@
             0% { transform: scale(.6); opacity: 0; }
             100% { transform: scale(1); opacity: 1; }
         }
+        .case-roulette {
+            position: relative;
+            width: min(94vw, 430px);
+            height: 128px;
+            margin: 14px auto 0;
+            border: 2px solid #223040;
+            border-radius: 12px;
+            overflow: hidden;
+            background: repeating-linear-gradient(90deg, #0b1118 0 46px, #0e1622 46px 96px);
+            touch-action: none;
+        }
+        .roulette-marker {
+            position: absolute;
+            top: 0; bottom: 0; left: 50%;
+            width: 3px;
+            background: #fff;
+            box-shadow: 0 0 12px 2px rgba(255,255,255,.9), 0 0 26px 6px rgba(255,255,255,.4);
+            z-index: 5;
+            transform: translateX(-50%);
+        }
+        .roulette-marker::before, .roulette-marker::after {
+            content: ''; position: absolute; left: 50%; transform: translateX(-50%);
+            border-left: 9px solid transparent; border-right: 9px solid transparent;
+        }
+        .roulette-marker::before { top: 0; border-top: 11px solid #fff; }
+        .roulette-marker::after { bottom: 0; border-bottom: 11px solid #fff; }
+        .roulette-track {
+            position: absolute;
+            top: 0; left: 0; height: 100%;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 0 8px;
+            will-change: transform;
+        }
+        .roulette-cell {
+            width: 86px; height: 104px; flex: 0 0 auto;
+            border-radius: 8px;
+            border: 2px solid #223040;
+            background: #131c28;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            overflow: hidden;
+        }
+        .roulette-cell img { width: 58px; height: 58px; object-fit: cover; border-radius: 6px; }
+        .roulette-cell span {
+            font-size: 0.62rem; color: #cbd5e1;
+            max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+            padding: 0 4px;
+        }
+        .roulette-cell.won {
+            border-color: #fbbf24;
+            box-shadow: 0 0 20px rgba(251,191,36,.8);
+            transform: scale(1.12);
+            transition: transform .3s cubic-bezier(.2,1.4,.4,1), box-shadow .3s;
+            z-index: 2;
+        }
+        .case-result { transition: opacity .4s ease; }
         .reveal-blind { animation: blindCycle .09s linear; }
         @keyframes blindCycle { from { transform: rotate(-1.5deg) scale(1.02); } to { transform: rotate(1.5deg) scale(.98); } }
 
@@ -3250,6 +3311,25 @@
         save();
     }
 
+    const CASE_WIN_INDEX = 40;
+    function weightedCasePick(eligible) {
+        const present = CASE_SLOTS.filter(s => eligible.some(it => it.slot === s.slot));
+        const totalRate = present.reduce((a, s) => a + s.rate, 0);
+        let r = Math.random() * totalRate;
+        let slot = present[0].slot;
+        for (const s of present) { r -= s.rate; if (r <= 0) { slot = s.slot; break; } }
+        const pool = eligible.filter(it => it.slot === slot);
+        return pool[Math.floor(Math.random() * pool.length)];
+    }
+    function buildCaseCells(c, won) {
+        const eligible = caseEligibleItems(c);
+        const cells = [];
+        for (let i = 0; i < CASE_WIN_INDEX; i++) cells.push(weightedCasePick(eligible));
+        cells.push(won);
+        for (let i = 0; i < 12; i++) cells.push(weightedCasePick(eligible));
+        return cells;
+    }
+
     function renderCaseReveal(c, won) {
         const body = document.getElementById('shop-body');
         body.innerHTML = '';
@@ -3257,33 +3337,66 @@
         reveal.className = 'case-reveal';
         const rTitle = document.createElement('div');
         rTitle.className = 'case-reveal-title';
-        rTitle.textContent = 'Abrir ' + c.name;
+        rTitle.textContent = 'Abriendo ' + c.name + '...';
         reveal.appendChild(rTitle);
+
+        const wheel = document.createElement('div');
+        wheel.className = 'case-roulette';
+        const marker = document.createElement('div');
+        marker.className = 'roulette-marker';
+        wheel.appendChild(marker);
+        const track = document.createElement('div');
+        track.className = 'roulette-track';
+        const cells = buildCaseCells(c, won);
+        cells.forEach((it, idx) => {
+            const cell = document.createElement('div');
+            cell.className = 'roulette-cell';
+            const img = document.createElement('img');
+            img.src = imgFor(it.id);
+            img.onerror = () => {
+                const sp = document.createElement('span');
+                sp.textContent = '🌿';
+                img.replaceWith(sp);
+            };
+            cell.appendChild(img);
+            const nm = document.createElement('span');
+            nm.textContent = (itemById(it.id) || {}).name || it.id;
+            cell.appendChild(nm);
+            if (idx === CASE_WIN_INDEX) cell.dataset.won = '1';
+            track.appendChild(cell);
+        });
+        wheel.appendChild(track);
+        reveal.appendChild(wheel);
+
         const slotDef = CASE_SLOTS.find(s => s.slot === won.slot);
         const color = slotDef ? slotDef.color : '#9fb3c8';
+
+        const result = document.createElement('div');
+        result.className = 'case-result';
+        result.style.opacity = '0';
         const box = document.createElement('div');
         box.className = 'case-reveal-box';
         box.style.borderColor = color;
         box.style.boxShadow = '0 0 40px ' + color + '88';
-        const img = document.createElement('img');
-        img.src = imgFor(won.id);
-        img.onerror = () => { img.outerHTML = '<span style="font-size:2.5rem">🌿</span>'; };
-        box.appendChild(img);
-        reveal.appendChild(box);
+        const boxImg = document.createElement('img');
+        boxImg.src = imgFor(won.id);
+        boxImg.onerror = () => { boxImg.outerHTML = '<span style="font-size:2.5rem">🌿</span>'; };
+        box.appendChild(boxImg);
+        result.appendChild(box);
         const n = document.createElement('div');
         n.className = 'case-reveal-name';
         n.style.color = color;
         n.textContent = (itemById(won.id) || {}).name || won.id;
-        reveal.appendChild(n);
+        result.appendChild(n);
         const sl = document.createElement('div');
         sl.className = 'case-reveal-slot';
         sl.style.color = color;
         sl.textContent = slotDef ? (slotDef.label + (won.slot === 'gold' ? ' ★' : '')) : won.slot;
-        reveal.appendChild(sl);
+        result.appendChild(sl);
         const note = document.createElement('div');
         note.className = 'case-reveal-note';
         note.textContent = 'Personaje añadido a tu inventario.';
-        reveal.appendChild(note);
+        result.appendChild(note);
         const btns = document.createElement('div');
         btns.className = 'case-reveal-btns';
         const again = document.createElement('button');
@@ -3296,9 +3409,25 @@
         close.textContent = 'Cerrar';
         close.addEventListener('click', closeShop);
         btns.appendChild(close);
-        reveal.appendChild(btns);
+        result.appendChild(btns);
+        reveal.appendChild(result);
         body.appendChild(reveal);
-        requestAnimationFrame(() => { box.classList.add('reveal-pop'); n.classList.add('reveal-pop'); });
+
+        const VW = wheel.clientWidth;
+        track.style.transform = 'translateX(0px)';
+        const target = VW / 2 - 51 - CASE_WIN_INDEX * 92;
+        requestAnimationFrame(() => {
+            void track.offsetWidth;
+            track.style.transition = 'transform 3.2s cubic-bezier(.12,.82,.3,1)';
+            track.style.transform = 'translateX(' + target + 'px)';
+        });
+        track.addEventListener('transitionend', (e) => {
+            if (e.propertyName !== 'transform') return;
+            const wonCell = track.querySelector('.roulette-cell[data-won="1"]');
+            if (wonCell) wonCell.classList.add('won');
+            rTitle.textContent = '🏆 Resultado: ' + c.name;
+            requestAnimationFrame(() => { result.style.opacity = '1'; });
+        }, { once: true });
     }
 
     // ---- Tester ----
