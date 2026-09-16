@@ -1158,6 +1158,33 @@
             z-index: 2;
         }
         .case-result { transition: opacity .4s ease; }
+        #music-btn {
+            position: fixed;
+            bottom: 18px;
+            left: 18px;
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            border: 1px solid #34d39966;
+            background: #0b1118cc;
+            color: #6ee7b7;
+            font-size: 1.25rem;
+            cursor: pointer;
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all .2s ease;
+            box-shadow: 0 0 12px rgba(52,211,153,0.2);
+            backdrop-filter: blur(4px);
+        }
+        #music-btn:hover {
+            background: #111c27ee;
+            box-shadow: 0 0 18px rgba(52,211,153,0.45);
+            transform: scale(1.06);
+        }
+        #music-btn.muted { border-color: #f8717166; color: #fca5a5; box-shadow: 0 0 12px rgba(248,113,113,0.2); }
+        #music-btn.muted:hover { box-shadow: 0 0 18px rgba(248,113,113,0.4); }
         .reveal-blind { animation: blindCycle .09s linear; }
         @keyframes blindCycle { from { transform: rotate(-1.5deg) scale(1.02); } to { transform: rotate(1.5deg) scale(.98); } }
 
@@ -1381,6 +1408,8 @@
     </div>
 
     <audio id="bg-music" preload="auto"></audio>
+
+    <button id="music-btn" title="Silenciar música">🔊</button>
 
     <script>
     const SAVE_KEY = 'valle-rng-save-v4';
@@ -3793,6 +3822,18 @@
     let musicIndex = 0;
     const bgMusic = document.getElementById('bg-music');
     bgMusic.volume = 0.35;
+    const musicBtn = document.getElementById('music-btn');
+    let musicMuted = localStorage.getItem('valle-rng-muted') === '1';
+    function setMusicMuted(m) {
+        musicMuted = m;
+        bgMusic.muted = m;
+        localStorage.setItem('valle-rng-muted', m ? '1' : '0');
+        musicBtn.textContent = m ? '🔇' : '🔊';
+        musicBtn.title = m ? 'Activar música' : 'Silenciar música';
+        musicBtn.classList.toggle('muted', m);
+    }
+    musicBtn.addEventListener('click', () => setMusicMuted(!musicMuted));
+    setMusicMuted(musicMuted);
 
     function shuffle(arr) {
         for (let i = arr.length - 1; i > 0; i--) {
