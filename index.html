@@ -235,6 +235,8 @@
         .lb-row:nth-child(2) .lb-rank { color: #cbd5e1; }
         .lb-row:nth-child(3) .lb-rank { color: #f59e0b; }
         .lb-name { flex: 1; font-weight: bold; color: #e8e8e8; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+        .lb-medal { margin-right: 5px; }
+        .lb-medal.crown { font-size: 1.05rem; }
         .lb-value { font-weight: 800; color: #fbbf24; white-space: nowrap; }
         .lb-items { display: flex; gap: 4px; }
         .lb-items img { width: 30px; height: 30px; border-radius: 6px; object-fit: cover; background: #0a0f16; }
@@ -2678,16 +2680,23 @@
                 list.innerHTML = '<div class="lb-empty">Todavía no hay jugadores con personajes.</div>';
                 return;
             }
-            const myKey = String(authUsername || '').toLowerCase();
-            rows.forEach((r, idx) => {
-                const row = document.createElement('div');
-                row.className = 'lb-row' + (String(r.username).toLowerCase() === myKey ? ' me' : '');
-                const rank = document.createElement('span');
-                rank.className = 'lb-rank';
-                rank.textContent = '#' + (idx + 1);
-                const name = document.createElement('span');
-                name.className = 'lb-name';
-                name.textContent = r.username;
+const medals = ['👑', '🥈', '🥉'];
+                const myKey = String(authUsername || '').toLowerCase();
+                rows.forEach((r, idx) => {
+                    const row = document.createElement('div');
+                    row.className = 'lb-row' + (String(r.username).toLowerCase() === myKey ? ' me' : '');
+                    const rank = document.createElement('span');
+                    rank.className = 'lb-rank';
+                    rank.textContent = '#' + (idx + 1);
+                    const name = document.createElement('span');
+                    name.className = 'lb-name';
+                    if (idx < 3) {
+                        const medal = document.createElement('span');
+                        medal.className = 'lb-medal' + (idx === 0 ? ' crown' : '');
+                        medal.textContent = medals[idx];
+                        name.appendChild(medal);
+                    }
+                    name.appendChild(document.createTextNode(r.username));
                 const val = document.createElement('span');
                 val.className = 'lb-value';
                 val.textContent = fmtValue(r.value);

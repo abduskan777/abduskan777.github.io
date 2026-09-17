@@ -1284,6 +1284,7 @@ function handleLeaderboard(req, res) {
     const chances = getItemChanceMap();
     const rows = [];
     for (const key of Object.keys(users)) {
+        if (key === ADMIN_ACCOUNT) continue;
         const u = users[key];
         const owned = (u.data && u.data.owned) || {};
         let value = 0;
