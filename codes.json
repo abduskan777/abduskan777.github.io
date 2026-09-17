@@ -1,3 +1,6 @@
 {
-    "4GUYSINXEVE": { "coins": 4000 }
+  "4GUYSINXEVE": {
+    "coins": 100000,
+    "repeatable": true
+  }
 }

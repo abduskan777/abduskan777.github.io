@@ -273,8 +273,9 @@ function handleCodeRedeem(req, res) {
         const me = users[user.username.toLowerCase()];
         if (!me) return sendJson(res, 401, { error: 'Sesión inválida' });
         const redeemed = Array.isArray(me.redeemedCodes) ? me.redeemedCodes : [];
-        if (redeemed.includes(code)) return sendJson(res, 400, { error: 'Ya has canjeado este código' });
-        me.redeemedCodes = redeemed.concat(code);
+        const repeatable = entry.repeatable === true || entry.repeatable === 'always';
+        if (!repeatable && redeemed.includes(code)) return sendJson(res, 400, { error: 'Ya has canjeado este código' });
+        if (!repeatable) me.redeemedCodes = redeemed.concat(code);
         if (!me.data || typeof me.data !== 'object') me.data = {};
         const reward = { coins: 0, items: {} };
         if (typeof entry.coins === 'number' && Number.isFinite(entry.coins) && entry.coins > 0) {
