@@ -1430,7 +1430,7 @@
         <div class="stat">Desbloqueados: <span id="unlocked-count">0</span>/<span id="total-items">0</span></div>
         <div id="auth-area">
             <span id="auth-username" class="auth-username" style="display:none;"></span>
-            <button id="pvp-btn" style="display:none;"><span style="font-size:1.1rem;">âš”ï¸</span><span>Jugar</span><span id="pvp-badge" style="display:none;"></span></button>
+            <button id="pvp-btn" style="display:none;"><span style="font-size:1.1rem;">⚔️</span><span>Jugar</span><span id="pvp-badge" style="display:none;"></span></button>
             <button id="auth-btn">👤 Iniciar sesión</button>
             <button id="logout-btn" style="display:none;">Cerrar sesión</button>
             <button id="trade-btn" style="display:none;"><span style="font-size:1.1rem;">🤝</span><span>Comercio</span><span id="trade-badge" style="display:none;"></span></button>
@@ -1600,17 +1600,17 @@
     <div id="pvp-overlay" class="trade-overlay">
         <div id="modal" style="width:min(560px,94vw);">
             <div id="modal-header" style="border-color:#a78bfa;">
-                <h3 style="color:#c4b5fd;">âš”ï¸ Jugar â€” Duelos PvP</h3>
-                <button id="pvp-close">âœ•</button>
+                <h3 style="color:#c4b5fd;">⚔️ Jugar — Duelos PvP</h3>
+                <button id="pvp-close">✕</button>
             </div>
             <div style="padding:14px;display:flex;flex-direction:column;gap:10px;">
                 <div id="pvp-pending-wrap" style="display:none;">
-                    <div class="pvp-section-label">DesafÃ­os recibidos</div>
+                    <div class="pvp-section-label">Desafíos recibidos</div>
                     <div id="pvp-pending-list" class="pvp-list"></div>
                 </div>
                 <div class="pvp-section-label">Jugadores online</div>
                 <div id="pvp-online-list" class="pvp-list"><div class="pvp-empty">Cargando...</div></div>
-                <button id="pvp-refresh" class="trade-btn" style="align-self:flex-end;">ðŸ”„ Actualizar lista</button>
+                <button id="pvp-refresh" class="trade-btn" style="align-self:flex-end;">🔄 Actualizar lista</button>
             </div>
         </div>
     </div>
@@ -1619,34 +1619,34 @@
     <div id="pvp-challenge-overlay" class="trade-overlay">
         <div id="modal" style="width:min(520px,94vw);">
             <div id="modal-header" style="border-color:#fbbf24;">
-                <h3 style="color:#fbbf24;">ðŸ¤ Configurar apuesta</h3>
-                <button id="pvp-challenge-close">âœ•</button>
+                <h3 style="color:#fbbf24;">🤝 Configurar apuesta</h3>
+                <button id="pvp-challenge-close">✕</button>
             </div>
             <div style="padding:14px;display:flex;flex-direction:column;gap:12px;">
                 <div id="pvp-challenge-target" class="trade-msg" style="padding:0;"></div>
                 <div class="pvp-bet-box">
-                    <div class="pvp-section-label">QuÃ© quieres apostar</div>
+                    <div class="pvp-section-label">Qué quieres apostar</div>
                     <div class="pvp-bet-line">
-                        <label>ðŸª™ Monedas</label>
+                        <label>🪙 Monedas</label>
                         <input type="number" id="pvp-bet-coins" min="0" value="0">
                         <button class="trade-btn" id="pvp-bet-all" style="white-space:nowrap;">Todo</button>
                     </div>
                     <div class="pvp-bet-hint" id="pvp-bet-owned"></div>
-                    <div class="pvp-section-label">ðŸ‘¤ Personaje (opcional, uno)</div>
+                    <div class="pvp-section-label">👤 Personaje (opcional, uno)</div>
                     <div id="pvp-bet-items" class="pvp-item-picker"></div>
                 </div>
                 <div id="pvp-challenge-error" class="trade-msg" style="display:none;color:#f87171;padding:0;"></div>
-                <button id="pvp-challenge-send" class="trade-btn green" style="padding:12px;font-size:0.95rem;">ðŸ“¤ Enviar desafÃ­o</button>
+                <button id="pvp-challenge-send" class="trade-btn green" style="padding:12px;font-size:0.95rem;">📤 Enviar desafío</button>
             </div>
         </div>
     </div>
 
-    <!-- ===================== PvP: Responder desafÃ­o ===================== -->
+    <!-- ===================== PvP: Responder desafío ===================== -->
     <div id="pvp-respond-overlay" class="trade-overlay">
         <div id="modal" style="width:min(520px,94vw);">
             <div id="modal-header" style="border-color:#f472b6;">
-                <h3 style="color:#f472b6;">ðŸ“© Te han desafiado</h3>
-                <button id="pvp-respond-close">âœ•</button>
+                <h3 style="color:#f472b6;">📩 Te han desafiado</h3>
+                <button id="pvp-respond-close">✕</button>
             </div>
             <div style="padding:14px;display:flex;flex-direction:column;gap:12px;">
                 <div id="pvp-respond-text" class="trade-msg" style="padding:0;color:#e8e8e8;"></div>
@@ -1654,41 +1654,41 @@
                 <div class="pvp-bet-box">
                     <div class="pvp-section-label">Tu apuesta</div>
                     <div class="pvp-bet-line">
-                        <label>ðŸª™ Monedas</label>
+                        <label>🪙 Monedas</label>
                         <input type="number" id="pvp-resp-coins" min="0" value="0">
                         <button class="trade-btn" id="pvp-resp-all" style="white-space:nowrap;">Todo</button>
                     </div>
                     <div class="pvp-bet-hint" id="pvp-resp-owned"></div>
-                    <div class="pvp-section-label">ðŸ‘¤ Personaje (opcional, uno)</div>
+                    <div class="pvp-section-label">👤 Personaje (opcional, uno)</div>
                     <div id="pvp-resp-items" class="pvp-item-picker"></div>
                 </div>
                 <div id="pvp-respond-error" class="trade-msg" style="display:none;color:#f87171;padding:0;"></div>
                 <div style="display:flex;gap:10px;">
-                    <button id="pvp-reject" class="trade-btn red" style="flex:1;padding:12px;">âŒ Rechazar</button>
-                    <button id="pvp-accept" class="trade-btn green" style="flex:1;padding:12px;">âœ… Aceptar</button>
+                    <button id="pvp-reject" class="trade-btn red" style="flex:1;padding:12px;">❌ Rechazar</button>
+                    <button id="pvp-accept" class="trade-btn green" style="flex:1;padding:12px;">✅ Aceptar</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- ===================== PvP: PreparaciÃ³n ===================== -->
+    <!-- ===================== PvP: Preparación ===================== -->
     <div id="pvp-prep-overlay" class="trade-overlay">
         <div id="modal" style="width:min(760px,96vw);">
             <div id="modal-header" style="border-color:#38bdf8;">
-                <h3 style="color:#38bdf8;">ðŸ› ï¸ PreparaciÃ³n de la partida</h3>
-                <button id="pvp-prep-close">âœ•</button>
+                <h3 style="color:#38bdf8;">🛠️ Preparación de la partida</h3>
+                <button id="pvp-prep-close">✕</button>
             </div>
             <div style="padding:14px;display:flex;flex-direction:column;gap:12px;max-height:82vh;overflow-y:auto;">
                 <div id="pvp-prep-bets" class="pvp-bet-summary"></div>
                 <div>
                     <div class="pvp-section-label">Tu mazo (<span id="pvp-deck-count">0</span>/8)</div>
-                    <div class="pvp-bet-hint">Elige hasta 8 personajes que poseas. Si no eliges, se usarÃ¡ un mazo automÃ¡tico.</div>
+                    <div class="pvp-bet-hint">Elige hasta 8 personajes que poseas. Si no eliges, se usará un mazo automático.</div>
                     <div id="pvp-deck-grid" class="pvp-deck-grid" style="margin-top:8px;"></div>
                 </div>
                 <div id="pvp-prep-status" class="trade-msg" style="padding:0;"></div>
                 <div style="display:flex;gap:10px;">
-                    <button id="pvp-prep-cancel" class="trade-btn red" style="flex:1;padding:12px;">âœ• Cancelar</button>
-                    <button id="pvp-prep-confirm" class="trade-btn green" style="flex:2;padding:12px;">âœ“ Confirmar apuesta</button>
+                    <button id="pvp-prep-cancel" class="trade-btn red" style="flex:1;padding:12px;">✕ Cancelar</button>
+                    <button id="pvp-prep-confirm" class="trade-btn green" style="flex:2;padding:12px;">✓ Confirmar apuesta</button>
                 </div>
             </div>
         </div>
@@ -1698,8 +1698,8 @@
     <div id="pvp-game-overlay" class="trade-overlay">
         <div id="pvp-arena">
             <div id="modal-header" style="border-color:#a78bfa;background:#0d1520;">
-                <h3 style="color:#c4b5fd;">âš”ï¸ Duelo</h3>
-                <button id="pvp-game-close" title="Rendirse y salir">âœ•</button>
+                <h3 style="color:#c4b5fd;">⚔️ Duelo</h3>
+                <button id="pvp-game-close" title="Rendirse y salir">✕</button>
             </div>
             <div class="pvp-board" id="pvp-board"></div>
         </div>
@@ -1713,7 +1713,7 @@
             </div>
             <div style="padding:16px;">
                 <div id="pvp-result-content" class="pvp-result-box"></div>
-                <button id="pvp-result-close" class="trade-btn green" style="width:100%;padding:12px;margin-top:8px;">â†© Volver al menÃº</button>
+                <button id="pvp-result-close" class="trade-btn green" style="width:100%;padding:12px;margin-top:8px;">↩ Volver al menú</button>
             </div>
         </div>
     </div>
@@ -2644,7 +2644,7 @@
     function bumpTradeChatUnread() {
         tradeChatUnread++;
         const btn = document.getElementById('tw-chat-btn');
-        if (btn) btn.textContent = 'ðŸ’¬ Chat (' + tradeChatUnread + ')';
+        if (btn) btn.textContent = '💬 Chat (' + tradeChatUnread + ')';
     }
 
     function renderTradeChatMessages() {
@@ -2652,7 +2652,7 @@
         if (!box) return;
         box.innerHTML = '';
         if (!tradeChatMessages.length) {
-            box.innerHTML = '<div class="chat-line chat-sys">Sin mensajes todavÃ­a. Â¡Negocia!</div>';
+            box.innerHTML = '<div class="chat-line chat-sys">Sin mensajes todavía. ¡Negocia!</div>';
             return;
         }
         const myKey = String(authUsername || '').toLowerCase();
@@ -2682,7 +2682,7 @@
             panel.classList.remove('hidden');
             tradeChatUnread = 0;
             const btn = document.getElementById('tw-chat-btn');
-            if (btn) btn.textContent = 'ðŸ’¬ Chat';
+            if (btn) btn.textContent = '💬 Chat';
             if (!tradeChatMessages.length) loadTradeChatHistory();
             renderTradeChatMessages();
             const input = document.getElementById('tw-chat-input');
@@ -2719,12 +2719,12 @@
             });
             const data = await res.json();
             if (!res.ok || !data.ok) {
-                showTradeToast('âš ï¸ ' + (data.error || 'No se pudo enviar el mensaje'));
+                showTradeToast('⚠️ ' + (data.error || 'No se pudo enviar el mensaje'));
                 return;
             }
             input.value = '';
         } catch (e) {
-            showTradeToast('âš ï¸ No se pudo conectar con el servidor');
+            showTradeToast('⚠️ No se pudo conectar con el servidor');
             refreshTradeMenu();
         }
     }
@@ -2810,7 +2810,7 @@
         const chatMsgs = document.createElement('div');
         chatMsgs.id = 'tw-chat-messages';
         chatMsgs.className = 'tw-chat-messages';
-        chatMsgs.innerHTML = '<div class="chat-line chat-sys">Sin mensajes todavÃ­a. Â¡Negocia!</div>';
+        chatMsgs.innerHTML = '<div class="chat-line chat-sys">Sin mensajes todavía. ¡Negocia!</div>';
         chatPanel.appendChild(chatMsgs);
         const chatInputRow = document.createElement('div');
         chatInputRow.className = 'chat-input-row';
@@ -2841,7 +2841,7 @@
         const chatBtn = document.createElement('button');
         chatBtn.id = 'tw-chat-btn';
         chatBtn.className = 'tw-chat-btn';
-        chatBtn.textContent = tradeChatUnread > 0 ? 'ðŸ’¬ Chat (' + tradeChatUnread + ')' : 'ðŸ’¬ Chat';
+        chatBtn.textContent = tradeChatUnread > 0 ? '💬 Chat (' + tradeChatUnread + ')' : '💬 Chat';
         chatBtn.addEventListener('click', toggleTradeChat);
         bottom.appendChild(chatBtn);
 
