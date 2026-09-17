@@ -3732,7 +3732,7 @@ const medals = ['👑', '🥈', '🥉'];
             card.appendChild(rarity);
             const chance = document.createElement('div');
             chance.className = 'idx-chance';
-            chance.textContent = chanceStr(item.chance);
+            chance.textContent = item.exclusive ? 'Exclusivo en el casino' : chanceStr(item.chance);
             card.appendChild(chance);
             document.getElementById('modal-body').appendChild(card);
         });
@@ -4578,7 +4578,7 @@ const medals = ['👑', '🥈', '🥉'];
 
             const chance = document.createElement('div');
             chance.className = 't-chance';
-            chance.textContent = chanceStr(item.chance);
+            chance.textContent = item.exclusive ? 'Exclusivo en el casino' : chanceStr(item.chance);
             card.appendChild(chance);
 
             const rarity = document.createElement('div');
