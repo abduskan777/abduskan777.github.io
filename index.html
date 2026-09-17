@@ -880,6 +880,7 @@
         }
         .tester-btn-item:hover { transform: scale(1.05); border-color: #7c3aed; }
         .tester-epic { position: relative; border-width: 3px; box-shadow: 0 0 14px rgba(244, 114, 182, 0.4); }
+        .tester-limited { position: relative; border-width: 3px; box-shadow: 0 0 16px rgba(0, 255, 255, 0.5); }
         .t-epic-badge {
             position: absolute;
             top: 2px;
@@ -4658,11 +4659,15 @@ const medals = ['👑', '🥈', '🥉'];
         cartRow.appendChild(clearBtn);
         body.appendChild(cartRow);
 
-        const sorted = [...ITEMS].sort((a, b) => b.chance - a.chance);
+        const sorted = [...ITEMS].sort((a, b) => ((b.rarity === 'limited') ? 1 : 0) - ((a.rarity === 'limited') ? 1 : 0) || b.chance - a.chance);
         sorted.forEach(item => {
             const card = document.createElement('div');
             card.className = 'tester-btn-item';
             card.style.borderColor = colorFor(item);
+
+            if (item.rarity === 'limited') {
+                card.classList.add('tester-limited');
+            }
 
             if (item.epic) {
                 card.classList.add('tester-epic');
