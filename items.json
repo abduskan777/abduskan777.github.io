@@ -9,7 +9,7 @@
         { "id": "tomas", "name": "Tomás", "chance": 18, "image": "img/tomas.png" },
         { "id": "manuelfarina", "name": "Manuel Farina", "chance": 32, "image": "img/manuelfarina.png" },
         { "id": "dianavilas", "name": "Diana Vilas", "chance": 64, "image": "img/dianavilas.png" },
-        { "id": "sorriso", "name": "Sorriso", "chance": 128, "image": "img/sorriso.png" },
+        { "id": "sorriso", "name": "Sorriso", "chance": 128, "image": "img/fernando.jpg" },
         { "id": "gubbyfeet", "name": "Gubby Feet", "chance": 300, "image": "img/gubbyfeet.png" },
         { "id": "gubbypeanut", "name": "Gubby Peanut", "chance": 600, "image": "img/gubbypeanut.png" },
         { "id": "goldenmejuto", "name": "Golden Mejuto", "chance": 1500, "image": "img/goldenmejuto.jfif" },
