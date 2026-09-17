@@ -1302,6 +1302,33 @@
         }
         #music-btn.muted { border-color: #f8717166; color: #fca5a5; box-shadow: 0 0 12px rgba(248,113,113,0.2); }
         #music-btn.muted:hover { box-shadow: 0 0 18px rgba(248,113,113,0.4); }
+        #music-pause-btn {
+            position: fixed;
+            bottom: 18px;
+            left: 72px;
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            border: 1px solid #34d39966;
+            background: #0b1118cc;
+            color: #6ee7b7;
+            font-size: 1.25rem;
+            cursor: pointer;
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all .2s ease;
+            box-shadow: 0 0 12px rgba(52,211,153,0.2);
+            backdrop-filter: blur(4px);
+        }
+        #music-pause-btn:hover {
+            background: #111c27ee;
+            box-shadow: 0 0 18px rgba(52,211,153,0.45);
+            transform: scale(1.06);
+        }
+        #music-pause-btn.paused { border-color: #fbbf2466; color: #fcd34d; box-shadow: 0 0 12px rgba(251,191,36,0.2); }
+        #music-pause-btn.paused:hover { box-shadow: 0 0 18px rgba(251,191,36,0.4); }
         .reveal-blind { animation: blindCycle .09s linear; }
         @keyframes blindCycle { from { transform: rotate(-1.5deg) scale(1.02); } to { transform: rotate(1.5deg) scale(.98); } }
 
@@ -1905,6 +1932,7 @@
     <audio id="bg-music" preload="auto"></audio>
 
     <button id="music-btn" title="Silenciar música">🔊</button>
+    <button id="music-pause-btn" title="Pausar música">⏸️</button>
 
     <script>
     const SAVE_KEY = 'valle-rng-save-v4';
@@ -5735,6 +5763,20 @@ const medals = ['👑', '🥈', '🥉'];
     musicBtn.addEventListener('click', () => setMusicMuted(!musicMuted));
     setMusicMuted(musicMuted);
 
+    const musicPauseBtn = document.getElementById('music-pause-btn');
+    let musicPaused = localStorage.getItem('valle-rng-paused') === '1';
+    function setMusicPaused(p) {
+        musicPaused = p;
+        localStorage.setItem('valle-rng-paused', p ? '1' : '0');
+        musicPauseBtn.textContent = p ? '▶️' : '⏸️';
+        musicPauseBtn.title = p ? 'Reanudar música' : 'Pausar música';
+        musicPauseBtn.classList.toggle('paused', p);
+        if (p) bgMusic.pause();
+        else bgMusic.play().catch(() => {});
+    }
+    musicPauseBtn.addEventListener('click', () => setMusicPaused(!musicPaused));
+    setMusicPaused(musicPaused);
+
     function shuffle(arr) {
         for (let i = arr.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
@@ -5750,7 +5792,7 @@ const medals = ['👑', '🥈', '🥉'];
             musicIndex = 0;
         }
         bgMusic.src = 'music/' + encodeURIComponent(musicPlaylist[musicIndex]);
-        bgMusic.play().catch(() => {});
+        if (!musicPaused) bgMusic.play().catch(() => {});
         musicIndex++;
     }
 
