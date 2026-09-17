@@ -1973,6 +1973,7 @@
         { slot: 'pink', label: 'Clasificado', color: '#d32ce6', rate: 1.6 },
         { slot: 'red', label: 'Secreto', color: '#eb4b4b', rate: 0.3 },
         { slot: 'gold', label: 'Dorado ★', color: '#ffd700', rate: 0.1 },
+        { slot: 'legendario', label: 'Legendario ★', color: '#f59e0b', rate: 0.08 },
     ];
 
     const CASES = [
@@ -1986,6 +1987,7 @@
                 { id: 'goldenalba', slot: 'pink' }, { id: 'rodrigorey', slot: 'pink' },
                 { id: 'manuelcocinillas', slot: 'red' }, { id: 'diamondalba', slot: 'red' },
                 { id: 'idksterling', slot: 'gold' },
+                { id: 'lilbro', slot: 'legendario' },
             ],
         },
         {
@@ -3621,6 +3623,13 @@ const medals = ['👑', '🥈', '🥉'];
         return c < 1000 ? `1 en ${c}` : `1 en ${c.toLocaleString()}`;
     }
 
+    function chanceLabel(item) {
+        if (item.exclusiveLabel) return item.exclusiveLabel;
+        if (item.rarity === 'limited') return 'Exclusivo en tienda';
+        if (item.exclusive) return 'Exclusivo en el casino';
+        return chanceStr(item.chance);
+    }
+
     const INFINITE_CAP = 999999999;
     function qtyText(q) { return q >= INFINITE_CAP ? '∞' : String(q); }
 
@@ -3794,7 +3803,7 @@ const medals = ['👑', '🥈', '🥉'];
             card.appendChild(rarity);
             const chance = document.createElement('div');
             chance.className = 'idx-chance';
-            chance.textContent = item.rarity === 'limited' ? 'Exclusivo en tienda' : (item.exclusive ? 'Exclusivo en el casino' : chanceStr(item.chance));
+            chance.textContent = chanceLabel(item);
             card.appendChild(chance);
             document.getElementById('modal-body').appendChild(card);
         });
@@ -4729,7 +4738,7 @@ const medals = ['👑', '🥈', '🥉'];
 
             const chance = document.createElement('div');
             chance.className = 't-chance';
-            chance.textContent = item.rarity === 'limited' ? 'Exclusivo en tienda' : (item.exclusive ? 'Exclusivo en el casino' : chanceStr(item.chance));
+            chance.textContent = chanceLabel(item);
             card.appendChild(chance);
 
             const rarity = document.createElement('div');
