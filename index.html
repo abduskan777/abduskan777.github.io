@@ -2432,6 +2432,7 @@
         }, 10000);
         try {
             tradeStream = new EventSource(API_BASE + '/api/trade/stream?token=' + encodeURIComponent(authToken));
+            tradeStream.onopen = () => { if (authToken) load(); };
             tradeStream.onmessage = (e) => {
                 let msg = {};
                 try { msg = JSON.parse(e.data); } catch (_) { return; }
@@ -2757,8 +2758,8 @@
     }
 
     // ---- Ventana de trade (Adopt Me) ----
-        const previous = currentTrade;
     function openTradeWindow(t) {
+        const previous = currentTrade;
         if (!previous || previous.id !== t.id) {
             tradeChatMessages = [];
             tradeChatOpen = false;
@@ -3075,6 +3076,7 @@
             });
             const data = await res.json();
             if (!res.ok || !data.ok) return showTradeToast('⚠️ ' + (data.error || 'Error'));
+            if (data.trade && data.trade.status === 'active') currentTrade = data.trade;
         } catch (e) {
             showTradeToast('⚠️ No se pudo conectar con el servidor');
         }
@@ -3091,6 +3093,7 @@
             });
             const data = await res.json();
             if (!res.ok || !data.ok) return showTradeToast('⚠️ ' + (data.error || 'Error'));
+            if (data.trade && data.trade.status === 'active') currentTrade = data.trade;
         } catch (e) {
             showTradeToast('⚠️ No se pudo conectar con el servidor');
         }

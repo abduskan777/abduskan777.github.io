@@ -6,7 +6,7 @@ const crypto = require('crypto');
 const ROOT = __dirname;
 const PORT = process.env.PORT || 3000;
 const USERS_FILE = path.join(ROOT, 'users.json');
-const ONLINE_WINDOW_MS = 120000;
+const ONLINE_WINDOW_MS = 600000;
 
 const MIME = {
     '.html': 'text/html; charset=utf-8',
@@ -1169,6 +1169,7 @@ function handleSave(req, res) {
     const user = findUserByToken(req.headers['x-token']);
     if (!user) return sendJson(res, 401, { error: 'Sesión inválida' });
     if (pvpHasBet(user.username.toLowerCase())) return sendJson(res, 403, { error: 'No puedes guardar datos mientras tienes una apuesta activa en PvP' });
+    if (getTrade(user.username.toLowerCase(), ['active'])) return sendJson(res, 403, { error: 'No puedes guardar datos mientras tienes un trade activo' });
     readBody(req).then(body => {
         try {
             const parsed = JSON.parse(body || '{}');
