@@ -1948,7 +1948,7 @@
         {
             id: 'rollSpeed', icon: '⚡', name: 'Velocidad de Roll',
             desc: 'Reduce el cooldown entre rolls (niveles 6-10 lo bajan aún más)',
-            maxLevel: 10, baseCost: 50, costMult: 3.5,
+            maxLevel: 10, baseCost: 25, costMult: 3.0,
             effect: (lvl) => lvl <= 5
                 ? Math.max(100, BASE_COOLDOWN_MS - lvl * 140)
                 : Math.max(50, 100 - (lvl - 5) * 10),
@@ -1956,13 +1956,13 @@
         {
             id: 'luckBoost', icon: '🍀', name: 'Suerte Extra',
             desc: '+0.1x suerte por nivel',
-            maxLevel: 20, baseCost: 30, costMult: 2.2,
+            maxLevel: 20, baseCost: 15, costMult: 1.9,
             effect: (lvl) => 1 + lvl * 0.1,
         },
         {
             id: 'coinMulti', icon: '💰', name: 'Mejor Precio de Venta',
             desc: '+50% monedas al vender personajes',
-            maxLevel: 10, baseCost: 150, costMult: 3.5,
+            maxLevel: 10, baseCost: 75, costMult: 3.0,
             effect: (lvl) => 1 + lvl * 0.5,
         },
     ];
