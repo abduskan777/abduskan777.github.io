@@ -5749,16 +5749,31 @@ const medals = ['👑', '🥈', '🥉'];
 
     bgMusic.addEventListener('ended', playNextTrack);
 
-    async function initMusic() {
-        try {
-            const res = await fetch(API_BASE + '/api/music');
-            const files = await res.json();
-            if (files.length === 0) return;
-            shuffle(files);
-            musicPlaylist = files;
-            musicIndex = 0;
-            playNextTrack();
-        } catch (e) {}
+    const LOCAL_MUSIC = [
+        'WhatsApp Audio 2026-09-17 at 20.08.43 (1).mp4',
+        'WhatsApp Audio 2026-09-17 at 20.08.43.mp4',
+        'WhatsApp Audio 2026-09-17 at 20.08.44.mp4',
+        'WhatsApp Audio 2026-09-17 at 20.14.54 (1).mp4',
+        'WhatsApp Audio 2026-09-17 at 20.14.54.mp4',
+        'WhatsApp Audio 2026-09-17 at 20.14.57 (1).mp4',
+        'WhatsApp Audio 2026-09-17 at 20.14.57 (2).mp4',
+        'WhatsApp Audio 2026-09-17 at 20.14.57.mp4',
+        'WhatsApp Audio 2026-09-17 at 20.14.58 (1).mp4',
+        'WhatsApp Audio 2026-09-17 at 20.14.58 (2).mp4',
+        'WhatsApp Audio 2026-09-17 at 20.14.58 (3).mp4',
+        'WhatsApp Audio 2026-09-17 at 20.14.58.mp4',
+        'WhatsApp Audio 2026-09-17 at 20.18.37.mp4',
+        'WhatsApp Audio 2026-09-17 at 20.18.38.mp4',
+        'WhatsApp Audio 2026-09-17 at 20.19.27.mp4',
+    ];
+
+    function initMusic() {
+        const files = LOCAL_MUSIC.slice();
+        if (files.length === 0) return;
+        shuffle(files);
+        musicPlaylist = files;
+        musicIndex = 0;
+        playNextTrack();
     }
 
     document.addEventListener('click', function firstClick() {
