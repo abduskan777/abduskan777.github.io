@@ -207,6 +207,27 @@ function handleLogout(req, res) {
                         cancelTrade(tr, 'desconectado');
                     }
                 }
+                const pvpM = pvpMatchForKey(loggedOutKey);
+                if (pvpM) {
+                    const isC = String(pvpM.challenger.key) === loggedOutKey;
+                    const offender = isC ? pvpM.challenger : pvpM.opponent;
+                    const other = isC ? pvpM.opponent : pvpM.challenger;
+                    if (pvpM.status === 'playing' && !pvpM.winner) {
+                        pvpM.winner = other;
+                        pvpM.reason = 'abandono';
+                        addLogHelper(pvpM, `${offender.username} cerró sesión y abandona la partida`, 'system');
+                        finalizeMatch(pvpM);
+                        saveUsers(users);
+                    } else if (pvpM.status === 'open' || pvpM.status === 'preparing') {
+                        refundEscrow(users[pvpM.challenger.key], pvpM.challenger.escrow);
+                        refundEscrow(users[pvpM.opponent.key], pvpM.opponent.escrow);
+                        pvpM.challenger.escrow = { coins: 0, items: {} };
+                        pvpM.opponent.escrow = { coins: 0, items: {} };
+                        pvpM.status = 'cancelled';
+                        pvpMatches.delete(pvpM.id);
+                        saveUsers(users);
+                    }
+                }
             }
         }
         sendJson(res, 200, { ok: true });
@@ -382,6 +403,741 @@ function handleHeartbeat(req, res) {
     }).catch(() => sendJson(res, 500, { error: 'Error interno' }));
 }
 
+// ===================== PvP 1v1 =====================
+const PVP_START_HP = 20;
+const PVP_MAX_ENERGY = 10;
+const PVP_START_ENERGY = 3;
+const PVP_START_HAND = 4;
+const PVP_MAX_HAND = 8;
+const PVP_MAX_DECK = 8;
+const PVP_MAX_FIELD = 3;
+const PVP_TURN_ENERGY = 2;
+const PVP_TIMEOUT_MS = 90000;
+const PVP_CANCEL_MS = 120000;
+const pvpMatches = new Map();
+let pvpResultsLog = [];
+const PVP_LOG_FILE = path.join(ROOT, 'pvp_log.json');
+
+function savePvpLog() {
+    if (dbPool) {
+        const snapshot = JSON.stringify(pvpResultsLog);
+        dbWriteChain = dbWriteChain
+            .catch(() => {})
+            .then(() => dbPool.query(
+                'INSERT INTO app_kv (k, v) VALUES (\'pvp_log\', $1) ON CONFLICT (k) DO UPDATE SET v = EXCLUDED.v',
+                [snapshot]
+            ));
+        dbWriteChain.catch(e => console.error('DB pvp log error:', e.message));
+    } else {
+        try { fs.writeFileSync(PVP_LOG_FILE, JSON.stringify(pvpResultsLog)); } catch (e) {}
+    }
+}
+
+function loadPvpLogFromDb() {
+    if (!dbPool) return;
+    dbPool.query("SELECT v FROM app_kv WHERE k = 'pvp_log'").then(res => {
+        if (res.rows[0]) {
+            try { pvpResultsLog = JSON.parse(res.rows[0].v); } catch (e) { pvpResultsLog = []; }
+        }
+    }).catch(() => {});
+}
+
+function pvpTierIndex(chance) {
+    const c = chance;
+    if (c <= 16) return 0;
+    if (c <= 128) return 1;
+    if (c <= 8000) return 2;
+    if (c <= 400000) return 3;
+    if (c <= 10000000) return 4;
+    return 5;
+}
+
+function cardForId(id) {
+    const chanceMap = getItemChanceMap();
+    const chance = chanceMap[id] || 100000;
+    const r = pvpTierIndex(chance);
+    return { id: id, atk: 1 + r * 2, hp: 4 + r * 5, cost: 1 + r };
+}
+
+function ownData(user) {
+    if (!user.data || typeof user.data !== 'object') user.data = {};
+    if (!user.data.owned || typeof user.data.owned !== 'object') user.data.owned = {};
+    user.data.coins = Number(user.data.coins) || 0;
+    if (Number.isNaN(user.data.totalCoins)) user.data.totalCoins = user.data.coins;
+    return user.data;
+}
+
+function pvpMatchForKey(key) {
+    for (const m of pvpMatches.values()) {
+        if (String(m.challenger.key) === key || String(m.opponent.key) === key) return m;
+    }
+    return null;
+}
+
+function pvpHasBet(username) {
+    const key = String(username).toLowerCase();
+    for (const m of pvpMatches.values()) {
+        if (m.status === 'finished' || m.status === 'cancelled') continue;
+        if (String(m.challenger.key) === key && m.challenger.escrow) {
+            if (m.challenger.escrow.coins > 0 || Object.keys(m.challenger.escrow.items || {}).length) return true;
+        }
+        if (String(m.opponent.key) === key && m.opponent.escrow) {
+            if (m.opponent.escrow.coins > 0 || Object.keys(m.opponent.escrow.items || {}).length) return true;
+        }
+    }
+    return false;
+}
+
+function escrowSize(escrow) {
+    if (!escrow) return { coins: 0, items: {} };
+    const items = {};
+    for (const id in (escrow.items || {})) if (escrow.items[id] > 0) items[id] = escrow.items[id];
+    return { coins: escrow.coins || 0, items: items };
+}
+
+function addWinningsToUser(user, escrow) {
+    const data = ownData(user);
+    data.coins += escrow.coins || 0;
+    data.totalCoins += escrow.coins || 0;
+    for (const id in (escrow.items || {})) {
+        if (escrow.items[id] > 0) data.owned[id] = (data.owned[id] || 0) + escrow.items[id];
+    }
+    return escrow;
+}
+
+function addLogHelper(m, msg, type, data) {
+    m.log.push({ t: Date.now(), s: type || 'info', msg: msg, data: data || {} });
+    if (m.log.length > 120) m.log.splice(0, m.log.length - 120);
+}
+
+function validateBet(user, bet, users) {
+    const data = ownData(user);
+    let coins = 0;
+    let item = null;
+    if (bet && typeof bet === 'object') {
+        if (bet.coins !== undefined && bet.coins !== null) {
+            coins = Math.floor(Number(bet.coins) || 0);
+            if (coins < 0) coins = 0;
+        }
+        if (bet.item && bet.item.id) {
+            const qty = Math.floor(Number(bet.item.qty) || 0);
+            if (qty > 0) item = { id: String(bet.item.id), qty: qty };
+        }
+    }
+    if (coins <= 0 && !item) return { error: 'La apuesta debe incluir monedas y/o un personaje' };
+    if (coins > 0 && data.coins < coins) return { error: 'No tienes suficientes monedas para apostar' };
+    if (item && (!data.owned[item.id] || data.owned[item.id] < item.qty)) return { error: 'No posees ese personaje para apostar' };
+    return { coins: coins, item: item };
+}
+
+function escrowFromUser(user, bet) {
+    const data = ownData(user);
+    const escrow = { coins: bet.coins, items: {} };
+    if (bet.coins > 0) data.coins -= bet.coins;
+    if (bet.item) {
+        data.owned[bet.item.id] = (data.owned[bet.item.id] || 0) - bet.item.qty;
+        escrow.items[bet.item.id] = (escrow.items[bet.item.id] || 0) + bet.item.qty;
+    }
+    return escrow;
+}
+
+function refundEscrow(user, escrow) {
+    if (!escrow) return;
+    const data = ownData(user);
+    const sz = escrowSize(escrow);
+    if (sz.coins > 0) data.coins += sz.coins;
+    for (const id in sz.items) data.owned[id] = (data.owned[id] || 0) + sz.items[id];
+}
+
+function publicMatchView(m, meKey) {
+    const isChallenger = String(m.challenger.key) === meKey;
+    const me = isChallenger ? m.challenger : m.opponent;
+    const op = isChallenger ? m.opponent : m.challenger;
+    const view = (player, own, oppName) => ({
+        key: player.key,
+        username: player.username,
+        hp: player.hp,
+        energy: player.energy,
+        handSize: (player.hand || []).length,
+        hand: own ? (player.hand || []).slice() : [],
+        field: (player.field || []).map(f => own ? f : { uid: f.uid, id: f.id, atk: f.atk, hp: f.hp, canAttack: false }),
+        deckLen: (player.deck || []).length,
+        confirm: !!player.confirm,
+        bet: player.bet || null,
+        escrow: player.escrow ? escrowSize(player.escrow) : { coins: 0, items: {} },
+        deckSelected: Array.isArray(player.deckSelected) ? player.deckSelected.slice() : null,
+        lastSeen: player.lastSeen || 0,
+    });
+    return {
+        id: m.id,
+        status: m.status,
+        version: m.version,
+        turn: m.turn,
+        phase: m.phase,
+        winner: m.winner ? m.winner.username : null,
+        reason: m.reason || null,
+        result: m.result || null,
+        isChallenger: isChallenger,
+        me: view(me, true, op.username),
+        opponent: view(op, false, me.username),
+        log: m.log,
+        createdAt: m.createdAt,
+    };
+}
+
+function buildAutoDeck(user, users) {
+    const data = ownData(user);
+    const chanceMap = getItemChanceMap();
+    const ownedIds = Object.keys(data.owned).filter(id => (data.owned[id] || 0) > 0);
+    const pool = [];
+    for (const id of ownedIds) {
+        const w = Math.max(1, Math.round(500000 / Math.max(1, chanceMap[id] || 500000)));
+        for (let i = 0; i < w && i < 8; i++) pool.push(id);
+    }
+    const deck = [];
+    const bag = pool.slice();
+    while (deck.length < PVP_MAX_DECK && bag.length > 0) {
+        const idx = Math.floor(Math.random() * bag.length);
+        deck.push(bag.splice(idx, 1)[0]);
+    }
+    return deck;
+}
+
+function startPlaying(m) {
+    const users = loadUsers();
+    const a = users[m.challenger.key];
+    const b = users[m.opponent.key];
+    m.status = 'playing';
+    m.winner = null;
+    m.reason = null;
+    for (const pl of [m.challenger, m.opponent]) {
+        const u = pl.key === m.challenger.key ? a : b;
+        const chosen = Array.isArray(pl.deckSelected) && pl.deckSelected.length > 0 ? pl.deckSelected : null;
+        let deck = chosen;
+        if (!deck) deck = buildAutoDeck(u, users);
+        deck = deck.slice(0, PVP_MAX_DECK);
+        pl.deck = deck.slice();
+        pl.deckLen = deck.length;
+        pl.hand = [];
+        pl.field = [];
+        pl.energy = PVP_START_ENERGY;
+        pl.hp = PVP_START_HP;
+        pl.dealtThisTurn = 0;
+    }
+    m.turn = 0;
+    m.phase = 'play';
+    m.version++;
+    drawAtTurnStart(m, m.challenger);
+    const c = m.challenger, o = m.opponent;
+    addLogHelper(m, `${c.username} empieza la partida`, 'system');
+    addLogHelper(m, `${c.username}: ${c.hand.length} cartas en mano`, 'draw');
+    addLogHelper(m, `${o.username}: ${o.hand.length} cartas en mano`, 'draw');
+    addLogHelper(m, `Turno de ${c.username}`, 'turn');
+}
+
+function drawAtTurnStart(m, pl) {
+    for (let i = 0; i < PVP_START_HAND; i++) {
+        if (pl.hand.length >= PVP_MAX_HAND) break;
+        if (pl.deck.length === 0) { addLogHelper(m, `${pl.username} no tiene cartas que robar`, 'draw'); return; }
+        pl.hand.push(pl.deck.shift());
+    }
+}
+
+function endTurn(m, pl) {
+    pl.energy = Math.min(PVP_MAX_ENERGY, pl.energy + PVP_TURN_ENERGY);
+    for (const f of pl.field) f.canAttack = true;
+    m.turn = m.turn === 0 ? 1 : 0;
+    m.phase = 'play';
+    const next = m.turn === 0 ? m.challenger : m.opponent;
+    if (next.deck.length === 0 && next.hand.length >= PVP_MAX_HAND) {
+        m.reason = 'deckout';
+        m.winner = m.turn === 0 ? m.opponent : m.challenger;
+        addLogHelper(m, `${next.username} se queda sin cartas y pierde`, 'system');
+        finalizeMatch(m);
+        return;
+    }
+    drawAtTurnStart(m, next);
+    addLogHelper(m, `Turno de ${next.username} (+${PVP_TURN_ENERGY} energía)`, 'turn');
+    m.version++;
+}
+
+function finalizeMatch(m) {
+    if (m.status === 'finished') return;
+    const users = loadUsers();
+    const a = users[m.challenger.key];
+    const b = users[m.opponent.key];
+    if (m.winner) {
+        const isC = String(m.winner.key) === String(m.challenger.key);
+        const w = isC ? m.challenger : m.opponent;
+        const l = isC ? m.opponent : m.challenger;
+        const wUser = isC ? a : b;
+        const gains = { coins: 0, items: {} };
+        const ws = escrowSize(w.escrow);
+        const ls = escrowSize(l.escrow);
+        gains.coins = (ws.coins || 0) + (ls.coins || 0);
+        for (const id in ws.items) gains.items[id] = (gains.items[id] || 0) + ws.items[id];
+        for (const id in ls.items) gains.items[id] = (gains.items[id] || 0) + ls.items[id];
+        addWinningsToUser(wUser, gains);
+        m.result = {
+            winner: w.username,
+            loser: l.username,
+            gained: gains,
+            lost: escrowSize(l.escrow),
+        };
+        addLogHelper(m, `${w.username} gana la partida${m.reason ? ' (' + m.reason + ')' : ''}`, 'win');
+        const entry = {
+            id: m.id,
+            at: Date.now(),
+            winner: w.username,
+            loser: l.username,
+            reason: m.reason || 'normal',
+            bets: { winner: escrowSize(w.escrow), loser: escrowSize(l.escrow), gained: gains },
+        };
+        pvpResultsLog.unshift(entry);
+        if (pvpResultsLog.length > 200) pvpResultsLog.length = 200;
+        savePvpLog();
+        saveUsers(users);
+    } else {
+        // empate imposible salvo desconexión mutua
+        for (const pl of [m.challenger, m.opponent]) {
+            const u = pl.key === m.challenger.key ? a : b;
+            if (u) refundEscrow(u, pl.escrow);
+        }
+        m.result = { winner: null, loser: null, gained: { coins: 0, items: {} }, lost: { coins: 0, items: {} } };
+        saveUsers(users);
+    }
+    m.status = 'finished';
+    m.version++;
+}
+
+function handlePvpPlayers(req, res) {
+    const user = findUserByToken(req.headers['x-token']);
+    if (!user) return sendJson(res, 401, { error: 'Sesión inválida' });
+    const users = loadUsers();
+    const meKey = user.username.toLowerCase();
+    const list = [];
+    for (const key of Object.keys(users)) {
+        if (key === meKey) continue;
+        const u = users[key];
+        if (!u.username) continue;
+        const online = isOnline(u);
+        const mActive = pvpMatchForKey(key);
+        let status = 'offline';
+        if (online) {
+            if (mActive && (mActive.status === 'playing' || mActive.status === 'preparing')) status = 'enpartida';
+            else status = 'disponible';
+        }
+        list.push({ username: u.username, status: status, online: online, inMatch: !!mActive });
+    }
+    sendJson(res, 200, { ok: true, players: list });
+}
+
+function handlePvpChallenge(req, res) {
+    readBody(req).then(body => {
+        let parsed;
+        try { parsed = JSON.parse(body || '{}'); } catch (e) { parsed = {}; }
+        const user = findUserByToken(parsed.token);
+        if (!user) return sendJson(res, 401, { error: 'Sesión inválida' });
+        const users = loadUsers();
+        const meKey = user.username.toLowerCase();
+        if (pvpMatchForKey(meKey)) return sendJson(res, 400, { error: 'Ya estás en una partida o desafío' });
+        const targetKey = String(parsed.target || '').toLowerCase();
+        const target = users[targetKey];
+        if (!target || !target.username) return sendJson(res, 400, { error: 'Jugador no encontrado' });
+        if (targetKey === meKey) return sendJson(res, 400, { error: 'No puedes desafiarte a ti mismo' });
+        if (!isOnline(target)) return sendJson(res, 400, { error: 'Ese jugador no está online' });
+        if (pvpMatchForKey(targetKey)) return sendJson(res, 400, { error: 'Ese jugador ya está en una partida' });
+        const bet = validateBet(user, parsed.bet, users);
+        if (bet.error) return sendJson(res, 400, { error: bet.error });
+        const escrow = escrowFromUser(user, bet);
+        const m = {
+            id: crypto.randomBytes(5).toString('hex'),
+            status: 'open',
+            version: 0,
+            turn: 0,
+            phase: 'play',
+            log: [],
+            createdAt: Date.now(),
+            winner: null,
+            reason: null,
+            result: null,
+            challenger: {
+                key: meKey, username: user.username, bet: bet, escrow: escrow,
+                confirm: false, deckSelected: null, lastSeen: Date.now(),
+            },
+            opponent: {
+                key: targetKey, username: target.username, bet: null, escrow: { coins: 0, items: {} },
+                confirm: false, deckSelected: null, lastSeen: Date.now(),
+            },
+        };
+        m.log = [];
+        addLogHelper(m, `${m.challenger.username} te ha desafiado a una partida`, 'challenge', { actor: m.challenger.username });
+        pvpMatches.set(m.id, m);
+        saveUsers(users);
+        sendJson(res, 200, { ok: true, matchId: m.id });
+    }).catch(() => sendJson(res, 500, { error: 'Error interno' }));
+}
+
+function handlePvpPending(req, res) {
+    const user = findUserByToken(req.headers['x-token']);
+    if (!user) return sendJson(res, 401, { error: 'Sesión inválida' });
+    const meKey = user.username.toLowerCase();
+    const out = [];
+    for (const m of pvpMatches.values()) {
+        if (m.status === 'open' && String(m.opponent.key) === meKey) {
+            out.push({ matchId: m.id, challenger: m.challenger.username, bet: m.challenger.bet, escrow: escrowSize(m.challenger.escrow), createdAt: m.createdAt });
+        }
+    }
+    sendJson(res, 200, { ok: true, pending: out });
+}
+
+function findPvpMatchById(id) {
+    return pvpMatches.get(String(id || '')) || null;
+}
+
+function handlePvpRespond(req, res) {
+    readBody(req).then(body => {
+        let parsed;
+        try { parsed = JSON.parse(body || '{}'); } catch (e) { parsed = {}; }
+        const user = findUserByToken(parsed.token);
+        if (!user) return sendJson(res, 401, { error: 'Sesión inválida' });
+        const users = loadUsers();
+        const meKey = user.username.toLowerCase();
+        const m = findPvpMatchById(parsed.matchId);
+        if (!m || m.status !== 'open') return sendJson(res, 400, { error: 'Desafío no encontrado o ya respondido' });
+        if (String(m.opponent.key) !== meKey) return sendJson(res, 400, { error: 'No formas parte de este desafío' });
+        if (parsed.accept !== 'true' && parsed.accept !== true) {
+            refundEscrow(users[m.challenger.key], m.challenger.escrow);
+            m.challenger.escrow = { coins: 0, items: {} };
+            m.status = 'cancelled';
+            addLogHelper(m, `${user.username} rechazó el desafío`, 'system');
+            m.version++;
+            pvpMatches.delete(m.id);
+            saveUsers(users);
+            return sendJson(res, 200, { ok: true, accepted: false });
+        }
+        let otherMatch = null;
+        for (const mm of pvpMatches.values()) {
+            if (mm.id === m.id) continue;
+            if (String(mm.challenger.key) === meKey || String(mm.opponent.key) === meKey) { otherMatch = mm; break; }
+        }
+        if (otherMatch) {
+            refundEscrow(users[m.challenger.key], m.challenger.escrow);
+            m.challenger.escrow = { coins: 0, items: {} };
+            pvpMatches.delete(m.id);
+            saveUsers(users);
+            return sendJson(res, 400, { error: 'Ya estás en una partida' });
+        }
+        const bet = validateBet(user, parsed.bet, users);
+        if (bet.error) {
+            refundEscrow(users[m.challenger.key], m.challenger.escrow);
+            m.challenger.escrow = { coins: 0, items: {} };
+            pvpMatches.delete(m.id);
+            saveUsers(users);
+            return sendJson(res, 400, { error: bet.error });
+        }
+        m.opponent.bet = bet;
+        m.opponent.escrow = escrowFromUser(user, bet);
+        m.status = 'preparing';
+        m.opponent.lastSeen = Date.now();
+        m.challenger.lastSeen = Date.now();
+        addLogHelper(m, `${m.opponent.username} aceptó el desafío`, 'system');
+        addLogHelper(m, `${m.opponent.username} apuesta: ${betStr(bet)}`, 'bet');
+        m.version++;
+        saveUsers(users);
+        sendJson(res, 200, { ok: true, accepted: true, matchId: m.id });
+    }).catch(() => sendJson(res, 500, { error: 'Error interno' }));
+}
+
+function betStr(bet) {
+    const parts = [];
+    if (bet && bet.coins > 0) parts.push(bet.coins.toLocaleString() + ' 🪙');
+    if (bet && bet.item) parts.push('👤 ' + (bet.item.qty > 1 ? bet.item.qty + 'x ' : '') + bet.item.id);
+    return parts.join(' + ') || 'nada';
+}
+
+function handlePvpBet(req, res) {
+    readBody(req).then(body => {
+        let parsed;
+        try { parsed = JSON.parse(body || '{}'); } catch (e) { parsed = {}; }
+        const user = findUserByToken(parsed.token);
+        if (!user) return sendJson(res, 401, { error: 'Sesión inválida' });
+        const users = loadUsers();
+        const meKey = user.username.toLowerCase();
+        const m = findPvpMatchById(parsed.matchId);
+        if (!m || m.status !== 'preparing') return sendJson(res, 400, { error: 'Solo se puede cambiar la apuesta antes de confirmar' });
+        const pl = String(m.challenger.key) === meKey ? m.challenger : (String(m.opponent.key) === meKey ? m.opponent : null);
+        if (!pl) return sendJson(res, 400, { error: 'No formas parte de esta partida' });
+        const bet = validateBet(user, parsed.bet, users);
+        if (bet.error) return sendJson(res, 400, { error: bet.error });
+        refundEscrow(users[meKey], pl.escrow);
+        pl.escrow = escrowFromUser(user, bet);
+        pl.bet = bet;
+        pl.confirm = false;
+        pl.lastSeen = Date.now();
+        addLogHelper(m, `${pl.username} actualizó su apuesta: ${betStr(bet)}`, 'bet');
+        m.version++;
+        saveUsers(users);
+        sendJson(res, 200, { ok: true });
+    }).catch(() => sendJson(res, 500, { error: 'Error interno' }));
+}
+
+function handlePvpDeck(req, res) {
+    readBody(req).then(body => {
+        let parsed;
+        try { parsed = JSON.parse(body || '{}'); } catch (e) { parsed = {}; }
+        const user = findUserByToken(parsed.token);
+        if (!user) return sendJson(res, 401, { error: 'Sesión inválida' });
+        const users = loadUsers();
+        const meKey = user.username.toLowerCase();
+        const m = findPvpMatchById(parsed.matchId);
+        if (!m || (m.status !== 'preparing' && m.status !== 'open')) return sendJson(res, 400, { error: 'No puedes modificar el mazo ahora' });
+        const pl = String(m.challenger.key) === meKey ? m.challenger : (String(m.opponent.key) === meKey ? m.opponent : null);
+        if (!pl) return sendJson(res, 400, { error: 'No formas parte de esta partida' });
+        const data = ownData(user);
+        const ids = Array.isArray(parsed.deckIds) ? parsed.deckIds.map(String) : [];
+        if (ids.length > PVP_MAX_DECK) return sendJson(res, 400, { error: 'El mazo máximo es de ' + PVP_MAX_DECK + ' cartas' });
+        const counts = {};
+        for (const id of ids) counts[id] = (counts[id] || 0) + 1;
+        for (const id in counts) if ((data.owned[id] || 0) < counts[id]) return sendJson(res, 400, { error: 'No posees suficientes cartas para ese mazo' });
+        pl.deckSelected = ids;
+        pl.lastSeen = Date.now();
+        m.version++;
+        saveUsers(users);
+        sendJson(res, 200, { ok: true });
+    }).catch(() => sendJson(res, 500, { error: 'Error interno' }));
+}
+
+function handlePvpConfirm(req, res) {
+    readBody(req).then(body => {
+        let parsed;
+        try { parsed = JSON.parse(body || '{}'); } catch (e) { parsed = {}; }
+        const user = findUserByToken(parsed.token);
+        if (!user) return sendJson(res, 401, { error: 'Sesión inválida' });
+        const users = loadUsers();
+        const meKey = user.username.toLowerCase();
+        const m = findPvpMatchById(parsed.matchId);
+        if (!m || m.status !== 'preparing') return sendJson(res, 400, { error: 'Partida no encontrada' });
+        const pl = String(m.challenger.key) === meKey ? m.challenger : (String(m.opponent.key) === meKey ? m.opponent : null);
+        if (!pl) return sendJson(res, 400, { error: 'No formas parte de esta partida' });
+        pl.confirm = true;
+        pl.lastSeen = Date.now();
+        addLogHelper(m, `${pl.username} confirmó la apuesta`, 'system');
+        m.version++;
+        if (m.challenger.confirm && m.opponent.confirm) {
+            addLogHelper(m, '¡Apuestas confirmadas! Empieza la partida', 'system');
+            startPlaying(m);
+        }
+        saveUsers(users);
+        sendJson(res, 200, { ok: true });
+    }).catch(() => sendJson(res, 500, { error: 'Error interno' }));
+}
+
+function handlePvpCancel(req, res) {
+    readBody(req).then(body => {
+        let parsed;
+        try { parsed = JSON.parse(body || '{}'); } catch (e) { parsed = {}; }
+        const user = findUserByToken(parsed.token);
+        if (!user) return sendJson(res, 401, { error: 'Sesión inválida' });
+        const users = loadUsers();
+        const meKey = user.username.toLowerCase();
+        const m = findPvpMatchById(parsed.matchId);
+        if (!m || (m.status !== 'open' && m.status !== 'preparing')) return sendJson(res, 400, { error: 'No se puede cancelar ahora' });
+        if (String(m.challenger.key) !== meKey && String(m.opponent.key) !== meKey) return sendJson(res, 400, { error: 'No formas parte de esta partida' });
+        refundEscrow(users[m.challenger.key], m.challenger.escrow);
+        refundEscrow(users[m.opponent.key], m.opponent.escrow);
+        m.challenger.escrow = { coins: 0, items: {} };
+        m.opponent.escrow = { coins: 0, items: {} };
+        m.status = 'cancelled';
+        addLogHelper(m, `${user.username} canceló la partida`, 'system');
+        m.version++;
+        pvpMatches.delete(m.id);
+        saveUsers(users);
+        sendJson(res, 200, { ok: true });
+    }).catch(() => sendJson(res, 500, { error: 'Error interno' }));
+}
+
+function handlePvpState(req, res) {
+    const user = findUserByToken(req.headers['x-token']);
+    if (!user) return sendJson(res, 401, { error: 'Sesión inválida' });
+    const m = findPvpMatchById(req.headers['x-match']);
+    if (!m) return sendJson(res, 404, { error: 'Partida no encontrada' });
+    const meKey = user.username.toLowerCase();
+    if (String(m.challenger.key) !== meKey && String(m.opponent.key) !== meKey) return sendJson(res, 403, { error: 'No formas parte de esta partida' });
+    const pl = String(m.challenger.key) === meKey ? m.challenger : m.opponent;
+    pl.lastSeen = Date.now();
+    m.updatedAt = Date.now();
+    sendJson(res, 200, { ok: true, match: publicMatchView(m, meKey) });
+}
+
+function handlePvpCurrent(req, res) {
+    const user = findUserByToken(req.headers['x-token']);
+    if (!user) return sendJson(res, 401, { error: 'Sesión inválida' });
+    const meKey = user.username.toLowerCase();
+    const m = pvpMatchForKey(meKey);
+    if (!m || m.status === 'finished' || m.status === 'cancelled') return sendJson(res, 200, { ok: true, match: null });
+    const pl = String(m.challenger.key) === meKey ? m.challenger : m.opponent;
+    pl.lastSeen = Date.now();
+    m.updatedAt = Date.now();
+    sendJson(res, 200, { ok: true, match: publicMatchView(m, meKey) });
+}
+
+function handlePvpAction(req, res) {
+    readBody(req).then(body => {
+        let parsed;
+        try { parsed = JSON.parse(body || '{}'); } catch (e) { parsed = {}; }
+        const user = findUserByToken(parsed.token);
+        if (!user) return sendJson(res, 401, { error: 'Sesión inválida' });
+        const meKey = user.username.toLowerCase();
+        const m = findPvpMatchById(parsed.matchId);
+        if (!m) return sendJson(res, 404, { error: 'Partida no encontrada' });
+        if (String(m.challenger.key) !== meKey && String(m.opponent.key) !== meKey) return sendJson(res, 403, { error: 'No formas parte de esta partida' });
+        const pl = String(m.challenger.key) === meKey ? m.challenger : m.opponent;
+        const op = pl.key === m.challenger.key ? m.opponent : m.challenger;
+        const isMyTurn = (m.turn === 0 && pl.key === m.challenger.key) || (m.turn === 1 && pl.key === m.opponent.key);
+        if (m.status === 'finished') return sendJson(res, 400, { error: 'La partida ya terminó' });
+        if (m.status !== 'playing') return sendJson(res, 400, { error: 'La partida no ha empezado' });
+        const act = parsed.action || {};
+
+        if (act.type === 'concede') {
+            m.winner = op;
+            m.reason = 'abandono';
+            addLogHelper(m, `${pl.username} abandonó la partida`, 'system');
+            finalizeMatch(m);
+            saveUsers(loadUsers());
+            return sendJson(res, 200, { ok: true });
+        }
+        if (act.type === 'end') {
+            if (!isMyTurn) return sendJson(res, 400, { error: 'No es tu turno' });
+            pl.lastSeen = Date.now();
+            addLogHelper(m, `${pl.username} terminó su turno`, 'turn');
+            endTurn(m, pl);
+            saveUsers(loadUsers());
+            return sendJson(res, 200, { ok: true });
+        }
+        if (act.type === 'play') {
+            if (!isMyTurn) return sendJson(res, 400, { error: 'No es tu turno' });
+            const handIdx = Math.floor(Number(act.card) || 0);
+            if (handIdx < 0 || handIdx >= (pl.hand || []).length) return sendJson(res, 400, { error: 'Carta no válida' });
+            const slot = Math.floor(Number(act.slot) || 0);
+            if (slot < 0 || slot >= PVP_MAX_FIELD) return sendJson(res, 400, { error: 'Slot de campo no válido' });
+            if ((pl.field || []).length >= PVP_MAX_FIELD) return sendJson(res, 400, { error: 'Campo lleno' });
+            const id = pl.hand[handIdx];
+            const stats = cardForId(id);
+            if (pl.energy < stats.cost) return sendJson(res, 400, { error: 'Energía insuficiente' });
+            pl.energy -= stats.cost;
+            pl.hand.splice(handIdx, 1);
+            if (pl.field.length >= PVP_MAX_FIELD) return sendJson(res, 400, { error: 'Campo lleno' });
+            pl.field.push({ uid: m.version + '-' + pl.field.length, id: id, atk: stats.atk, hp: stats.hp, cost: stats.cost, canAttack: true });
+            addLogHelper(m, `${pl.username} juega '${id}'`, 'play');
+            m.version++;
+            saveUsers(loadUsers());
+            return sendJson(res, 200, { ok: true });
+        }
+        if (act.type === 'attack') {
+            if (!isMyTurn) return sendJson(res, 400, { error: 'No es tu turno' });
+            const atkIdx = Math.floor(Number(act.attacker) || 0);
+            if (atkIdx < 0 || atkIdx >= (pl.field || []).length) return sendJson(res, 400, { error: 'Atacante no válido' });
+            const attacker = pl.field[atkIdx];
+            if (!attacker.canAttack) return sendJson(res, 400, { error: 'Esa carta ya atacó este turno' });
+            if (act.target === 'face') {
+                attacker.canAttack = false;
+                op.hp -= attacker.atk;
+                addLogHelper(m, `${attacker.id} ataca la cara de ${op.username} (-${attacker.atk})`, 'attack');
+                m.version++;
+                if (op.hp <= 0) {
+                    m.reason = 'hp';
+                    m.winner = pl;
+                    addLogHelper(m, `${op.username} pierde todos sus PV`, 'system');
+                    finalizeMatch(m);
+                    saveUsers(loadUsers());
+                    return sendJson(res, 200, { ok: true });
+                }
+                saveUsers(loadUsers());
+                return sendJson(res, 200, { ok: true });
+            }
+            const tIdx = Math.floor(Number(act.target) || 0);
+            if (tIdx < 0 || tIdx >= (op.field || []).length) return sendJson(res, 400, { error: 'Objetivo no válido' });
+            const target = op.field[tIdx];
+            attacker.canAttack = false;
+            target.hp -= attacker.atk;
+            addLogHelper(m, `${attacker.id} ataca a ${target.id} (-${attacker.atk})`, 'attack');
+            m.version++;
+            if (target.hp <= 0) {
+                op.field.splice(tIdx, 1);
+                addLogHelper(m, `${target.id} es derrotado`, 'kill');
+            }
+            saveUsers(loadUsers());
+            return sendJson(res, 200, { ok: true });
+        }
+        return sendJson(res, 400, { error: 'Acción no válida' });
+    }).catch(() => sendJson(res, 500, { error: 'Error interno' }));
+}
+
+setInterval(() => {
+    const users = loadUsers();
+    const now = Date.now();
+    for (const [id, m] of pvpMatches) {
+        if (m.status === 'finished' || m.status === 'cancelled') {
+            pvpMatches.delete(id);
+            continue;
+        }
+        if (m.status === 'open') {
+            if (now - (m.challenger.lastSeen || 0) > PVP_CANCEL_MS || now - (m.opponent.lastSeen || 0) > PVP_CANCEL_MS) {
+                refundEscrow(users[m.challenger.key], m.challenger.escrow);
+                refundEscrow(users[m.opponent.key], m.opponent.escrow);
+                m.challenger.escrow = { coins: 0, items: {} };
+                m.opponent.escrow = { coins: 0, items: {} };
+                addLogHelper(m, 'Desafío cancelado por inactividad', 'system');
+                m.status = 'cancelled';
+                m.version++;
+                saveUsers(users);
+                pvpMatches.delete(id);
+            }
+            continue;
+        }
+        if (m.status === 'preparing') {
+            if (now - (m.challenger.lastSeen || 0) > PVP_CANCEL_MS || now - (m.opponent.lastSeen || 0) > PVP_CANCEL_MS) {
+                refundEscrow(users[m.challenger.key], m.challenger.escrow);
+                refundEscrow(users[m.opponent.key], m.opponent.escrow);
+                m.challenger.escrow = { coins: 0, items: {} };
+                m.opponent.escrow = { coins: 0, items: {} };
+                addLogHelper(m, 'Preparación cancelada por inactividad', 'system');
+                m.status = 'cancelled';
+                m.version++;
+                saveUsers(users);
+                pvpMatches.delete(id);
+            }
+            continue;
+        }
+        if (m.status === 'playing') {
+            const aGone = now - (m.challenger.lastSeen || 0) > PVP_TIMEOUT_MS;
+            const bGone = now - (m.opponent.lastSeen || 0) > PVP_TIMEOUT_MS;
+            if (aGone && !bGone) {
+                m.winner = m.opponent;
+                m.reason = 'desconexión';
+                addLogHelper(m, `${m.challenger.username} se desconectó. Gana ${m.opponent.username}`, 'system');
+                finalizeMatch(m);
+                saveUsers(users);
+            } else if (bGone && !aGone) {
+                m.winner = m.challenger;
+                m.reason = 'desconexión';
+                addLogHelper(m, `${m.opponent.username} se desconectó. Gana ${m.challenger.username}`, 'system');
+                finalizeMatch(m);
+                saveUsers(users);
+            } else if (aGone && bGone) {
+                refundEscrow(users[m.challenger.key], m.challenger.escrow);
+                refundEscrow(users[m.opponent.key], m.opponent.escrow);
+                m.challenger.escrow = { coins: 0, items: {} };
+                m.opponent.escrow = { coins: 0, items: {} };
+                addLogHelper(m, 'Ambos jugadores se desconectaron: apuestas devueltas', 'system');
+                finalizeMatch(m);
+                saveUsers(users);
+            }
+        }
+    }
+}, 10000);
+
 const ADMIN_ACCOUNT = 'ricardoadmin67';
 const INFINITE_CAP = 999999999;
 
@@ -411,6 +1167,7 @@ function handleLoad(req, res) {
 function handleSave(req, res) {
     const user = findUserByToken(req.headers['x-token']);
     if (!user) return sendJson(res, 401, { error: 'Sesión inválida' });
+    if (pvpHasBet(user.username.toLowerCase())) return sendJson(res, 403, { error: 'No puedes guardar datos mientras tienes una apuesta activa en PvP' });
     readBody(req).then(body => {
         try {
             const parsed = JSON.parse(body || '{}');
@@ -492,6 +1249,8 @@ function cleanupOwned(owned) {
 
 let activeTrades = {};
 const sseClients = {};
+let tradeChatMessages = {};
+const TRADE_CHAT_MAX = 50;
 
 const CHAT_MAX = 100;
 const CHAT_TTL_MS = 24 * 60 * 60 * 1000;
@@ -541,6 +1300,7 @@ function cancelTrade(t, reason) {
     if (!activeTrades[t.id]) return;
     t.status = 'declined';
     delete activeTrades[t.id];
+    delete tradeChatMessages[t.id];
     pushToUser(t.from, { type: 'cancelled', reason: reason || '' });
     pushToUser(t.to, { type: 'cancelled', reason: reason || '' });
 }
@@ -592,6 +1352,7 @@ function completeTrade(t, fromU, toU, users) {
     saveUsers(users);
     t.status = 'completed';
     delete activeTrades[t.id];
+    delete tradeChatMessages[t.id];
     pushToUser(t.from, { type: 'completed', trade: t });
     pushToUser(t.to, { type: 'completed', trade: t });
 }
@@ -685,6 +1446,65 @@ function handleChatSend(req, res) {
         saveChat(chatMessages);
         sendJson(res, 200, { ok: true });
     }).catch(() => sendJson(res, 500, { error: 'Error interno' }));
+}
+
+function getTradeChat(tradeId) {
+    const list = tradeChatMessages[tradeId] || [];
+    if (list.length > TRADE_CHAT_MAX) {
+        tradeChatMessages[tradeId] = list.slice(-TRADE_CHAT_MAX);
+        return tradeChatMessages[tradeId];
+    }
+    return list;
+}
+
+function pushTradeChat(t, message) {
+    pushToUser(t.from, { type: 'tradeChat', tradeId: t.id, message });
+    pushToUser(t.to, { type: 'tradeChat', tradeId: t.id, message });
+}
+
+function handleTradeChatSend(req, res) {
+    readBody(req).then(body => {
+        let parsed;
+        try { parsed = JSON.parse(body || '{}'); } catch (e) { parsed = {}; }
+        const { token, tradeId, text } = parsed;
+        const user = findUserByToken(token);
+        if (!user) return sendJson(res, 401, { error: 'Sesión inválida' });
+        if (!isOnline(user)) return sendJson(res, 403, { error: 'Solo los jugadores conectados al juego pueden escribir' });
+        const t = activeTrades[tradeId];
+        if (!t || t.status !== 'active') return sendJson(res, 400, { error: 'El trade ya no está activo' });
+        const meKey = user.username.toLowerCase();
+        if (!(String(t.from).toLowerCase() === meKey || String(t.to).toLowerCase() === meKey)) return sendJson(res, 403, { error: 'No formas parte de este trade' });
+        const msgText = String(text || '').trim();
+        if (!msgText) return sendJson(res, 400, { error: 'Mensaje vacío' });
+        if (msgText.length > 300) return sendJson(res, 400, { error: 'El mensaje es demasiado largo' });
+        const users = loadUsers();
+        const me = users[meKey];
+        if (!me) return sendJson(res, 401, { error: 'Sesión inválida' });
+        const now = Date.now();
+        if (chatLastSent[meKey] && now - chatLastSent[meKey] < 1500) {
+            return sendJson(res, 429, { error: 'Espera un momento antes de seguir escribiendo' });
+        }
+        chatLastSent[meKey] = now;
+        if (!tradeChatMessages[tradeId]) tradeChatMessages[tradeId] = [];
+        tradeChatMessages[tradeId].push({ user: me.username, text: msgText, at: now });
+        if (tradeChatMessages[tradeId].length > TRADE_CHAT_MAX) tradeChatMessages[tradeId] = tradeChatMessages[tradeId].slice(-TRADE_CHAT_MAX);
+        const list = tradeChatMessages[tradeId];
+        pushTradeChat(t, list[list.length - 1]);
+        sendJson(res, 200, { ok: true });
+    }).catch(() => sendJson(res, 500, { error: 'Error interno' }));
+}
+
+function handleTradeChatHistory(req, res) {
+    const url = new URL(req.url, 'http://localhost');
+    const token = url.searchParams.get('token') || '';
+    const tradeId = url.searchParams.get('tradeId') || '';
+    const user = findUserByToken(token);
+    if (!user) return sendJson(res, 401, { error: 'Sesión inválida' });
+    const t = activeTrades[tradeId];
+    if (!t) return sendJson(res, 400, { error: 'Trade no encontrado' });
+    const meKey = user.username.toLowerCase();
+    if (!(String(t.from).toLowerCase() === meKey || String(t.to).toLowerCase() === meKey)) return sendJson(res, 403, { error: 'No formas parte de este trade' });
+    sendJson(res, 200, { ok: true, messages: getTradeChat(tradeId) });
 }
 
 function handleTradeOnline(req, res) {
@@ -871,6 +1691,7 @@ function handleTradeDecline(req, res) {
         if (String(t.to).toLowerCase() !== user.username.toLowerCase()) return sendJson(res, 400, { error: 'No puedes rechazar esto' });
         t.status = 'declined';
         delete activeTrades[tradeId];
+        delete tradeChatMessages[tradeId];
         pushToUser(t.from, { type: 'declined', trade: t });
         sendJson(res, 200, { ok: true });
     }).catch(() => sendJson(res, 500, { error: 'Error interno' }));
@@ -992,6 +1813,46 @@ if (urlPath === '/api/logout' && req.method === 'POST') {
     }
     if (urlPath === '/api/trade/cancel' && req.method === 'POST') {
         return handleTradeCancel(req, res);
+    }
+    if (urlPath === '/api/trade/chat/send' && req.method === 'POST') {
+        return handleTradeChatSend(req, res);
+    }
+    if (urlPath === '/api/trade/chat/history' && req.method === 'GET') {
+        return handleTradeChatHistory(req, res);
+    }
+
+    if (urlPath === '/api/pvp/players' && req.method === 'GET') {
+        return handlePvpPlayers(req, res);
+    }
+    if (urlPath === '/api/pvp/challenge' && req.method === 'POST') {
+        return handlePvpChallenge(req, res);
+    }
+    if (urlPath === '/api/pvp/pending' && req.method === 'GET') {
+        return handlePvpPending(req, res);
+    }
+    if (urlPath === '/api/pvp/respond' && req.method === 'POST') {
+        return handlePvpRespond(req, res);
+    }
+    if (urlPath === '/api/pvp/bet' && req.method === 'POST') {
+        return handlePvpBet(req, res);
+    }
+    if (urlPath === '/api/pvp/deck' && req.method === 'POST') {
+        return handlePvpDeck(req, res);
+    }
+    if (urlPath === '/api/pvp/confirm' && req.method === 'POST') {
+        return handlePvpConfirm(req, res);
+    }
+    if (urlPath === '/api/pvp/cancel' && req.method === 'POST') {
+        return handlePvpCancel(req, res);
+    }
+    if (urlPath === '/api/pvp/state' && req.method === 'GET') {
+        return handlePvpState(req, res);
+    }
+    if (urlPath === '/api/pvp/current' && req.method === 'GET') {
+        return handlePvpCurrent(req, res);
+    }
+    if (urlPath === '/api/pvp/action' && req.method === 'POST') {
+        return handlePvpAction(req, res);
     }
 
     const filePath = path.join(ROOT, path.normalize(urlPath));

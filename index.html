@@ -404,6 +404,21 @@
         .tw-leave { padding: 10px 16px; border: 1px solid #f8717166; border-radius: 10px; background: #f8717122; color: #fca5a5; font-weight: bold; cursor: pointer; }
         .tw-leave:hover { background: #f8717144; }
         .tw-note { font-size: 0.72rem; color: #fbbf24; text-align: center; padding: 8px; }
+        .tw-chat-btn {
+            padding: 10px 14px; border: 1px solid #22c55e66; border-radius: 10px;
+            background: #22c55e22; color: #4ade80; font-weight: bold; cursor: pointer; white-space: nowrap;
+        }
+        .tw-chat-btn:hover { background: #22c55e44; }
+        .tw-chat {
+            border-top: 1px solid #2a3a50; padding: 12px 14px; background: #0f1720;
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .tw-chat.hidden { display: none; }
+        .tw-chat-messages {
+            height: 150px; overflow-y: auto; background: #0b1118; border: 1px solid #223040;
+            border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 4px;
+        }
+        .tw-chat .chat-input-row input { padding: 8px 10px; font-size: 0.85rem; }
         .tw-countdown { font-size: 1.3rem; font-weight: bold; color: #4ade80; }
 
         .trade-toast {
@@ -1204,6 +1219,204 @@
         }
 
         ::-webkit-scrollbar { width: 8px; }
+
+        /* ===================== PvP (duelos de cartas) ===================== */
+        #pvp-btn { border-color: #a78bfa; color: #c4b5fd; }
+        #pvp-btn.busy { border-color: #fbbf24; color: #fbbf24; animation: pvpPulse 1.4s infinite; }
+        #pvp-badge {
+            position: absolute; top: -7px; right: -7px;
+            background: linear-gradient(135deg, #ef4444, #b91c1c); color: #fff;
+            font-size: 0.65rem; font-weight: 800; min-width: 17px; height: 17px;
+            border-radius: 9px; display: flex; align-items: center; justify-content: center;
+            padding: 0 4px; border: 1px solid #fecaca; box-shadow: 0 0 8px rgba(239,68,68,0.6);
+        }
+        @keyframes pvpPulse { 0%,100% { box-shadow: 0 0 0 rgba(251,191,36,0); } 50% { box-shadow: 0 0 14px rgba(251,191,36,0.6); } }
+
+        .pvp-avatar {
+            width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 1.1rem; color: #0b1118;
+            border: 2px solid rgba(255,255,255,0.25); text-transform: uppercase;
+        }
+        .pvp-avatar.sm { width: 30px; height: 30px; font-size: 0.85rem; }
+        .pvp-avatar.lg { width: 54px; height: 54px; font-size: 1.4rem; }
+
+        .pvp-list { display: flex; flex-direction: column; gap: 8px; max-height: 48vh; overflow-y: auto; padding-right: 2px; }
+        .pvp-row {
+            display: flex; align-items: center; gap: 10px;
+            background: #10171f; border: 1px solid #223040; border-radius: 12px; padding: 10px 12px;
+            transition: border-color 0.15s, transform 0.15s;
+        }
+        .pvp-row:hover { border-color: #a78bfa66; transform: translateY(-1px); }
+        .pvp-row-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+        .pvp-row-name { font-weight: 700; color: #e8e8e8; font-size: 0.95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .pvp-seq { font-size: 0.66rem; color: #64748b; }
+        .pvp-status { font-size: 0.7rem; font-weight: 800; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+        .pvp-status.disponible { color: #4ade80; background: #22c55e14; border: 1px solid #22c55e66; }
+        .pvp-status.enpartida { color: #fbbf24; background: #fbbf2414; border: 1px solid #fbbf2466; }
+        .pvp-status.offline { color: #94a3b8; background: #94a3b814; border: 1px solid #94a3b866; }
+        .pvp-empty { text-align: center; color: #64748b; font-size: 0.85rem; padding: 26px 10px; }
+
+        .pvp-section-label { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.06em; color: #94a3b8; text-transform: uppercase; margin: 4px 0 2px; }
+
+        .pvp-bet-box { background: #0f1720; border: 1px solid #223040; border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+        .pvp-bet-line { display: flex; align-items: center; gap: 8px; }
+        .pvp-bet-line label { font-size: 0.8rem; font-weight: 700; color: #fbbf24; min-width: 74px; }
+        .pvp-bet-line input[type=number] {
+            flex: 1; min-width: 0; padding: 8px 10px; border-radius: 8px; border: 1px solid #223040;
+            background: #0b1118; color: #fbbf24; font-size: 0.9rem; outline: none;
+        }
+        .pvp-bet-line input[type=number]:focus { border-color: #fbbf2466; }
+        .pvp-bet-hint { font-size: 0.7rem; color: #94a3b8; }
+        .pvp-item-picker { display: grid; grid-template-columns: repeat(auto-fill, minmax(74px, 1fr)); gap: 8px; max-height: 190px; overflow-y: auto; padding: 2px; }
+        .pvp-pick {
+            background: #131c28; border: 2px solid #223040; border-radius: 10px; padding: 6px 4px;
+            display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; transition: all 0.15s; position: relative;
+        }
+        .pvp-pick:hover { border-color: #4ade80; }
+        .pvp-pick.selected { border-color: #fbbf24; background: #241f10; box-shadow: 0 0 10px rgba(251,191,36,0.35); }
+        .pvp-pick.sel-disabled { opacity: 0.35; cursor: not-allowed; }
+        .pvp-pick img { width: 42px; height: 42px; border-radius: 8px; object-fit: cover; background: #0a0f16; }
+        .pvp-pick .pvp-pick-name { font-size: 0.56rem; color: #cbd5e1; max-width: 100%; overflow: hidden; white-space: nowrap; }
+        .pvp-pick .pvp-pick-qty { font-size: 0.6rem; color: #fbbf24; font-weight: 800; }
+        .pvp-pick .pvp-pick-x {
+            position: absolute; top: -6px; right: -6px; width: 18px; height: 18px; border-radius: 50%;
+            background: #ef4444; color: #fff; border: none; cursor: pointer; font-weight: bold; font-size: 0.7rem;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .pvp-bet-summary { display: flex; flex-direction: column; gap: 6px; }
+        .pvp-bet-player { background: #0f1720; border: 1px solid #223040; border-radius: 10px; padding: 10px; }
+        .pvp-bet-player-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+        .pvp-bet-player-name { font-weight: 800; font-size: 0.85rem; color: #e8e8e8; }
+        .pvp-bet-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .pvp-chip {
+            display: inline-flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 700;
+            padding: 4px 10px; border-radius: 999px; background: #131c28; border: 1px solid #2a3a50; color: #fbbf24;
+        }
+        .pvp-chip.gold { color: #fbbf24; border-color: #fbbf2466; }
+        .pvp-chip.item { color: #a78bfa; border-color: #a78bfa66; }
+        .pvp-chip.empty { color: #64748b; border-color: #334155; }
+        .pvp-chip img { width: 18px; height: 18px; border-radius: 4px; }
+
+        .pvp-ready { font-size: 0.8rem; font-weight: 800; }
+        .pvp-ready.ok { color: #4ade80; }
+        .pvp-ready.wait { color: #fbbf24; }
+
+        .pvp-deck-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 8px; max-height: 240px; overflow-y: auto; padding: 2px; }
+        .pvp-deckcard {
+            background: #131c28; border: 2px solid #223040; border-radius: 10px; padding: 6px 4px;
+            display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; transition: all 0.15s; position: relative;
+        }
+        .pvp-deckcard:hover { border-color: #4ade80; transform: translateY(-2px); }
+        .pvp-deckcard.in-deck { border-color: #a78bfa; box-shadow: 0 0 10px rgba(167,139,250,0.4); }
+        .pvp-deckcard img { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; }
+        .pvp-deckcard .pvp-dc-name { font-size: 0.56rem; color: #cbd5e1; max-width: 100%; overflow: hidden; white-space: nowrap; }
+        .pvp-deckcard .pvp-dc-stats { font-size: 0.58rem; font-weight: 800; color: #94a3b8; }
+        .pvp-deckcard .pvp-dc-count { position: absolute; top: -6px; right: -6px; background: #a78bfa; color: #0b1118; font-size: 0.62rem; font-weight: 900; min-width: 17px; height: 17px; border-radius: 9px; display: flex; align-items: center; justify-content: center; }
+
+        /* --- Tablero de juego --- */
+        #pvp-arena { width: min(920px, 97vw); }
+        .pvp-board { display: flex; flex-direction: column; gap: 10px; padding: 12px; }
+        .pvp-panel { background: #10171f; border: 1px solid #223040; border-radius: 12px; padding: 10px 12px; }
+        .pvp-panel.active-turn { border-color: #4ade8066; box-shadow: 0 0 16px rgba(74,222,128,0.18); }
+        .pvp-panel-head { display: flex; align-items: center; gap: 10px; }
+        .pvp-panel-name { font-weight: 800; font-size: 0.9rem; color: #e8e8e8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .pvp-hpwrap { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 90px; }
+        .pvp-hpbar { height: 13px; background: #0b1118; border: 1px solid #223040; border-radius: 8px; overflow: hidden; }
+        .pvp-hpfill { height: 100%; background: linear-gradient(90deg, #ef4444, #f59e0b); transition: width 0.45s ease; }
+        .pvp-hpnum { font-size: 0.7rem; font-weight: 800; color: #fca5a5; }
+        .pvp-energy { display: flex; align-items: center; gap: 5px; font-size: 0.78rem; font-weight: 800; color: #38bdf8; white-space: nowrap; }
+        .pvp-energy .dot { width: 9px; height: 9px; border-radius: 50%; background: #38bdf8; box-shadow: 0 0 6px rgba(56,189,248,0.8); }
+        .pvp-energy .dot.off { background: #1e293b; box-shadow: none; }
+
+        .pvp-field { display: flex; gap: 8px; margin-top: 9px; min-height: 104px; }
+        .pvp-slot {
+            flex: 1; min-width: 0; background: #0b1118; border: 2px dashed #334155; border-radius: 10px;
+            padding: 6px 3px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+            position: relative; text-align: center;
+        }
+        .pvp-slot.filled { border-style: solid; border-color: #a78bfa66; background: #1a1628; }
+        .pvp-slot.filled.mine { cursor: pointer; }
+        .pvp-slot.filled.mine:hover { border-color: #4ade80; }
+        .pvp-slot.selected { border-color: #38bdf8; box-shadow: 0 0 12px rgba(56,189,248,0.6); }
+        .pvp-slot.attackable { border-color: #f87171; box-shadow: 0 0 12px rgba(248,113,113,0.55); cursor: crosshair; animation: pvpTarget 1s infinite; }
+        @keyframes pvpTarget { 0%,100% { box-shadow: 0 0 8px rgba(248,113,113,0.4); } 50% { box-shadow: 0 0 16px rgba(248,113,113,0.85); } }
+        .pvp-slot.spent { opacity: 0.5; }
+        .pvp-slot img { width: 46px; height: 46px; border-radius: 8px; object-fit: cover; }
+        .pvp-slot-name { font-size: 0.58rem; color: #e8e8e8; max-width: 100%; overflow: hidden; white-space: nowrap; }
+        .pvp-slot-stats { font-size: 0.66rem; font-weight: 800; color: #cbd5e1; }
+        .pvp-slot-stats .atk { color: #fca5a5; }
+        .pvp-slot-stats .hp { color: #86efac; }
+        .pvp-slot-empty-txt { font-size: 0.56rem; color: #334155; }
+
+        .pvp-handwrap { margin-top: 8px; }
+        .pvp-hand { display: flex; gap: 8px; overflow-x: auto; padding: 6px 2px 8px; min-height: 116px; }
+        .pvp-hand-card {
+            width: 90px; flex-shrink: 0; background: #131c28; border: 2px solid #223040; border-radius: 10px;
+            padding: 6px 4px; display: flex; flex-direction: column; align-items: center; gap: 3px;
+            cursor: pointer; transition: transform 0.15s, border-color 0.15s;
+        }
+        .pvp-hand-card:hover { transform: translateY(-5px); border-color: #4ade80; }
+        .pvp-hand-card.noenergy { opacity: 0.45; cursor: not-allowed; }
+        .pvp-hand-card.noenergy:hover { transform: none; border-color: #f8717155; }
+        .pvp-hand-card img { width: 58px; height: 58px; border-radius: 8px; object-fit: cover; }
+        .pvp-hand-card .pvp-hc-name { font-size: 0.58rem; color: #e8e8e8; max-width: 100%; overflow: hidden; white-space: nowrap; }
+        .pvp-hand-card .pvp-hc-stats { font-size: 0.64rem; font-weight: 800; color: #94a3b8; }
+
+        .pvp-turnbar { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 0.82rem; font-weight: 800; padding: 6px; border-radius: 10px; }
+        .pvp-turnbar.mine { color: #4ade80; background: #22c55e14; border: 1px solid #22c55e55; }
+        .pvp-turnbar.theirs { color: #fbbf24; background: #fbbf2414; border: 1px solid #fbbf2455; }
+        .pvp-controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; justify-content: center; }
+        .pvp-log { background: #0b1118; border: 1px solid #223040; border-radius: 10px; padding: 8px 10px; max-height: 116px; overflow-y: auto; font-size: 0.74rem; color: #94a3b8; display: flex; flex-direction: column; gap: 3px; }
+        .pvp-log .lg { color: #cbd5e1; }
+        .pvp-log .lg.attack { color: #fca5a5; }
+        .pvp-log .lg.play { color: #a5b4fc; }
+        .pvp-log .lg.turn { color: #fbbf24; }
+        .pvp-log .lg.win { color: #4ade80; font-weight: 800; }
+        .pvp-log .lg.kill { color: #f87171; }
+        .pvp-log .lg.bet { color: #f0abfc; }
+
+        .pvp-hit {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-weight: 900; font-size: 1.05rem; color: #fca5a5; text-shadow: 0 2px 6px #000;
+            pointer-events: none; animation: pvpHit 0.9s ease-out forwards; z-index: 40;
+        }
+        @keyframes pvpHit { 0% { opacity: 0; transform: translate(-50%, -30%) scale(0.6); } 30% { opacity: 1; transform: translate(-50%, -60%) scale(1.15); } 100% { opacity: 0; transform: translate(-50%, -140%) scale(1); } }
+        .pvp-shake { animation: pvpShake 0.35s; }
+        @keyframes pvpShake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+        .pvp-cast {
+            position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+            font-size: 2rem; font-weight: 900; color: #a78bfa; text-shadow: 0 0 22px rgba(167,139,250,0.8);
+            pointer-events: none; animation: pvpCast 0.8s ease-out forwards; z-index: 40;
+        }
+        @keyframes pvpCast { 0% { opacity: 0; transform: scale(0.5); } 40% { opacity: 1; transform: scale(1.1); } 100% { opacity: 0; transform: scale(1.4); } }
+
+        .pvp-result-box { text-align: center; display: flex; flex-direction: column; gap: 14px; padding: 8px; }
+        .pvp-result-title { font-size: 2.2rem; font-weight: 900; letter-spacing: 0.04em; }
+        .pvp-result-title.win { color: #4ade80; text-shadow: 0 0 24px rgba(74,222,128,0.6); }
+        .pvp-result-title.lose { color: #f87171; text-shadow: 0 0 24px rgba(248,113,113,0.55); }
+        .pvp-result-sub { font-size: 0.9rem; color: #cbd5e1; }
+        .pvp-result-card { background: #0f1720; border: 1px solid #223040; border-radius: 12px; padding: 12px; text-align: left; }
+        .pvp-result-card h4 { margin: 0 0 8px; font-size: 0.82rem; color: #94a3b8; }
+
+        .pvp-notify {
+            position: fixed; right: 18px; bottom: 18px; z-index: 700;
+            width: min(330px, 92vw); background: #0d1520; border: 2px solid #a78bfa; border-radius: 14px;
+            padding: 14px; box-shadow: 0 10px 34px rgba(0,0,0,0.6); animation: toast-in 0.28s ease;
+        }
+        .pvp-notify-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+        .pvp-notify-text { font-size: 0.88rem; color: #e8e8e8; line-height: 1.35; }
+        .pvp-notify-bet { margin: 8px 0; }
+        .pvp-notify-actions { display: flex; gap: 8px; }
+        .pvp-notify-actions button { flex: 1; }
+
+        @media (max-width: 640px) {
+            .pvp-field { min-height: 84px; }
+            .pvp-slot img { width: 38px; height: 38px; }
+            .pvp-hand-card { width: 78px; }
+            .pvp-hand-card img { width: 48px; height: 48px; }
+        }
         ::-webkit-scrollbar-thumb { background: #223040; border-radius: 4px; }
     </style>
 </head>
@@ -1217,6 +1430,7 @@
         <div class="stat">Desbloqueados: <span id="unlocked-count">0</span>/<span id="total-items">0</span></div>
         <div id="auth-area">
             <span id="auth-username" class="auth-username" style="display:none;"></span>
+            <button id="pvp-btn" style="display:none;"><span style="font-size:1.1rem;">âš”ï¸</span><span>Jugar</span><span id="pvp-badge" style="display:none;"></span></button>
             <button id="auth-btn">👤 Iniciar sesión</button>
             <button id="logout-btn" style="display:none;">Cerrar sesión</button>
             <button id="trade-btn" style="display:none;"><span style="font-size:1.1rem;">🤝</span><span>Comercio</span><span id="trade-badge" style="display:none;"></span></button>
@@ -1381,6 +1595,130 @@
             <div id="trade-win"></div>
         </div>
     </div>
+
+    <!-- ===================== PvP: Matchmaking (JUGAR) ===================== -->
+    <div id="pvp-overlay" class="trade-overlay">
+        <div id="modal" style="width:min(560px,94vw);">
+            <div id="modal-header" style="border-color:#a78bfa;">
+                <h3 style="color:#c4b5fd;">âš”ï¸ Jugar â€” Duelos PvP</h3>
+                <button id="pvp-close">âœ•</button>
+            </div>
+            <div style="padding:14px;display:flex;flex-direction:column;gap:10px;">
+                <div id="pvp-pending-wrap" style="display:none;">
+                    <div class="pvp-section-label">DesafÃ­os recibidos</div>
+                    <div id="pvp-pending-list" class="pvp-list"></div>
+                </div>
+                <div class="pvp-section-label">Jugadores online</div>
+                <div id="pvp-online-list" class="pvp-list"><div class="pvp-empty">Cargando...</div></div>
+                <button id="pvp-refresh" class="trade-btn" style="align-self:flex-end;">ðŸ”„ Actualizar lista</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== PvP: Configurar apuesta ===================== -->
+    <div id="pvp-challenge-overlay" class="trade-overlay">
+        <div id="modal" style="width:min(520px,94vw);">
+            <div id="modal-header" style="border-color:#fbbf24;">
+                <h3 style="color:#fbbf24;">ðŸ¤ Configurar apuesta</h3>
+                <button id="pvp-challenge-close">âœ•</button>
+            </div>
+            <div style="padding:14px;display:flex;flex-direction:column;gap:12px;">
+                <div id="pvp-challenge-target" class="trade-msg" style="padding:0;"></div>
+                <div class="pvp-bet-box">
+                    <div class="pvp-section-label">QuÃ© quieres apostar</div>
+                    <div class="pvp-bet-line">
+                        <label>ðŸª™ Monedas</label>
+                        <input type="number" id="pvp-bet-coins" min="0" value="0">
+                        <button class="trade-btn" id="pvp-bet-all" style="white-space:nowrap;">Todo</button>
+                    </div>
+                    <div class="pvp-bet-hint" id="pvp-bet-owned"></div>
+                    <div class="pvp-section-label">ðŸ‘¤ Personaje (opcional, uno)</div>
+                    <div id="pvp-bet-items" class="pvp-item-picker"></div>
+                </div>
+                <div id="pvp-challenge-error" class="trade-msg" style="display:none;color:#f87171;padding:0;"></div>
+                <button id="pvp-challenge-send" class="trade-btn green" style="padding:12px;font-size:0.95rem;">ðŸ“¤ Enviar desafÃ­o</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== PvP: Responder desafÃ­o ===================== -->
+    <div id="pvp-respond-overlay" class="trade-overlay">
+        <div id="modal" style="width:min(520px,94vw);">
+            <div id="modal-header" style="border-color:#f472b6;">
+                <h3 style="color:#f472b6;">ðŸ“© Te han desafiado</h3>
+                <button id="pvp-respond-close">âœ•</button>
+            </div>
+            <div style="padding:14px;display:flex;flex-direction:column;gap:12px;">
+                <div id="pvp-respond-text" class="trade-msg" style="padding:0;color:#e8e8e8;"></div>
+                <div id="pvp-respond-bet" class="pvp-bet-summary"></div>
+                <div class="pvp-bet-box">
+                    <div class="pvp-section-label">Tu apuesta</div>
+                    <div class="pvp-bet-line">
+                        <label>ðŸª™ Monedas</label>
+                        <input type="number" id="pvp-resp-coins" min="0" value="0">
+                        <button class="trade-btn" id="pvp-resp-all" style="white-space:nowrap;">Todo</button>
+                    </div>
+                    <div class="pvp-bet-hint" id="pvp-resp-owned"></div>
+                    <div class="pvp-section-label">ðŸ‘¤ Personaje (opcional, uno)</div>
+                    <div id="pvp-resp-items" class="pvp-item-picker"></div>
+                </div>
+                <div id="pvp-respond-error" class="trade-msg" style="display:none;color:#f87171;padding:0;"></div>
+                <div style="display:flex;gap:10px;">
+                    <button id="pvp-reject" class="trade-btn red" style="flex:1;padding:12px;">âŒ Rechazar</button>
+                    <button id="pvp-accept" class="trade-btn green" style="flex:1;padding:12px;">âœ… Aceptar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== PvP: PreparaciÃ³n ===================== -->
+    <div id="pvp-prep-overlay" class="trade-overlay">
+        <div id="modal" style="width:min(760px,96vw);">
+            <div id="modal-header" style="border-color:#38bdf8;">
+                <h3 style="color:#38bdf8;">ðŸ› ï¸ PreparaciÃ³n de la partida</h3>
+                <button id="pvp-prep-close">âœ•</button>
+            </div>
+            <div style="padding:14px;display:flex;flex-direction:column;gap:12px;max-height:82vh;overflow-y:auto;">
+                <div id="pvp-prep-bets" class="pvp-bet-summary"></div>
+                <div>
+                    <div class="pvp-section-label">Tu mazo (<span id="pvp-deck-count">0</span>/8)</div>
+                    <div class="pvp-bet-hint">Elige hasta 8 personajes que poseas. Si no eliges, se usarÃ¡ un mazo automÃ¡tico.</div>
+                    <div id="pvp-deck-grid" class="pvp-deck-grid" style="margin-top:8px;"></div>
+                </div>
+                <div id="pvp-prep-status" class="trade-msg" style="padding:0;"></div>
+                <div style="display:flex;gap:10px;">
+                    <button id="pvp-prep-cancel" class="trade-btn red" style="flex:1;padding:12px;">âœ• Cancelar</button>
+                    <button id="pvp-prep-confirm" class="trade-btn green" style="flex:2;padding:12px;">âœ“ Confirmar apuesta</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== PvP: Tablero de partida ===================== -->
+    <div id="pvp-game-overlay" class="trade-overlay">
+        <div id="pvp-arena">
+            <div id="modal-header" style="border-color:#a78bfa;background:#0d1520;">
+                <h3 style="color:#c4b5fd;">âš”ï¸ Duelo</h3>
+                <button id="pvp-game-close" title="Rendirse y salir">âœ•</button>
+            </div>
+            <div class="pvp-board" id="pvp-board"></div>
+        </div>
+    </div>
+
+    <!-- ===================== PvP: Resultados ===================== -->
+    <div id="pvp-result-overlay" class="trade-overlay">
+        <div id="modal" style="width:min(520px,94vw);">
+            <div id="modal-header" style="border-color:#4ade80;">
+                <h3 style="color:#4ade80;">Resultado</h3>
+            </div>
+            <div style="padding:16px;">
+                <div id="pvp-result-content" class="pvp-result-box"></div>
+                <button id="pvp-result-close" class="trade-btn green" style="width:100%;padding:12px;margin-top:8px;">â†© Volver al menÃº</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="pvp-notify-root"></div>
 
     <!-- Códigos -->
     <div id="codes-overlay" class="trade-overlay">
@@ -1618,6 +1956,7 @@
         const tradeBtn = document.getElementById('trade-btn');
         const chatBtn = document.getElementById('chat-btn');
         const leaderboardBtn = document.getElementById('leaderboard-btn');
+        const pvpBtn = document.getElementById('pvp-btn');
         const codesBtn = document.getElementById('codes-btn');
         if (username) {
             userEl.textContent = '👤 ' + username;
@@ -1627,9 +1966,11 @@
             tradeBtn.style.display = 'inline-block';
             chatBtn.style.display = 'inline-block';
             leaderboardBtn.style.display = 'inline-block';
+            pvpBtn.style.display = 'inline-block';
             codesBtn.style.display = 'inline-block';
             initTradeStream();
             initChatStream();
+            initPvp();
             refreshTradeMenu();
         } else {
             userEl.style.display = 'none';
@@ -1638,12 +1979,14 @@
             tradeBtn.style.display = 'none';
             chatBtn.style.display = 'none';
             leaderboardBtn.style.display = 'none';
+            pvpBtn.style.display = 'none';
             codesBtn.style.display = 'none';
             stopTradeStream();
             stopChatStream();
             closeChat();
             closeLeaderboard();
             closeTradeWindow();
+            resetPvp();
             closeTrade();
         }
     }
@@ -1803,6 +2146,9 @@
     let chatStream = null;
     let chatOpen = false;
     let chatHistory = [];
+    let tradeChatMessages = [];
+    let tradeChatOpen = false;
+    let tradeChatUnread = 0;
     let chatUnread = 0;
 
     function itemById(id) {
@@ -2281,18 +2627,125 @@
             closeTradeWindow();
             showTradeToast('✅ ¡Intercambio completado!');
             if (authToken) load();
+        } else if (msg.type === 'tradeChat') {
+            if (currentTrade && msg.tradeId === currentTrade.id) {
+                tradeChatMessages.push(msg.message);
+                if (tradeChatMessages.length > 50) tradeChatMessages = tradeChatMessages.slice(-50);
+                const panel = document.getElementById('tw-chat');
+                if (tradeChatOpen && panel && !panel.classList.contains('hidden')) {
+                    renderTradeChatMessages();
+                } else {
+                    bumpTradeChatUnread();
+                }
+            }
+        }
+    }
+
+    function bumpTradeChatUnread() {
+        tradeChatUnread++;
+        const btn = document.getElementById('tw-chat-btn');
+        if (btn) btn.textContent = 'ðŸ’¬ Chat (' + tradeChatUnread + ')';
+    }
+
+    function renderTradeChatMessages() {
+        const box = document.getElementById('tw-chat-messages');
+        if (!box) return;
+        box.innerHTML = '';
+        if (!tradeChatMessages.length) {
+            box.innerHTML = '<div class="chat-line chat-sys">Sin mensajes todavÃ­a. Â¡Negocia!</div>';
+            return;
+        }
+        const myKey = String(authUsername || '').toLowerCase();
+        for (const m of tradeChatMessages) {
+            const div = document.createElement('div');
+            div.className = 'chat-line' + (String(m.user).toLowerCase() === myKey ? ' chat-own' : '');
+            const u = document.createElement('span');
+            u.className = 'chat-user';
+            u.textContent = m.user + ':';
+            div.appendChild(u);
+            div.appendChild(document.createTextNode(m.text));
+            const time = document.createElement('span');
+            time.className = 'chat-time';
+            time.textContent = fmtChatTime(m.at);
+            div.appendChild(time);
+            box.appendChild(div);
+        }
+        box.scrollTop = box.scrollHeight;
+    }
+
+    function toggleTradeChat() {
+        const panel = document.getElementById('tw-chat');
+        if (!panel) return;
+        const willOpen = panel.classList.contains('hidden');
+        if (willOpen) {
+            tradeChatOpen = true;
+            panel.classList.remove('hidden');
+            tradeChatUnread = 0;
+            const btn = document.getElementById('tw-chat-btn');
+            if (btn) btn.textContent = 'ðŸ’¬ Chat';
+            if (!tradeChatMessages.length) loadTradeChatHistory();
+            renderTradeChatMessages();
+            const input = document.getElementById('tw-chat-input');
+            if (input) setTimeout(() => input.focus(), 50);
+        } else {
+            tradeChatOpen = false;
+            panel.classList.add('hidden');
+        }
+    }
+
+    async function loadTradeChatHistory() {
+        const t = currentTrade;
+        if (!t) return;
+        try {
+            const res = await fetch(API_BASE + '/api/trade/chat/history?token=' + encodeURIComponent(authToken) + '&tradeId=' + encodeURIComponent(t.id));
+            const data = await res.json();
+            if (!res.ok || !data.ok) return;
+            tradeChatMessages = (data.messages || []).slice(-50);
+            renderTradeChatMessages();
+        } catch (e) {}
+    }
+
+    async function sendTradeChat() {
+        const t = currentTrade;
+        const input = document.getElementById('tw-chat-input');
+        if (!t || !input) return;
+        const text = input.value.trim();
+        if (!text || !authToken) return;
+        try {
+            const res = await fetch(API_BASE + '/api/trade/chat/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: authToken, tradeId: t.id, text }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.ok) {
+                showTradeToast('âš ï¸ ' + (data.error || 'No se pudo enviar el mensaje'));
+                return;
+            }
+            input.value = '';
+        } catch (e) {
+            showTradeToast('âš ï¸ No se pudo conectar con el servidor');
             refreshTradeMenu();
         }
     }
 
     // ---- Ventana de trade (Adopt Me) ----
+        const previous = currentTrade;
     function openTradeWindow(t) {
+        if (!previous || previous.id !== t.id) {
+            tradeChatMessages = [];
+            tradeChatOpen = false;
+            tradeChatUnread = 0;
+        }
         currentTrade = t;
         document.getElementById('trade-win-overlay').classList.add('open');
         renderTradeWindow();
     }
 
     function closeTradeWindow() {
+        tradeChatMessages = [];
+        tradeChatOpen = false;
+        tradeChatUnread = 0;
         currentTrade = null;
         document.getElementById('trade-win-overlay').classList.remove('open');
     }
@@ -2351,6 +2804,32 @@
         sides.appendChild(arrows);
         sides.appendChild(renderSide(false));
         win.appendChild(sides);
+        const chatPanel = document.createElement('div');
+        chatPanel.id = 'tw-chat';
+        chatPanel.className = 'tw-chat' + (tradeChatOpen ? '' : ' hidden');
+        const chatMsgs = document.createElement('div');
+        chatMsgs.id = 'tw-chat-messages';
+        chatMsgs.className = 'tw-chat-messages';
+        chatMsgs.innerHTML = '<div class="chat-line chat-sys">Sin mensajes todavÃ­a. Â¡Negocia!</div>';
+        chatPanel.appendChild(chatMsgs);
+        const chatInputRow = document.createElement('div');
+        chatInputRow.className = 'chat-input-row';
+        const chatInput = document.createElement('input');
+        chatInput.id = 'tw-chat-input';
+        chatInput.type = 'text';
+        chatInput.maxLength = '300';
+        chatInput.placeholder = 'Mensaje privado del trade...';
+        chatInput.autocomplete = 'off';
+        chatInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendTradeChat(); });
+        const chatSend = document.createElement('button');
+        chatSend.className = 'trade-btn green';
+        chatSend.textContent = 'Enviar';
+        chatSend.addEventListener('click', sendTradeChat);
+        chatInputRow.appendChild(chatInput);
+        chatInputRow.appendChild(chatSend);
+        chatPanel.appendChild(chatInputRow);
+        win.appendChild(chatPanel);
+
 
         const bottom = document.createElement('div');
         bottom.className = 'tw-bottom';
@@ -2359,6 +2838,13 @@
         leave.textContent = '✕ Salir del trade';
         leave.addEventListener('click', cancelActiveTrade);
         bottom.appendChild(leave);
+        const chatBtn = document.createElement('button');
+        chatBtn.id = 'tw-chat-btn';
+        chatBtn.className = 'tw-chat-btn';
+        chatBtn.textContent = tradeChatUnread > 0 ? 'ðŸ’¬ Chat (' + tradeChatUnread + ')' : 'ðŸ’¬ Chat';
+        chatBtn.addEventListener('click', toggleTradeChat);
+        bottom.appendChild(chatBtn);
+
 
         const otherTickCol = document.createElement('div');
         otherTickCol.className = 'tw-accept-col';
@@ -2392,6 +2878,12 @@
         note.id = 'tw-note';
         note.className = 'tw-note';
         win.appendChild(note);
+        if (tradeChatOpen) {
+            renderTradeChatMessages();
+            const input = document.getElementById('tw-chat-input');
+            if (input) setTimeout(() => input.focus(), 50);
+        }
+
 
         renderTradeStatus();
     }
@@ -3794,6 +4286,791 @@
             setTimeout(() => div.remove(), 500);
         }, 6000);
     }
+    // ===================== PvP: Duelos de cartas =====================
+    const PVP_MAX_DECK = 8;
+    const PVP_MAX_FIELD = 3;
+    const PVP_MAX_ENERGY = 10;
+    const PVP_START_HP = 20;
+    const PVP_OVERLAYS = ['pvp-overlay', 'pvp-challenge-overlay', 'pvp-respond-overlay', 'pvp-prep-overlay', 'pvp-game-overlay', 'pvp-result-overlay'];
+
+    let pvpMatchId = null;
+    let pvpMatch = null;
+    let pvpTarget = null;
+    let pvpBetItem = null;
+    let pvpRespItem = null;
+    let pvpRespMatchId = null;
+    let pvpDeckSel = [];
+    let pvpDeckInitFor = null;
+    let pvpSelAttacker = null;
+    let pvpSelHand = null;
+    let pvpBusy = false;
+    let pvpStateTimer = null;
+    let pvpPendingTimer = null;
+    let pvpRenderedVersion = -1;
+    const pvpSeenPending = {};
+
+    function pvpShowOnly(id) {
+        PVP_OVERLAYS.forEach(o => document.getElementById(o).classList.toggle('open', o === id));
+    }
+    function pvpCloseAll() {
+        PVP_OVERLAYS.forEach(o => document.getElementById(o).classList.remove('open'));
+    }
+    function pvpErr(id, msg) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = msg || '';
+        el.style.display = msg ? 'block' : 'none';
+    }
+    function pvpColorFor(name) {
+        let h = 0;
+        const s = String(name || '?');
+        for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 360;
+        return 'hsl(' + h + ',60%,42%)';
+    }
+    function pvpAvatarHTML(name, cls) {
+        const s = String(name || '?');
+        let initial = (s.trim().charAt(0) || '?').toUpperCase();
+        if (!/[A-Za-z0-9]/.test(initial)) initial = '?';
+        return '<span class="pvp-avatar ' + (cls || '') + '" style="background:' + pvpColorFor(s) + '">' + initial + '</span>';
+    }
+    function pvpName(id) { const it = itemById(id); return it ? it.name : id; }
+    function pvpCardStats(id) {
+        const it = itemById(id);
+        const chance = (it && it.chance) || 100000;
+        const r = tierIndex(it || { chance: chance });
+        return { id: id, atk: 1 + r * 2, hp: 4 + r * 5, cost: 1 + r };
+    }
+    function pvpBetText(bet) {
+        const parts = [];
+        if (bet && Number(bet.coins) > 0) parts.push(Number(bet.coins).toLocaleString('es-ES') + ' 🪙');
+        if (bet && bet.item && bet.item.id) parts.push('👤 ' + pvpName(bet.item.id) + (bet.item.qty > 1 ? ' ×' + bet.item.qty : ''));
+        return parts.join(' + ') || 'nada';
+    }
+    function pvpOwnedItems() {
+        return Object.keys(state.owned || {}).filter(id => (state.owned[id] || 0) > 0 && itemById(id));
+    }
+    async function pvpGet(path, extra) {
+        const headers = Object.assign({ 'x-token': authToken || '' }, extra || {});
+        const res = await fetch(API_BASE + path, { headers: headers });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || data.ok === false) throw new Error(data.error || 'Error de conexión');
+        return data;
+    }
+    async function pvpPost(path, body) {
+        const res = await fetch(API_BASE + path, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(Object.assign({ token: authToken }, body || {})),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || data.ok === false) throw new Error(data.error || 'Error de conexión');
+        return data;
+    }
+
+    // ---- Menú de matchmaking ----
+    function openPvpMenu() {
+        if (!authToken) return;
+        pvpShowOnly('pvp-overlay');
+        refreshPvpMenu();
+    }
+    async function refreshPvpMenu() {
+        const online = document.getElementById('pvp-online-list');
+        online.innerHTML = '<div class="pvp-empty">Cargando...</div>';
+        try {
+            const d = await pvpGet('/api/pvp/players');
+            renderPvpOnline(d.players || []);
+        } catch (e) { online.innerHTML = '<div class="pvp-empty">No se pudo cargar la lista</div>'; }
+        try {
+            const d = await pvpGet('/api/pvp/pending');
+            pvpUpdatePending(d.pending || []);
+        } catch (e) {}
+    }
+    function renderPvpOnline(players) {
+        const box = document.getElementById('pvp-online-list');
+        box.innerHTML = '';
+        const list = players.filter(p => p.online);
+        if (!list.length) { box.innerHTML = '<div class="pvp-empty">No hay nadie online ahora mismo</div>'; return; }
+        list.sort((a, b) => a.username.localeCompare(b.username));
+        for (const p of list) {
+            const row = document.createElement('div');
+            row.className = 'pvp-row';
+            row.innerHTML = pvpAvatarHTML(p.username);
+            const info = document.createElement('div');
+            info.className = 'pvp-row-info';
+            const nm = document.createElement('div');
+            nm.className = 'pvp-row-name';
+            nm.textContent = p.username;
+            const st = document.createElement('span');
+            st.className = 'pvp-status ' + (p.status === 'disponible' ? 'disponible' : (p.status === 'enpartida' ? 'enpartida' : 'offline'));
+            st.textContent = p.status === 'disponible' ? 'Disponible' : (p.status === 'enpartida' ? 'En partida' : 'Offline');
+            info.appendChild(nm);
+            info.appendChild(st);
+            row.appendChild(info);
+            const btn = document.createElement('button');
+            btn.className = 'trade-btn';
+            btn.textContent = 'Desafiar';
+            btn.disabled = p.status !== 'disponible' || !!pvpMatchId;
+            if (!btn.disabled) btn.addEventListener('click', () => openPvpChallenge(p.username));
+            row.appendChild(btn);
+            box.appendChild(row);
+        }
+    }
+    function pvpUpdatePending(list) {
+        const badge = document.getElementById('pvp-badge');
+        badge.style.display = list.length ? 'flex' : 'none';
+        badge.textContent = list.length;
+        for (const p of list) {
+            if (!pvpSeenPending[p.matchId]) {
+                pvpSeenPending[p.matchId] = true;
+                showTradeToast('⚔️ ' + p.challenger + ' te ha desafiado');
+                break;
+            }
+        }
+        renderPvpPendingList(list);
+    }
+    function renderPvpPendingList(list) {
+        const wrap = document.getElementById('pvp-pending-wrap');
+        const box = document.getElementById('pvp-pending-list');
+        wrap.style.display = list.length ? 'block' : 'none';
+        box.innerHTML = '';
+        for (const p of list) {
+            const row = document.createElement('div');
+            row.className = 'pvp-row';
+            row.innerHTML = pvpAvatarHTML(p.challenger);
+            const info = document.createElement('div');
+            info.className = 'pvp-row-info';
+            const nm = document.createElement('div');
+            nm.className = 'pvp-row-name';
+            nm.textContent = p.challenger;
+            const sub = document.createElement('div');
+            sub.className = 'pvp-seq';
+            sub.textContent = 'Apuesta: ' + pvpBetText(p.bet);
+            info.appendChild(nm);
+            info.appendChild(sub);
+            row.appendChild(info);
+            const rej = document.createElement('button');
+            rej.className = 'trade-btn red';
+            rej.textContent = 'Rechazar';
+            rej.addEventListener('click', async () => { await rejectPvp(p.matchId); openPvpMenu(); });
+            const acc = document.createElement('button');
+            acc.className = 'trade-btn green';
+            acc.textContent = 'Aceptar';
+            acc.addEventListener('click', () => openPvpRespond(p));
+            row.appendChild(rej);
+            row.appendChild(acc);
+            box.appendChild(row);
+        }
+    }
+    async function rejectPvp(matchId) {
+        try { await pvpPost('/api/pvp/respond', { matchId: matchId, accept: false }); }
+        catch (e) { showTradeToast('⚠️ ' + e.message); }
+        refreshPvpMenu();
+    }
+
+    // ---- Selector de apuesta ----
+    function renderPvpItemPicker(containerId, selectedId, onPick) {
+        const box = document.getElementById(containerId);
+        if (!box) return;
+        box.innerHTML = '';
+        const owned = pvpOwnedItems().sort((a, b) => ((itemById(a) || {}).chance || 0) - ((itemById(b) || {}).chance || 0));
+        if (!owned.length) { box.innerHTML = '<div class="pvp-empty">No tienes personajes</div>'; return; }
+        for (const id of owned) {
+            const it = itemById(id);
+            const div = document.createElement('div');
+            div.className = 'pvp-pick' + (selectedId === id ? ' selected' : '');
+            const img = document.createElement('img');
+            img.src = imgFor(id);
+            img.alt = it ? it.name : id;
+            const nm = document.createElement('div');
+            nm.className = 'pvp-pick-name';
+            nm.textContent = it ? it.name : id;
+            const q = document.createElement('div');
+            q.className = 'pvp-pick-qty';
+            q.textContent = '×' + state.owned[id];
+            div.appendChild(img);
+            div.appendChild(nm);
+            div.appendChild(q);
+            div.addEventListener('click', () => onPick(selectedId === id ? null : id));
+            box.appendChild(div);
+        }
+    }
+    function refreshChallengePicker() {
+        renderPvpItemPicker('pvp-bet-items', pvpBetItem, (id) => { pvpBetItem = id; refreshChallengePicker(); });
+    }
+    function refreshRespPicker() {
+        renderPvpItemPicker('pvp-resp-items', pvpRespItem, (id) => { pvpRespItem = id; refreshRespPicker(); });
+    }
+    function openPvpChallenge(target) {
+        pvpTarget = target;
+        pvpBetItem = null;
+        document.getElementById('pvp-challenge-target').textContent = 'Desafiar a ' + target;
+        document.getElementById('pvp-bet-coins').value = '0';
+        document.getElementById('pvp-bet-owned').textContent = 'Tienes ' + state.coins.toLocaleString('es-ES') + ' monedas';
+        pvpErr('pvp-challenge-error', null);
+        refreshChallengePicker();
+        pvpShowOnly('pvp-challenge-overlay');
+    }
+    async function sendPvpChallenge() {
+        if (pvpBusy) return;
+        const coins = Math.max(0, Math.floor(Number(document.getElementById('pvp-bet-coins').value) || 0));
+        if (coins > state.coins) return pvpErr('pvp-challenge-error', 'No tienes suficientes monedas');
+        if (coins <= 0 && !pvpBetItem) return pvpErr('pvp-challenge-error', 'Añade monedas o un personaje');
+        const bet = { coins: coins };
+        if (pvpBetItem) bet.item = { id: pvpBetItem, qty: 1 };
+        pvpBusy = true;
+        try {
+            const d = await pvpPost('/api/pvp/challenge', { target: pvpTarget, bet: bet });
+            pvpMatchId = d.matchId;
+            pvpDeckInitFor = null;
+            await load();
+            pvpShowOnly('pvp-prep-overlay');
+            showTradeToast('⚔️ Desafío enviado a ' + pvpTarget);
+            pvpStartStateLoop();
+        } catch (e) { pvpErr('pvp-challenge-error', e.message); }
+        finally { pvpBusy = false; }
+    }
+
+    // ---- Responder desafío ----
+    function openPvpRespond(p) {
+        pvpRespMatchId = p.matchId;
+        pvpRespItem = null;
+        document.getElementById('pvp-respond-text').textContent = p.challenger + ' te ha desafiado a un duelo.';
+        renderPvpBetSummary('pvp-respond-bet', [{ name: p.challenger, bet: p.bet, escrow: p.escrow }]);
+        document.getElementById('pvp-resp-coins').value = '0';
+        document.getElementById('pvp-resp-owned').textContent = 'Tienes ' + state.coins.toLocaleString('es-ES') + ' monedas';
+        pvpErr('pvp-respond-error', null);
+        refreshRespPicker();
+        pvpShowOnly('pvp-respond-overlay');
+    }
+    async function acceptPvp() {
+        if (pvpBusy) return;
+        const coins = Math.max(0, Math.floor(Number(document.getElementById('pvp-resp-coins').value) || 0));
+        if (coins > state.coins) return pvpErr('pvp-respond-error', 'No tienes suficientes monedas');
+        if (coins <= 0 && !pvpRespItem) return pvpErr('pvp-respond-error', 'Añade monedas o un personaje');
+        const bet = { coins: coins };
+        if (pvpRespItem) bet.item = { id: pvpRespItem, qty: 1 };
+        pvpBusy = true;
+        try {
+            const d = await pvpPost('/api/pvp/respond', { matchId: pvpRespMatchId, accept: true, bet: bet });
+            pvpMatchId = d.matchId || pvpRespMatchId;
+            pvpDeckInitFor = null;
+            await load();
+            pvpShowOnly('pvp-prep-overlay');
+            pvpStartStateLoop();
+        } catch (e) { pvpErr('pvp-respond-error', e.message); }
+        finally { pvpBusy = false; }
+    }
+
+    // ---- Resumen de apuestas ----
+    function renderPvpBetSummary(id, rows) {
+        const box = document.getElementById(id);
+        if (!box) return;
+        box.innerHTML = '';
+        for (const r of rows) {
+            const card = document.createElement('div');
+            card.className = 'pvp-bet-player';
+            const head = document.createElement('div');
+            head.className = 'pvp-bet-player-head';
+            head.innerHTML = pvpAvatarHTML(r.name, 'sm');
+            const nm = document.createElement('div');
+            nm.className = 'pvp-bet-player-name';
+            nm.textContent = r.name + (r.confirm ? ' ✅' : '');
+            head.appendChild(nm);
+            card.appendChild(head);
+            const chips = document.createElement('div');
+            chips.className = 'pvp-bet-chips';
+            const bet = (r.bet && (Number(r.bet.coins) > 0 || r.bet.item)) ? r.bet : r.escrow;
+            if (bet && Number(bet.coins) > 0) {
+                const c = document.createElement('span');
+                c.className = 'pvp-chip gold';
+                c.textContent = '🪙 ' + Number(bet.coins).toLocaleString('es-ES');
+                chips.appendChild(c);
+            }
+            if (bet && bet.item) {
+                const c = document.createElement('span');
+                c.className = 'pvp-chip item';
+                c.textContent = '👤 ' + pvpName(bet.item.id) + (bet.item.qty > 1 ? ' ×' + bet.item.qty : '');
+                chips.appendChild(c);
+            }
+            if (bet && bet.items) {
+                for (const iid in bet.items) {
+                    if (!(bet.items[iid] > 0)) continue;
+                    const c = document.createElement('span');
+                    c.className = 'pvp-chip item';
+                    c.textContent = '👤 ' + pvpName(iid) + (bet.items[iid] > 1 ? ' ×' + bet.items[iid] : '');
+                    chips.appendChild(c);
+                }
+            }
+            if (!chips.children.length) {
+                const c = document.createElement('span');
+                c.className = 'pvp-chip empty';
+                c.textContent = 'Sin apuesta';
+                chips.appendChild(c);
+            }
+            card.appendChild(chips);
+            box.appendChild(card);
+        }
+    }
+
+    // ---- Preparación ----
+    function renderPvpPrep(m) {
+        renderPvpBetSummary('pvp-prep-bets', [
+            { name: m.me.username, bet: m.me.bet, escrow: m.me.escrow, confirm: m.me.confirm },
+            { name: m.opponent.username, bet: m.opponent.bet, escrow: m.opponent.escrow, confirm: m.opponent.confirm },
+        ]);
+        if (pvpDeckInitFor !== m.id) {
+            pvpDeckInitFor = m.id;
+            pvpDeckSel = Array.isArray(m.me.deckSelected) ? m.me.deckSelected.slice() : [];
+        }
+        renderPvpDeckGrid();
+        const status = document.getElementById('pvp-prep-status');
+        if (m.status === 'open') status.textContent = 'Esperando a que ' + m.opponent.username + ' acepte el desafío...';
+        else if (m.me.confirm && m.opponent.confirm) status.textContent = '¡Ambos listos! Empezando...';
+        else if (m.me.confirm) status.textContent = 'Confirmado. Esperando a ' + m.opponent.username + '...';
+        else if (m.opponent.confirm) status.textContent = m.opponent.username + ' ya confirmó. ¡Confirma tú también!';
+        else status.textContent = 'Elige tu mazo y confirma la apuesta.';
+        const btn = document.getElementById('pvp-prep-confirm');
+        btn.disabled = !!m.me.confirm || m.status === 'open';
+        btn.textContent = m.me.confirm ? '✓ Confirmado' : '✓ Confirmar apuesta';
+    }
+    function renderPvpDeckGrid() {
+        const grid = document.getElementById('pvp-deck-grid');
+        grid.innerHTML = '';
+        document.getElementById('pvp-deck-count').textContent = pvpDeckSel.length;
+        const owned = pvpOwnedItems().sort((a, b) => ((itemById(a) || {}).chance || 0) - ((itemById(b) || {}).chance || 0));
+        if (!owned.length) { grid.innerHTML = '<div class="pvp-empty">No tienes personajes</div>'; return; }
+        for (const id of owned) {
+            const it = itemById(id);
+            const total = state.owned[id] || 0;
+            const used = pvpDeckSel.filter(x => x === id).length;
+            const st = pvpCardStats(id);
+            const div = document.createElement('div');
+            div.className = 'pvp-deckcard' + (used > 0 ? ' in-deck' : '');
+            const img = document.createElement('img');
+            img.src = imgFor(id);
+            img.alt = it ? it.name : id;
+            const nm = document.createElement('div');
+            nm.className = 'pvp-dc-name';
+            nm.textContent = it ? it.name : id;
+            const stats = document.createElement('div');
+            stats.className = 'pvp-dc-stats';
+            stats.textContent = '⚔' + st.atk + ' ❤' + st.hp + ' ⚡' + st.cost;
+            div.appendChild(img);
+            div.appendChild(nm);
+            div.appendChild(stats);
+            if (used > 0) {
+                const cnt = document.createElement('div');
+                cnt.className = 'pvp-dc-count';
+                cnt.textContent = used;
+                div.appendChild(cnt);
+            }
+            div.addEventListener('click', () => {
+                if (used > 0) {
+                    const idx = pvpDeckSel.lastIndexOf(id);
+                    if (idx >= 0) pvpDeckSel.splice(idx, 1);
+                } else if (used < total && pvpDeckSel.length < PVP_MAX_DECK) {
+                    pvpDeckSel.push(id);
+                }
+                renderPvpDeckGrid();
+            });
+            grid.appendChild(div);
+        }
+    }
+    async function confirmPvpPrep() {
+        if (pvpBusy) return;
+        pvpBusy = true;
+        try {
+            await pvpPost('/api/pvp/deck', { matchId: pvpMatchId, deckIds: pvpDeckSel.slice(0, PVP_MAX_DECK) });
+            await pvpPost('/api/pvp/confirm', { matchId: pvpMatchId });
+            const d = await pvpGet('/api/pvp/state', { 'x-match': pvpMatchId });
+            pvpApplyMatch(d.match);
+        } catch (e) { showTradeToast('⚠️ ' + e.message); }
+        finally { pvpBusy = false; }
+    }
+    async function cancelPvpPrep() {
+        if (pvpBusy) return;
+        pvpBusy = true;
+        try { await pvpPost('/api/pvp/cancel', { matchId: pvpMatchId }); } catch (e) {}
+        pvpBusy = false;
+        pvpStopStateLoop();
+        pvpMatchId = null;
+        pvpMatch = null;
+        pvpDeckInitFor = null;
+        await load();
+        openPvpMenu();
+    }
+
+    // ---- Tablero ----
+    function pvpHPBar(player) {
+        const pct = Math.max(0, Math.min(100, (player.hp / PVP_START_HP) * 100));
+        const wrap = document.createElement('div');
+        wrap.className = 'pvp-hpwrap';
+        const bar = document.createElement('div');
+        bar.className = 'pvp-hpbar';
+        const fill = document.createElement('div');
+        fill.className = 'pvp-hpfill';
+        fill.style.width = pct + '%';
+        bar.appendChild(fill);
+        const num = document.createElement('div');
+        num.className = 'pvp-hpnum';
+        num.textContent = player.hp + ' / ' + PVP_START_HP + ' PV';
+        wrap.appendChild(bar);
+        wrap.appendChild(num);
+        return wrap;
+    }
+    function pvpEnergyDots(player) {
+        const el = document.createElement('div');
+        el.className = 'pvp-energy';
+        let dots = '';
+        for (let i = 0; i < PVP_MAX_ENERGY; i++) dots += '<span class="dot' + (i < player.energy ? '' : ' off') + '"></span>';
+        el.innerHTML = '⚡' + player.energy + ' ' + dots;
+        return el;
+    }
+    function pvpSlot(m, card, index, isMine, myTurn) {
+        const slot = document.createElement('div');
+        slot.className = 'pvp-slot';
+        if (!card) {
+            const empt = document.createElement('div');
+            empt.className = 'pvp-slot-empty-txt';
+            empt.textContent = 'vacío';
+            slot.appendChild(empt);
+            if (isMine && myTurn && pvpSelHand !== null) {
+                slot.style.borderStyle = 'dashed';
+                slot.style.borderColor = '#38bdf8';
+                slot.style.cursor = 'pointer';
+                slot.addEventListener('click', () => pvpAction({ type: 'play', card: pvpSelHand, slot: index }));
+            }
+            return slot;
+        }
+        slot.classList.add('filled');
+        if (isMine) {
+            slot.classList.add('mine');
+            if (!card.canAttack) slot.classList.add('spent');
+            if (pvpSelAttacker === index) slot.classList.add('selected');
+            slot.addEventListener('click', () => {
+                if (!myTurn || pvpSelHand !== null) return;
+                pvpSelAttacker = (pvpSelAttacker === index) ? null : index;
+                renderPvpGame(m);
+            });
+        } else if (pvpSelAttacker !== null && myTurn) {
+            slot.classList.add('attackable');
+            slot.addEventListener('click', () => pvpAction({ type: 'attack', attacker: pvpSelAttacker, target: index }));
+        }
+        const img = document.createElement('img');
+        img.src = imgFor(card.id);
+        img.alt = pvpName(card.id);
+        const nm = document.createElement('div');
+        nm.className = 'pvp-slot-name';
+        nm.textContent = pvpName(card.id);
+        const st = document.createElement('div');
+        st.className = 'pvp-slot-stats';
+        st.innerHTML = '<span class="atk">⚔' + card.atk + '</span> <span class="hp">❤' + card.hp + '</span>';
+        slot.appendChild(img);
+        slot.appendChild(nm);
+        slot.appendChild(st);
+        return slot;
+    }
+    function pvpPanel(m, isMine, myTurn) {
+        const player = isMine ? m.me : m.opponent;
+        const panel = document.createElement('div');
+        panel.className = 'pvp-panel' + ((myTurn === isMine) ? ' active-turn' : '');
+        const head = document.createElement('div');
+        head.className = 'pvp-panel-head';
+        head.innerHTML = pvpAvatarHTML(player.username, 'sm');
+        const nm = document.createElement('div');
+        nm.className = 'pvp-panel-name';
+        nm.textContent = player.username + (isMine ? ' (tú)' : '');
+        head.appendChild(nm);
+        head.appendChild(pvpHPBar(player));
+        head.appendChild(pvpEnergyDots(player));
+        panel.appendChild(head);
+        const field = document.createElement('div');
+        field.className = 'pvp-field';
+        const cards = player.field || [];
+        for (let i = 0; i < PVP_MAX_FIELD; i++) field.appendChild(pvpSlot(m, cards[i], i, isMine, myTurn));
+        panel.appendChild(field);
+        return panel;
+    }
+    function pvpControls(m, myTurn) {
+        const box = document.createElement('div');
+        box.className = 'pvp-controls';
+        if (pvpSelHand !== null) {
+            const info = document.createElement('span');
+            info.style.fontSize = '0.78rem';
+            info.style.color = '#a5b4fc';
+            info.textContent = 'Elige un hueco para colocar la carta';
+            box.appendChild(info);
+            const cancel = document.createElement('button');
+            cancel.className = 'trade-btn';
+            cancel.textContent = 'Cancelar';
+            cancel.addEventListener('click', () => { pvpSelHand = null; renderPvpGame(m); });
+            box.appendChild(cancel);
+        } else if (pvpSelAttacker !== null) {
+            const face = document.createElement('button');
+            face.className = 'trade-btn red';
+            face.textContent = '🎯 Atacar cara';
+            face.addEventListener('click', () => pvpAction({ type: 'attack', attacker: pvpSelAttacker, target: 'face' }));
+            box.appendChild(face);
+            const cancel = document.createElement('button');
+            cancel.className = 'trade-btn';
+            cancel.textContent = 'Cancelar';
+            cancel.addEventListener('click', () => { pvpSelAttacker = null; renderPvpGame(m); });
+            box.appendChild(cancel);
+        }
+        const end = document.createElement('button');
+        end.className = 'trade-btn green';
+        end.textContent = '⏭ Terminar turno';
+        end.disabled = !myTurn;
+        end.addEventListener('click', () => pvpAction({ type: 'end' }));
+        box.appendChild(end);
+        return box;
+    }
+    function pvpHand(m, myTurn) {
+        const wrap = document.createElement('div');
+        wrap.className = 'pvp-handwrap';
+        const label = document.createElement('div');
+        label.className = 'pvp-section-label';
+        label.textContent = 'Tu mano';
+        wrap.appendChild(label);
+        const hand = document.createElement('div');
+        hand.className = 'pvp-hand';
+        const cards = m.me.hand || [];
+        if (!cards.length) {
+            hand.innerHTML = '<div class="pvp-empty" style="padding:8px;">Sin cartas</div>';
+            wrap.appendChild(hand);
+            return wrap;
+        }
+        cards.forEach((id, idx) => {
+            const st = pvpCardStats(id);
+            const affordable = myTurn && st.cost <= m.me.energy;
+            const card = document.createElement('div');
+            card.className = 'pvp-hand-card' + (affordable ? '' : ' noenergy');
+            if (pvpSelHand === idx) {
+                card.style.borderColor = '#38bdf8';
+                card.style.boxShadow = '0 0 12px rgba(56,189,248,0.6)';
+            }
+            const img = document.createElement('img');
+            img.src = imgFor(id);
+            img.alt = pvpName(id);
+            const nm = document.createElement('div');
+            nm.className = 'pvp-hc-name';
+            nm.textContent = pvpName(id);
+            const stats = document.createElement('div');
+            stats.className = 'pvp-hc-stats';
+            stats.innerHTML = '⚔' + st.atk + ' ❤' + st.hp + ' ⚡' + st.cost;
+            card.appendChild(img);
+            card.appendChild(nm);
+            card.appendChild(stats);
+            card.addEventListener('click', () => {
+                if (!affordable) return;
+                pvpSelHand = (pvpSelHand === idx) ? null : idx;
+                pvpSelAttacker = null;
+                renderPvpGame(m);
+            });
+            hand.appendChild(card);
+        });
+        wrap.appendChild(hand);
+        return wrap;
+    }
+    function pvpLog(log) {
+        const box = document.createElement('div');
+        box.className = 'pvp-log';
+        const entries = (log || []).slice(-40);
+        for (const e of entries) {
+            const d = document.createElement('div');
+            d.className = 'lg ' + (e.s || '');
+            d.textContent = e.msg;
+            box.appendChild(d);
+        }
+        box.scrollTop = box.scrollHeight;
+        return box;
+    }
+    function renderPvpGame(m) {
+        const board = document.getElementById('pvp-board');
+        board.innerHTML = '';
+        const myTurn = (m.turn === 0 && m.isChallenger) || (m.turn === 1 && !m.isChallenger);
+        board.appendChild(pvpPanel(m, false, myTurn));
+        const tb = document.createElement('div');
+        tb.className = 'pvp-turnbar ' + (myTurn ? 'mine' : 'theirs');
+        tb.textContent = myTurn ? '¡Tu turno! ⚔️' : ('Turno de ' + m.opponent.username);
+        board.appendChild(tb);
+        board.appendChild(pvpControls(m, myTurn));
+        board.appendChild(pvpPanel(m, true, myTurn));
+        board.appendChild(pvpHand(m, myTurn));
+        board.appendChild(pvpLog(m.log));
+    }
+    async function pvpAction(action) {
+        if (pvpBusy || !pvpMatchId) return;
+        pvpBusy = true;
+        try {
+            await pvpPost('/api/pvp/action', { matchId: pvpMatchId, action: action });
+            pvpSelAttacker = null;
+            pvpSelHand = null;
+            const d = await pvpGet('/api/pvp/state', { 'x-match': pvpMatchId });
+            pvpApplyMatch(d.match);
+        } catch (e) { showTradeToast('⚠️ ' + e.message); }
+        finally { pvpBusy = false; }
+    }
+
+    // ---- Resultado ----
+    function renderPvpResult(m) {
+        const box = document.getElementById('pvp-result-content');
+        box.innerHTML = '';
+        const r = m.result || {};
+        const meName = String(authUsername || '').toLowerCase();
+        const won = !!(r.winner && String(r.winner).toLowerCase() === meName);
+        const title = document.createElement('div');
+        title.className = 'pvp-result-title ' + (won ? 'win' : 'lose');
+        title.textContent = won ? '🏆 ¡Ganaste!' : '💀 Perdiste';
+        box.appendChild(title);
+        const sub = document.createElement('div');
+        sub.className = 'pvp-result-sub';
+        sub.textContent = won ? ('Derrotaste a ' + (r.loser || '—')) : (r.winner ? ('Ganó ' + r.winner) : 'Sin ganador');
+        box.appendChild(sub);
+        const card = document.createElement('div');
+        card.className = 'pvp-result-card';
+        const h = document.createElement('h4');
+        h.textContent = won ? 'Botín obtenido' : 'Botín perdido';
+        card.appendChild(h);
+        const loot = document.createElement('div');
+        loot.className = 'pvp-bet-chips';
+        const betlike = won ? (r.gained || {}) : (r.lost || {});
+        const chips = [];
+        if (Number(betlike.coins) > 0) chips.push('🪙 ' + Number(betlike.coins).toLocaleString('es-ES'));
+        for (const id in (betlike.items || {})) if (betlike.items[id] > 0) chips.push('👤 ' + pvpName(id) + (betlike.items[id] > 1 ? ' ×' + betlike.items[id] : ''));
+        if (!chips.length) chips.push('nada');
+        for (const c of chips) {
+            const s = document.createElement('span');
+            s.className = 'pvp-chip ' + (c === 'nada' ? 'empty' : (c.charAt(0) === '🪙' ? 'gold' : 'item'));
+            s.textContent = c;
+            loot.appendChild(s);
+        }
+        card.appendChild(loot);
+        box.appendChild(card);
+    }
+    function closePvpResult() { pvpCloseAll(); openPvpMenu(); }
+
+    // ---- Bucle de estado / reconexión ----
+    function pvpApplyMatch(m) {
+        if (!m) return;
+        pvpMatch = m;
+        if (m.status === 'playing') {
+            if (!document.getElementById('pvp-game-overlay').classList.contains('open')) {
+                pvpShowOnly('pvp-game-overlay');
+                pvpRenderedVersion = -1;
+            }
+            if (pvpRenderedVersion !== m.version || pvpSelAttacker !== null || pvpSelHand !== null) {
+                pvpRenderedVersion = m.version;
+                renderPvpGame(m);
+            }
+        } else if (m.status === 'preparing' || (m.status === 'open' && m.isChallenger)) {
+            if (!document.getElementById('pvp-prep-overlay').classList.contains('open')) pvpShowOnly('pvp-prep-overlay');
+            renderPvpPrep(m);
+        } else if (m.status === 'finished') {
+            pvpStopStateLoop();
+            pvpMatchId = null;
+            pvpMatch = null;
+            pvpDeckInitFor = null;
+            renderPvpResult(m);
+            pvpShowOnly('pvp-result-overlay');
+            addEvent('⚔️ Duelo finalizado', 'evt-sistema');
+            load();
+        }
+    }
+    function pvpStartStateLoop() {
+        pvpStopStateLoop();
+        pvpStateTimer = setInterval(pvpPollState, 1200);
+        pvpPollState();
+    }
+    function pvpStopStateLoop() {
+        clearInterval(pvpStateTimer);
+        pvpStateTimer = null;
+    }
+    async function pvpPollState() {
+        if (!authToken || !pvpMatchId) return;
+        try {
+            const d = await pvpGet('/api/pvp/state', { 'x-match': pvpMatchId });
+            pvpApplyMatch(d.match);
+        } catch (e) {}
+    }
+    async function pvpRecover() {
+        if (!authToken) return;
+        try {
+            const d = await pvpGet('/api/pvp/current');
+            const m = d.match;
+            if (!m) return;
+            if (m.status === 'open' && !m.isChallenger) return;
+            pvpMatchId = m.id;
+            pvpApplyMatch(m);
+            pvpStartStateLoop();
+        } catch (e) {}
+    }
+    function pvpStartPendingLoop() {
+        pvpStopPendingLoop();
+        pvpPendingTimer = setInterval(pvpPollPending, 5000);
+        pvpPollPending();
+    }
+    function pvpStopPendingLoop() {
+        clearInterval(pvpPendingTimer);
+        pvpPendingTimer = null;
+    }
+    async function pvpPollPending() {
+        if (!authToken) return;
+        try {
+            const d = await pvpGet('/api/pvp/pending');
+            pvpUpdatePending(d.pending || []);
+        } catch (e) {}
+    }
+    function initPvp() {
+        pvpStartPendingLoop();
+        pvpRecover();
+    }
+    function resetPvp() {
+        pvpStopStateLoop();
+        pvpStopPendingLoop();
+        pvpCloseAll();
+        pvpMatchId = null;
+        pvpMatch = null;
+        pvpDeckInitFor = null;
+        pvpSelAttacker = null;
+        pvpSelHand = null;
+        pvpRenderedVersion = -1;
+        for (const k in pvpSeenPending) delete pvpSeenPending[k];
+        const badge = document.getElementById('pvp-badge');
+        if (badge) badge.style.display = 'none';
+    }
+    async function surrenderPvp() {
+        if (pvpMatchId) {
+            try { await pvpPost('/api/pvp/action', { matchId: pvpMatchId, action: { type: 'concede' } }); } catch (e) {}
+        }
+        pvpStopStateLoop();
+        pvpMatchId = null;
+        pvpMatch = null;
+        pvpDeckInitFor = null;
+        pvpSelAttacker = null;
+        pvpSelHand = null;
+        await load();
+        openPvpMenu();
+    }
+
+    // ---- Wire-up PvP ----
+    document.getElementById('pvp-btn').addEventListener('click', openPvpMenu);
+    document.getElementById('pvp-close').addEventListener('click', () => pvpCloseAll());
+    document.getElementById('pvp-refresh').addEventListener('click', refreshPvpMenu);
+    document.getElementById('pvp-challenge-close').addEventListener('click', () => openPvpMenu());
+    document.getElementById('pvp-challenge-send').addEventListener('click', sendPvpChallenge);
+    document.getElementById('pvp-bet-all').addEventListener('click', () => { document.getElementById('pvp-bet-coins').value = state.coins; });
+    document.getElementById('pvp-respond-close').addEventListener('click', () => openPvpMenu());
+    document.getElementById('pvp-accept').addEventListener('click', acceptPvp);
+    document.getElementById('pvp-reject').addEventListener('click', async () => { await rejectPvp(pvpRespMatchId); openPvpMenu(); });
+    document.getElementById('pvp-resp-all').addEventListener('click', () => { document.getElementById('pvp-resp-coins').value = state.coins; });
+    document.getElementById('pvp-prep-close').addEventListener('click', cancelPvpPrep);
+    document.getElementById('pvp-prep-cancel').addEventListener('click', cancelPvpPrep);
+    document.getElementById('pvp-prep-confirm').addEventListener('click', confirmPvpPrep);
+    document.getElementById('pvp-game-close').addEventListener('click', surrenderPvp);
+    document.getElementById('pvp-result-close').addEventListener('click', closePvpResult);
+    document.getElementById('pvp-overlay').addEventListener('click', (e) => { if (e.target === e.currentTarget) pvpCloseAll(); });
+
 
     // ---- AFK Roll ----
     let afkActive = false;
