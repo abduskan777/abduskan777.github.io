@@ -1087,41 +1087,29 @@
         .casino-title { font-size: 1.3rem; font-weight: 900; color: #fbbf24; letter-spacing: 1px; }
         .casino-sub { font-size: 0.8rem; color: #9fb3c8; margin-bottom: 14px; }
         .casino-balance { font-size: 0.95rem; font-weight: bold; color: #fbbf24; margin-bottom: 12px; }
-        .casino-wheel-box { position: relative; width: min(280px, 78vw); height: min(280px, 78vw); margin: 0 auto 20px; }
+        .casino-wheel-box { position: relative; width: min(300px, 84vw); height: min(300px, 84vw); margin: 0 auto 18px; }
         .casino-wheel {
             position: absolute;
             inset: 0;
             border-radius: 50%;
-            background: conic-gradient(#ef4444 0deg 162deg, #1f2937 162deg 324deg, #15803d 324deg 360deg);
-            border: 10px solid #1f2937;
-            box-shadow: 0 0 0 4px #0b0716, 0 0 26px rgba(251, 191, 36, 0.35);
+            overflow: hidden;
             transition: transform 4.3s cubic-bezier(0.12, 0.8, 0.18, 1);
             will-change: transform;
         }
+        .casino-wheel svg { width: 100%; height: 100%; display: block; }
         .casino-wheel::after {
             content: '';
             position: absolute;
-            top: 6px;
+            top: 0;
             left: 50%;
             transform: translateX(-50%);
-            border-left: 10px solid transparent;
-            border-right: 10px solid transparent;
-            border-top: 18px solid #fbbf24;
+            border-left: 11px solid transparent;
+            border-right: 11px solid transparent;
+            border-top: 20px solid #fbbf24;
             filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.6));
+            z-index: 2;
         }
-        .casino-wheel-label {
-            position: absolute;
-            width: 34%;
-            text-align: center;
-            font-size: 0.72rem;
-            font-weight: 900;
-            color: #fff;
-            text-shadow: 0 1px 3px #000;
-            pointer-events: none;
-        }
-        .casino-seg-red { top: 13%; left: 50%; transform: translateX(-50%); }
-        .casino-seg-black { right: 12%; top: 50%; transform: translateY(-50%); }
-        .casino-seg-green { bottom: 12%; left: 50%; transform: translateX(-50%); color: #bbf7d0; }
+        .casino-wheel-hub-text { font: 900 11px Arial, Helvetica, sans-serif; fill: #fbbf24; letter-spacing: 1px; }
         .casino-bet-row { display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
         .casino-bet-input {
             width: 120px; padding: 10px; border-radius: 8px; border: 2px solid #223040;
@@ -1616,13 +1604,10 @@
                 <button id="casino-close">✕</button>
             </div>
             <div class="casino-wrap">
-                <div class="casino-sub">Acierta al rojo o al negro y doblas 🪙 · Acierta al verde (x10) y consigues al legendario <b>Anderdingus</b>, solo disponible en la ruleta.</div>
+                <div class="casino-sub">Ruleta europea de 37 casillas. Acierta al rojo o al negro y doblas 🪙 · Acierta al verde (el 0, x10) y consigues al legendario <b>Anderdingus</b>, solo disponible aquí.</div>
                 <div class="casino-balance" id="casino-balance">—</div>
                 <div class="casino-wheel-box">
-                    <div class="casino-wheel" id="casino-wheel"></div>
-                    <div class="casino-wheel-label casino-seg-red">ROJO<br>x2</div>
-                    <div class="casino-wheel-label casino-seg-black">NEGRO<br>x2</div>
-                    <div class="casino-wheel-label casino-seg-green">VERDE<br>x10</div>
+                    <div class="casino-wheel" id="casino-wheel"><svg id="casino-wheel-svg" viewBox="0 0 400 400" aria-hidden="true"></svg></div>
                 </div>
                 <div class="casino-bet-row">
                     <input type="number" id="casino-bet" class="casino-bet-input" min="20" step="1" value="20" placeholder="Apuesta (min 20)">
@@ -3899,6 +3884,7 @@
         document.getElementById('casino-overlay').classList.remove('open');
     }
     function renderCasino() {
+        buildCasinoWheel();
         document.getElementById('casino-balance').textContent = '🪙 ' + (state.coins || 0).toLocaleString('es-ES') + ' disponibles';
         document.getElementById('casino-bet').value = Math.max(20, parseInt(document.getElementById('casino-bet').value, 10) || 20);
         document.getElementById('casino-result').textContent = '';
@@ -3917,10 +3903,112 @@
         el.style.transform = 'rotate(0deg)';
         void el.offsetWidth;
     }
+
+    const CASINO_WHEEL_ORDER = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
+    const CASINO_RED_NUMBERS = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]);
+    function casinoSectorColor(i) {
+        const n = CASINO_WHEEL_ORDER[i];
+        if (n === 0) return 'green';
+        return CASINO_RED_NUMBERS.has(n) ? 'red' : 'black';
+    }
+    function casinoWheelAngleForSector(i) {
+        const seg = 360 / CASINO_WHEEL_ORDER.length;
+        const mid = (i + 0.5) * seg;
+        const jitter = Math.random() * seg * 0.55;
+        return (360 - mid - jitter) % 360;
+    }
+    function casinoSectorIndexForColor(c) {
+        if (c === 'green') return 0;
+        const picks = [];
+        for (let i = 1; i < CASINO_WHEEL_ORDER.length; i++) {
+            if (casinoSectorColor(i) === c) picks.push(i);
+        }
+        return picks[Math.floor(Math.random() * picks.length)];
+    }
+
+    let casinoWheelBuilt = false;
+    function buildCasinoWheel() {
+        if (casinoWheelBuilt) return;
+        const svg = document.getElementById('casino-wheel-svg');
+        if (!svg) return;
+        const ns = 'http://www.w3.org/2000/svg';
+        const CX = 200, CY = 200, R = 194, TEXT_R = 166, HUB_R = 34;
+        const total = CASINO_WHEEL_ORDER.length;
+        const seg = (2 * Math.PI) / total;
+        const colors = { red: '#d21f2c', black: '#191a1e', green: '#16a34a' };
+        const textColor = { red: '#ffffff', black: '#ffffff', green: '#f3fdf6' };
+        const ring = document.createElementNS(ns, 'circle');
+        ring.setAttribute('cx', CX);
+        ring.setAttribute('cy', CY);
+        ring.setAttribute('r', 199);
+        ring.setAttribute('fill', '#3a2a0f');
+        ring.setAttribute('stroke', '#fbbf24');
+        ring.setAttribute('stroke-width', 7);
+        svg.appendChild(ring);
+        const inner = document.createElementNS(ns, 'circle');
+        inner.setAttribute('cx', CX);
+        inner.setAttribute('cy', CY);
+        inner.setAttribute('r', 176);
+        inner.setAttribute('fill', '#0b0716');
+        svg.appendChild(inner);
+        for (let i = 0; i < total; i++) {
+            const a1 = i * seg - Math.PI / 2;
+            const a2 = (i + 1) * seg - Math.PI / 2;
+            const x1 = CX + R * Math.cos(a1);
+            const y1 = CY + R * Math.sin(a1);
+            const x2 = CX + R * Math.cos(a2);
+            const y2 = CY + R * Math.sin(a2);
+            const p = document.createElementNS(ns, 'path');
+            p.setAttribute('d', 'M ' + CX + ' ' + CY + ' L ' + x1.toFixed(2) + ' ' + y1.toFixed(2) + ' A ' + R + ' ' + R + ' 0 0 1 ' + x2.toFixed(2) + ' ' + y2.toFixed(2) + ' Z');
+            p.setAttribute('fill', colors[casinoSectorColor(i)]);
+            p.setAttribute('stroke', '#e8c766');
+            p.setAttribute('stroke-width', 0.8);
+            svg.appendChild(p);
+
+            const am = (a1 + a2) / 2;
+            const tx = CX + TEXT_R * Math.cos(am);
+            const ty = CY + TEXT_R * Math.sin(am);
+            const t = document.createElementNS(ns, 'text');
+            t.setAttribute('x', tx.toFixed(2));
+            t.setAttribute('y', ty.toFixed(2));
+            t.setAttribute('text-anchor', 'middle');
+            t.setAttribute('dominant-baseline', 'central');
+            t.setAttribute('fill', textColor[casinoSectorColor(i)]);
+            t.setAttribute('font-size', i === 0 ? 15 : 11);
+            t.setAttribute('font-weight', 'bold');
+            t.setAttribute('font-family', 'Arial, Helvetica, sans-serif');
+            t.setAttribute('transform', 'rotate(' + (am * 180 / Math.PI + 90) + ' ' + tx.toFixed(2) + ' ' + ty.toFixed(2) + ')');
+            t.textContent = CASINO_WHEEL_ORDER[i];
+            svg.appendChild(t);
+        }
+        const hubOut = document.createElementNS(ns, 'circle');
+        hubOut.setAttribute('cx', CX);
+        hubOut.setAttribute('cy', CY);
+        hubOut.setAttribute('r', HUB_R + 6);
+        hubOut.setAttribute('fill', '#0b0716');
+        hubOut.setAttribute('stroke', '#fbbf24');
+        hubOut.setAttribute('stroke-width', 3);
+        svg.appendChild(hubOut);
+        const hubDisc = document.createElementNS(ns, 'circle');
+        hubDisc.setAttribute('cx', CX);
+        hubDisc.setAttribute('cy', CY);
+        hubDisc.setAttribute('r', HUB_R - 4);
+        hubDisc.setAttribute('fill', '#3a2a0f');
+        hubDisc.setAttribute('stroke', '#0b0716');
+        hubDisc.setAttribute('stroke-width', 2);
+        svg.appendChild(hubDisc);
+        const hubText = document.createElementNS(ns, 'text');
+        hubText.setAttribute('x', CX);
+        hubText.setAttribute('y', CY + 4);
+        hubText.setAttribute('text-anchor', 'middle');
+        hubText.setAttribute('class', 'casino-wheel-hub-text');
+        hubText.textContent = 'VALLE RNG';
+        svg.appendChild(hubText);
+        casinoWheelBuilt = true;
+    }
     function casinoAngleForColor(c) {
-        const ranges = { red: [3, 161], black: [163, 322], green: [326, 358] };
-        const a = ranges[c];
-        return a[0] + Math.random() * (a[1] - a[0]);
+        const idx = casinoSectorIndexForColor(c);
+        return casinoWheelAngleForSector(idx);
     }
     async function casinoSpin() {
         if (casinoSpinning) return;

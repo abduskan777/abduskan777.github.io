@@ -299,7 +299,7 @@ function handleCodeRedeem(req, res) {
 const CASINO_MIN_BET = 20;
 const CASINO_ITEM_ID = 'anderdingus';
 const CASINO_RESULTS = ['red', 'black', 'green'];
-const CASINO_PROBS = { red: 0.45, black: 0.45, green: 0.10 };
+const CASINO_PROBS = { green: 1 / 37, red: 18 / 37, black: 18 / 37 };
 
 function casinoSpinColor() {
     const r = Math.random();
