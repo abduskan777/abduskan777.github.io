@@ -1222,7 +1222,11 @@
 
         /* ===================== PvP (duelos de cartas) ===================== */
         #pvp-btn {
-            position: relative;
+            position: fixed;
+            bottom: 18px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 300;
             display: inline-flex;
             align-items: center;
             gap: 6px;
@@ -1241,9 +1245,9 @@
         #pvp-btn:hover {
             background: linear-gradient(135deg, #8b5cf644, #6d28d944);
             box-shadow: 0 0 20px rgba(167,139,250,0.5), inset 0 0 10px rgba(167,139,250,0.2);
-            transform: translateY(-1px);
+            transform: translateX(-50%) translateY(-1px);
         }
-        #pvp-btn:active { transform: translateY(0); }
+        #pvp-btn:active { transform: translateX(-50%); }
         #pvp-btn.busy { border-color: #fbbf24; color: #fbbf24; animation: pvpPulse 1.4s infinite; }
         #pvp-badge {
             position: absolute; top: -7px; right: -7px;
@@ -1458,9 +1462,10 @@
             <button id="chat-btn" style="display:none;"><span style="font-size:1.1rem;">💬</span><span>Chat</span><span id="chat-badge" style="display:none;"></span></button>
             <button id="leaderboard-btn" style="display:none;"><span style="font-size:1.1rem;">🏆</span><span>Ranking</span></button>
             <button id="codes-btn" style="display:none;"><span style="font-size:1.1rem;">🎫</span><span>Códigos</span></button>
-            <button id="pvp-btn" style="display:none;"><span style="font-size:1.1rem;">⚔️</span><span>Jugar</span><span id="pvp-badge" style="display:none;"></span></button>
         </div>
     </div>
+
+    <button id="pvp-btn" style="display:none;"><span style="font-size:1.1rem;">⚔️</span><span>Jugar</span><span id="pvp-badge" style="display:none;"></span></button>
 
     <div id="main">
         <div id="center">
