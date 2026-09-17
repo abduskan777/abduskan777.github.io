@@ -4050,6 +4050,7 @@ const medals = ['👑', '🥈', '🥉'];
             void el.offsetWidth;
             el.style.transition = 'transform 4.3s cubic-bezier(0.12, 0.8, 0.18, 1)';
             el.style.transform = 'rotate(' + (5 * 360 + angle) + 'deg)';
+            playCasinoWheel();
 
             await new Promise(r => setTimeout(r, 4400));
 
@@ -4274,6 +4275,62 @@ const medals = ['👑', '🥈', '🥉'];
             o.connect(g); g.connect(ctx.destination);
             o.start(start); o.stop(start + 0.55);
         });
+    }
+
+    const CASINO_WHEEL_S = 4.3;
+    function casinoNoiseBuffer(ctx, seconds) {
+        const buf = ctx.createBuffer(1, Math.max(1, Math.floor(ctx.sampleRate * seconds)), ctx.sampleRate);
+        const d = buf.getChannelData(0);
+        let last = 0;
+        for (let i = 0; i < d.length; i++) {
+            const w = (Math.random() * 2) - 1;
+            last = (last + 0.02 * w) / 1.02;
+            d[i] = last * 3.5;
+        }
+        return buf;
+    }
+    function casinoBallClick(ctx, time) {
+        const b = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.02), ctx.sampleRate);
+        const d = b.getChannelData(0);
+        for (let i = 0; i < d.length; i++) {
+            d[i] = ((Math.random() * 2) - 1) * Math.pow(1 - i / d.length, 2);
+        }
+        const src = ctx.createBufferSource();
+        src.buffer = b;
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0.09, time);
+        g.gain.exponentialRampToValueAtTime(0.001, time + 0.02);
+        src.connect(g); g.connect(ctx.destination);
+        src.start(time);
+    }
+    function playCasinoWheel() {
+        const ctx = caseAudio();
+        if (!ctx) return;
+        const t0 = ctx.currentTime;
+
+        const buf = casinoNoiseBuffer(ctx, 1.2);
+        const src = ctx.createBufferSource();
+        src.buffer = buf;
+        src.loop = true;
+        const bp = ctx.createBiquadFilter();
+        bp.type = 'bandpass';
+        bp.Q.value = 0.8;
+        bp.frequency.setValueAtTime(420, t0);
+        bp.frequency.exponentialRampToValueAtTime(150, t0 + CASINO_WHEEL_S);
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0.0001, t0);
+        g.gain.linearRampToValueAtTime(0.15, t0 + 0.25);
+        g.gain.exponentialRampToValueAtTime(0.001, t0 + CASINO_WHEEL_S);
+        src.connect(bp); bp.connect(g); g.connect(ctx.destination);
+        src.start(t0); src.stop(t0 + CASINO_WHEEL_S + 0.05);
+
+        let t = t0 + 0.1;
+        let interval = 0.045;
+        while (t < t0 + CASINO_WHEEL_S - 0.25) {
+            casinoBallClick(ctx, t);
+            interval += 0.006;
+            t += interval;
+        }
     }
 
     function renderCaseReveal(c, won) {
