@@ -1097,17 +1097,17 @@
             will-change: transform;
         }
         .casino-wheel svg { width: 100%; height: 100%; display: block; }
-        .casino-wheel::after {
-            content: '';
+        .casino-pointer {
             position: absolute;
-            top: 0;
+            top: -6px;
             left: 50%;
             transform: translateX(-50%);
             border-left: 11px solid transparent;
             border-right: 11px solid transparent;
             border-top: 20px solid #fbbf24;
             filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.6));
-            z-index: 2;
+            z-index: 3;
+            pointer-events: none;
         }
         .casino-wheel-hub-text { font: 900 11px Arial, Helvetica, sans-serif; fill: #fbbf24; letter-spacing: 1px; }
         .casino-bet-row { display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
@@ -1608,6 +1608,7 @@
                 <div class="casino-balance" id="casino-balance">—</div>
                 <div class="casino-wheel-box">
                     <div class="casino-wheel" id="casino-wheel"><svg id="casino-wheel-svg" viewBox="0 0 400 400" aria-hidden="true"></svg></div>
+                    <div class="casino-pointer"></div>
                 </div>
                 <div class="casino-bet-row">
                     <input type="number" id="casino-bet" class="casino-bet-input" min="20" step="1" value="20" placeholder="Apuesta (min 20)">
