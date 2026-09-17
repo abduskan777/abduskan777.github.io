@@ -301,6 +301,80 @@ const CASINO_ITEM_ID = 'anderdingus';
 const CASINO_RESULTS = ['red', 'black', 'green'];
 const CASINO_PROBS = { green: 1 / 37, red: 18 / 37, black: 18 / 37 };
 
+// ==================== Oferta Limited (evento único) ====================
+const LIMITED_EVENT = {
+    itemId: 'chiquibai',
+    price: 67,
+    maxQty: 2,
+    tz: 'Europe/Madrid',
+    date: '2026-09-17',
+};
+
+function limitedEventState() {
+    const parts = new Intl.DateTimeFormat('en-GB', {
+        timeZone: LIMITED_EVENT.tz,
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+    }).formatToParts(new Date());
+    const get = t => (parts.find(p => p.type === t) || {}).value || '';
+    const dateStr = get('year') + '-' + get('month') + '-' + get('day');
+    const totalSec = parseInt(get('hour'), 10) * 3600 + parseInt(get('minute'), 10) * 60 + parseInt(get('second'), 10);
+    const startSec = 20 * 3600;
+    const endSec = 20 * 3600 + 5 * 60;
+    const isEventDate = dateStr === LIMITED_EVENT.date;
+    return {
+        before: isEventDate && totalSec < startSec,
+        available: isEventDate && totalSec >= startSec && totalSec < endSec,
+        ended: !isEventDate || totalSec >= endSec,
+    };
+}
+
+function handleLimitedStatus(req, res) {
+    const user = findUserByToken(req.headers['x-token']);
+    if (!user) return sendJson(res, 401, { error: 'Sesión inválida' });
+    const ev = limitedEventState();
+    const users = loadUsers();
+    const me = users[user.username.toLowerCase()];
+    const bought = (me && me.data && me.data.limitedBought && me.data.limitedBought[LIMITED_EVENT.itemId]) || 0;
+    sendJson(res, 200, {
+        ok: true,
+        available: ev.available,
+        before: ev.before,
+        ended: ev.ended,
+        bought: bought,
+        maxQty: LIMITED_EVENT.maxQty,
+        price: LIMITED_EVENT.price,
+        itemId: LIMITED_EVENT.itemId,
+    });
+}
+
+function handleLimitedBuy(req, res) {
+    readBody(req).then(body => {
+        let parsed;
+        try { parsed = JSON.parse(body || '{}'); } catch (e) { parsed = {}; }
+        const user = findUserByToken(parsed.token);
+        if (!user) return sendJson(res, 401, { error: 'Sesión inválida' });
+        const ev = limitedEventState();
+        if (!ev.available) return sendJson(res, 400, { error: 'La oferta de Chiqui Ibai ya no está disponible' });
+        const users = loadUsers();
+        const me = users[user.username.toLowerCase()];
+        if (!me) return sendJson(res, 500, { error: 'Error interno' });
+        me.data = me.data && typeof me.data === 'object' ? me.data : {};
+        me.data.owned = me.data.owned && typeof me.data.owned === 'object' ? me.data.owned : {};
+        me.data.limitedBought = me.data.limitedBought && typeof me.data.limitedBought === 'object' ? me.data.limitedBought : {};
+        const bought = me.data.limitedBought[LIMITED_EVENT.itemId] || 0;
+        if (bought >= LIMITED_EVENT.maxQty) return sendJson(res, 400, { error: 'Ya tienes el máximo de 2' });
+        me.data.coins = Number.isFinite(me.data.coins) ? me.data.coins : 0;
+        if (me.data.coins < LIMITED_EVENT.price) return sendJson(res, 400, { error: 'Monedas insuficientes' });
+        me.data.coins -= LIMITED_EVENT.price;
+        me.data.owned[LIMITED_EVENT.itemId] = (me.data.owned[LIMITED_EVENT.itemId] || 0) + 1;
+        me.data.limitedBought[LIMITED_EVENT.itemId] = bought + 1;
+        cleanupOwned(me.data.owned);
+        saveUsers(users);
+        sendJson(res, 200, { ok: true, coins: me.data.coins, owned: me.data.owned, bought: bought + 1, maxQty: LIMITED_EVENT.maxQty });
+    }).catch(() => sendJson(res, 500, { error: 'Error interno' }));
+}
+
 function casinoSpinColor() {
     const r = Math.random();
     if (r < CASINO_PROBS.green) return 'green';
@@ -1839,6 +1913,12 @@ if (urlPath === '/api/logout' && req.method === 'POST') {
             }
             if (urlPath === '/api/daily/claim' && req.method === 'POST') {
                 return handleDailyClaim(req, res);
+            }
+            if (urlPath === '/api/limited/status' && req.method === 'GET') {
+                return handleLimitedStatus(req, res);
+            }
+            if (urlPath === '/api/limited/buy' && req.method === 'POST') {
+                return handleLimitedBuy(req, res);
             }
     if (urlPath === '/api/heartbeat' && req.method === 'POST') {
         return handleHeartbeat(req, res);

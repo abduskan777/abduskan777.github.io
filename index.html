@@ -1073,6 +1073,23 @@
         .daily-btn:hover { background: #1d4ed8; }
         .daily-btn:disabled { background: #334155; cursor: default; }
 
+        /* Oferta Limited */
+        .limited-offer-title { font-size: 0.85rem; font-weight: bold; color: #00ffff; padding-bottom: 4px; }
+        .limited-card {
+            border: 2px solid #00ffff; background: #0d1b2a; border-radius: 10px; padding: 12px;
+            display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+            box-shadow: 0 0 18px #00ffff33;
+        }
+        .limited-img { width: 64px; height: 64px; object-fit: cover; border-radius: 8px; border: 2px solid #00ffff; }
+        .limited-info { flex: 1; min-width: 200px; }
+        .limited-name { font-size: 1.05rem; font-weight: 800; }
+        .limited-sub { font-size: 0.75rem; color: #9fb3c8; margin-top: 2px; }
+        .limited-status { font-size: 0.78rem; color: #bae6fd; margin-top: 6px; }
+        .limited-buy { background: #00ffff; color: #042414; border: none; border-radius: 8px; padding: 8px 14px; font-weight: bold; cursor: pointer; margin-top: 8px; }
+        .limited-buy:hover { background: #7dfaff; }
+        .limited-buy:disabled { background: #334155; color: #94a3b8; cursor: default; }
+        .limited-sold { color: #f87171; font-weight: bold; }
+
         /* Casino */
         .casino-overlay {
             position: fixed;
@@ -3291,13 +3308,21 @@ const medals = ['👑', '🥈', '🥉'];
     }
 
     const RARITY_TIERS = [
-        { label: 'Común',        color: '#9ca3af' },
-        { label: 'Poco común',   color: '#4ade80' },
-        { label: 'Raro',         color: '#3b82f6' },
-        { label: 'Épico',        color: '#a855f7' },
-        { label: 'Legendario',   color: '#f59e0b' },
-        { label: 'Mítico',       color: '#eaff00' },
+        { key: 'comun', label: 'Común',        color: '#9ca3af' },
+        { key: 'pococomun', label: 'Poco común', color: '#4ade80' },
+        { key: 'raro', label: 'Raro',         color: '#3b82f6' },
+        { key: 'epico', label: 'Épico',        color: '#a855f7' },
+        { key: 'legendario', label: 'Legendario',   color: '#f59e0b' },
+        { key: 'mitico', label: 'Mítico',       color: '#eaff00' },
+        { key: 'limited', label: 'Limited',      color: '#00ffff' },
     ];
+    function rarityIndex(item) {
+        if (item && item.rarity) {
+            const i = RARITY_TIERS.findIndex(t => t.key === item.rarity);
+            if (i >= 0) return i;
+        }
+        return tierIndex(item);
+    }
     function tierIndex(item) {
         const c = item.chance;
         if (c <= 16) return 0;
@@ -3308,18 +3333,19 @@ const medals = ['👑', '🥈', '🥉'];
         return 5;
     }
     function colorFor(item) {
-        return RARITY_TIERS[tierIndex(item)].color;
+        return RARITY_TIERS[rarityIndex(item)].color;
     }
     function tierOf(item) {
-        return RARITY_TIERS[tierIndex(item)].label;
+        return RARITY_TIERS[rarityIndex(item)].label;
     }
     function rarityClass(item) {
-        const i = tierIndex(item);
+        const i = rarityIndex(item);
         if (i <= 1) return '';
         if (i === 2) return 'rare';
         if (i === 3) return 'epic';
         if (i === 4) return 'legend';
-        return 'myth';
+        if (i === 5) return 'myth';
+        return 'limited';
     }
     function effLuck() {
         const shopLuck = state.shop.luckBoost ? 1 + state.shop.luckBoost * 0.1 : 1;
@@ -3571,6 +3597,7 @@ const medals = ['👑', '🥈', '🥉'];
     }
 
     function sellValue(item) {
+        if (item && typeof item.sellPrice === 'number') return item.sellPrice;
         return Math.round(coinsForItem(item) * coinMultiTotal() / 2);
     }
 
@@ -3732,7 +3759,7 @@ const medals = ['👑', '🥈', '🥉'];
             card.appendChild(rarity);
             const chance = document.createElement('div');
             chance.className = 'idx-chance';
-            chance.textContent = item.exclusive ? 'Exclusivo en el casino' : chanceStr(item.chance);
+            chance.textContent = item.rarity === 'limited' ? 'Exclusivo en tienda' : (item.exclusive ? 'Exclusivo en el casino' : chanceStr(item.chance));
             card.appendChild(chance);
             document.getElementById('modal-body').appendChild(card);
         });
@@ -3872,13 +3899,98 @@ const medals = ['👑', '🥈', '🥉'];
         dailyCard.style.marginTop = '10px';
         body.appendChild(dailyCard);
         renderDailyCard();
+
+        const limitedTitle = document.createElement('div');
+        limitedTitle.className = 'limited-offer-title';
+        limitedTitle.textContent = '🔥 Oferta Limited';
+        limitedTitle.style.marginTop = '14px';
+        body.appendChild(limitedTitle);
+        const limitedWrap = document.createElement('div');
+        limitedWrap.id = 'limited-offer-wrap';
+        body.appendChild(limitedWrap);
+        renderLimitedOffer();
+    }
+
+    let shopOfferTimer = null;
+    async function renderLimitedOffer() {
+        const wrap = document.getElementById('limited-offer-wrap');
+        if (!wrap) return;
+        const def = itemById('chiquibai');
+        if (!def) return;
+        if (!authToken) {
+            wrap.innerHTML = `<div class="limited-card">
+                <img class="limited-img" src="${def.image}" alt="" onerror="this.outerHTML='<span style=font-size:2rem>🌿</span>'">
+                <div class="limited-info">
+                    <div class="limited-name" style="color:#00ffff">${def.name}</div>
+                    <div class="limited-sub">Rareza <b style="color:#00ffff">Limited</b> · Precio 67 🪙 · Precio de venta 100.000 🪙</div>
+                    <div class="limited-status">Inicia sesión para comprarla.</div>
+                </div>
+            </div>`;
+            return;
+        }
+        try {
+            const res = await fetch(API_BASE + '/api/limited/status', { headers: { 'x-token': authToken } });
+            const data = await res.json();
+            if (!data.ok) throw new Error(data.error || 'Error');
+            const bought = data.bought || 0;
+            const left = data.maxQty - bought;
+            let statusTxt;
+            if (data.ended) statusTxt = '⛔ Oferta terminada. Chiqui Ibai no volverá a estar a la venta.';
+            else if (data.before) statusTxt = '⏳ Chiqui Ibai llegará hoy a las 20:00 (hora España).';
+            else statusTxt = '⌛ Oferta activa hasta las 20:05. Comprados: ' + bought + '/' + data.maxQty;
+            let actionHtml = '';
+            if (data.available) {
+                if (left > 0) actionHtml = '<button class="limited-buy" data-limited-buy>Comprar (67 🪙)</button>';
+                else actionHtml = '<span class="limited-sold">Agotado (máx. 2 por cuenta)</span>';
+            }
+            wrap.innerHTML = `<div class="limited-card">
+                <img class="limited-img" src="${def.image}" alt="" onerror="this.outerHTML='<span style=font-size:2rem>🌿</span>'">
+                <div class="limited-info">
+                    <div class="limited-name" style="color:#00ffff">${def.name}</div>
+                    <div class="limited-sub">Rareza <b style="color:#00ffff">Limited</b> · Precio 67 🪙 · Precio de venta 100.000 🪙 · Solo 2 por cuenta</div>
+                    <div class="limited-status">${statusTxt}</div>
+                    ${actionHtml}
+                </div>
+            </div>`;
+            const btn = wrap.querySelector('[data-limited-buy]');
+            if (btn) btn.addEventListener('click', () => buyLimited(wrap));
+        } catch (e) {
+            wrap.innerHTML = '';
+        }
+    }
+
+    async function buyLimited(wrap) {
+        const btn = wrap.querySelector('[data-limited-buy]');
+        btn.disabled = true;
+        try {
+            const res = await fetch(API_BASE + '/api/limited/buy', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: authToken }),
+            });
+            const data = await res.json();
+            if (!data.ok) throw new Error(data.error || 'Error de conexión');
+            state.coins = data.coins;
+            state.owned = data.owned || state.owned;
+            updateTopStats();
+            await save();
+            addEvent('🔥 Compraste Chiqui Ibai en la tienda (67 🪙)', 'evt-sistema');
+            renderLimitedOffer(wrap);
+        } catch (e) {
+            btn.disabled = false;
+            showTradeToast(e.message || 'Error de conexión');
+        }
     }
 
     function openShop() {
         renderShop();
+        clearInterval(shopOfferTimer);
+        renderLimitedOffer();
+        shopOfferTimer = setInterval(renderLimitedOffer, 5000);
         document.getElementById('shop-overlay').classList.add('open');
     }
     function closeShop() {
+        clearInterval(shopOfferTimer);
         document.getElementById('shop-overlay').classList.remove('open');
     }
 
@@ -4578,7 +4690,7 @@ const medals = ['👑', '🥈', '🥉'];
 
             const chance = document.createElement('div');
             chance.className = 't-chance';
-            chance.textContent = item.exclusive ? 'Exclusivo en el casino' : chanceStr(item.chance);
+            chance.textContent = item.rarity === 'limited' ? 'Exclusivo en tienda' : (item.exclusive ? 'Exclusivo en el casino' : chanceStr(item.chance));
             card.appendChild(chance);
 
             const rarity = document.createElement('div');

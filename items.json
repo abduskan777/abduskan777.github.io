@@ -30,6 +30,7 @@
         { "id": "lmsilvares", "name": "LMSilvares", "chance": 1500000000, "image": "img/lmsilvares.png", "epic": true, "epicBackground": "fondos/matrix.gif" },
         { "id": "rubyalba", "name": "Ruby Alba", "chance": 6700000000000, "image": "img/rubyalba.jfif" },
         { "id": "rubymejuto", "name": "Ruby Mejuto", "chance": 6900000000000, "image": "img/rubymejuto.jfif" },
-        { "id": "anderdingus", "name": "Anderdingus", "chance": 5000000, "image": "img/anderdingus.jfif", "exclusive": true }
+        { "id": "anderdingus", "name": "Anderdingus", "chance": 5000000, "image": "img/anderdingus.jfif", "exclusive": true },
+        { "id": "chiquibai", "name": "Chiqui Ibai", "chance": 12000000, "image": "img/chiquiibai.png", "rarity": "limited", "exclusive": true, "price": 67, "maxQty": 2, "sellPrice": 100000 }
     ]
 }
