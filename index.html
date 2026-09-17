@@ -1221,7 +1221,29 @@
         ::-webkit-scrollbar { width: 8px; }
 
         /* ===================== PvP (duelos de cartas) ===================== */
-        #pvp-btn { border-color: #a78bfa; color: #c4b5fd; }
+        #pvp-btn {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, #8b5cf622, #6d28d922);
+            border: 1px solid #a78bfa;
+            color: #c4b5fd;
+            border-radius: 10px;
+            padding: 8px 14px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all .25s ease;
+            box-shadow: 0 0 12px rgba(167,139,250,0.25), inset 0 0 8px rgba(167,139,250,0.1);
+            text-shadow: 0 0 6px rgba(167,139,250,0.7);
+        }
+        #pvp-btn:hover {
+            background: linear-gradient(135deg, #8b5cf644, #6d28d944);
+            box-shadow: 0 0 20px rgba(167,139,250,0.5), inset 0 0 10px rgba(167,139,250,0.2);
+            transform: translateY(-1px);
+        }
+        #pvp-btn:active { transform: translateY(0); }
         #pvp-btn.busy { border-color: #fbbf24; color: #fbbf24; animation: pvpPulse 1.4s infinite; }
         #pvp-badge {
             position: absolute; top: -7px; right: -7px;
@@ -1430,13 +1452,13 @@
         <div class="stat">Desbloqueados: <span id="unlocked-count">0</span>/<span id="total-items">0</span></div>
         <div id="auth-area">
             <span id="auth-username" class="auth-username" style="display:none;"></span>
-            <button id="pvp-btn" style="display:none;"><span style="font-size:1.1rem;">⚔️</span><span>Jugar</span><span id="pvp-badge" style="display:none;"></span></button>
             <button id="auth-btn">👤 Iniciar sesión</button>
             <button id="logout-btn" style="display:none;">Cerrar sesión</button>
             <button id="trade-btn" style="display:none;"><span style="font-size:1.1rem;">🤝</span><span>Comercio</span><span id="trade-badge" style="display:none;"></span></button>
             <button id="chat-btn" style="display:none;"><span style="font-size:1.1rem;">💬</span><span>Chat</span><span id="chat-badge" style="display:none;"></span></button>
             <button id="leaderboard-btn" style="display:none;"><span style="font-size:1.1rem;">🏆</span><span>Ranking</span></button>
             <button id="codes-btn" style="display:none;"><span style="font-size:1.1rem;">🎫</span><span>Códigos</span></button>
+            <button id="pvp-btn" style="display:none;"><span style="font-size:1.1rem;">⚔️</span><span>Jugar</span><span id="pvp-badge" style="display:none;"></span></button>
         </div>
     </div>
 
