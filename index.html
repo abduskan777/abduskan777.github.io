@@ -1919,20 +1919,22 @@
     const SHOP_DEFS = [
         {
             id: 'rollSpeed', icon: '⚡', name: 'Velocidad de Roll',
-            desc: 'Reduce el cooldown entre rolls',
-            maxLevel: 5, baseCost: 50, costMult: 3.5,
-            effect: (lvl) => Math.max(100, BASE_COOLDOWN_MS - lvl * 140),
+            desc: 'Reduce el cooldown entre rolls (niveles 6-10 lo bajan aún más)',
+            maxLevel: 10, baseCost: 50, costMult: 3.5,
+            effect: (lvl) => lvl <= 5
+                ? Math.max(100, BASE_COOLDOWN_MS - lvl * 140)
+                : Math.max(50, 100 - (lvl - 5) * 10),
         },
         {
             id: 'luckBoost', icon: '🍀', name: 'Suerte Extra',
             desc: '+0.1x suerte por nivel',
-            maxLevel: 10, baseCost: 30, costMult: 2.2,
+            maxLevel: 20, baseCost: 30, costMult: 2.2,
             effect: (lvl) => 1 + lvl * 0.1,
         },
         {
             id: 'coinMulti', icon: '💰', name: 'Mejor Precio de Venta',
             desc: '+50% monedas al vender personajes',
-            maxLevel: 5, baseCost: 150, costMult: 3.5,
+            maxLevel: 10, baseCost: 150, costMult: 3.5,
             effect: (lvl) => 1 + lvl * 0.5,
         },
     ];
@@ -1999,12 +2001,17 @@
         return Math.floor(def.baseCost * Math.pow(def.costMult, state.shop[def.id]));
     }
 
+    function shopEffect(id) {
+        const def = SHOP_DEFS.find(d => d.id === id);
+        return def ? def.effect(state.shop[id] || 0) : 1;
+    }
+
     function cooldownMs() {
-        return Math.max(100, BASE_COOLDOWN_MS - (state.shop.rollSpeed || 0) * 140);
+        return shopEffect('rollSpeed');
     }
 
     function coinMultiTotal() {
-        return 1 + (state.shop.coinMulti || 0) * 0.5;
+        return shopEffect('coinMulti');
     }
 
     function coinsForItem(item) {
@@ -3349,7 +3356,7 @@ const medals = ['👑', '🥈', '🥉'];
         return 'limited';
     }
     function effLuck() {
-        const shopLuck = state.shop.luckBoost ? 1 + state.shop.luckBoost * 0.1 : 1;
+        const shopLuck = shopEffect('luckBoost');
         return Math.max(1, (state.luck || 1) * shopLuck);
     }
     function effLuckTotal() {

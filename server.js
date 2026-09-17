@@ -1293,7 +1293,7 @@ function handleLoad(req, res) {
                 owned: owned,
                 coins: INFINITE_CAP,
                 totalCoins: INFINITE_CAP,
-                shop: { rollSpeed: 5, luckBoost: 10, coinMulti: 5 },
+                shop: { rollSpeed: 10, luckBoost: 20, coinMulti: 10 },
                 autoSell: false,
             },
         });
