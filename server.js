@@ -296,6 +296,68 @@ function handleCodeRedeem(req, res) {
     }).catch(() => sendJson(res, 500, { error: 'Error interno' }));
 }
 
+const CASINO_MIN_BET = 20;
+const CASINO_ITEM_ID = 'anderdingus';
+const CASINO_RESULTS = ['red', 'black', 'green'];
+const CASINO_PROBS = { red: 0.45, black: 0.45, green: 0.10 };
+
+function casinoSpinColor() {
+    const r = Math.random();
+    if (r < CASINO_PROBS.green) return 'green';
+    return r < CASINO_PROBS.green + CASINO_PROBS.red ? 'red' : 'black';
+}
+
+function handleCasinoSpin(req, res) {
+    let body = '';
+    req.on('data', c => { body += c; if (body.length > 1e6) req.destroy(); });
+    req.on('end', () => {
+        try {
+            const parsed = body ? JSON.parse(body) : {};
+            const token = String(parsed.token || '');
+            const color = String(parsed.color || '');
+            const bet = Math.floor(Number(parsed.bet));
+            const user = findUserByToken(token);
+            if (!user) return sendJson(res, 401, { error: 'Sesión inválida' });
+            if (CASINO_RESULTS.indexOf(color) === -1) return sendJson(res, 400, { error: 'Color inválido: rojo, negro o verde' });
+            if (!Number.isFinite(bet) || bet < CASINO_MIN_BET) return sendJson(res, 400, { error: 'La apuesta mínima es 20' });
+
+            const users = loadUsers();
+            const me = users[user.username.toLowerCase()];
+            if (!me) return sendJson(res, 401, { error: 'Sesión inválida' });
+            me.data = me.data || {};
+            me.data.coins = Number.isFinite(me.data.coins) ? me.data.coins : 0;
+            if (bet > me.data.coins) return sendJson(res, 400, { error: 'Saldo insuficiente' });
+
+            const result = casinoSpinColor();
+            const won = result === color;
+            const onChangeCoins = won ? (color === 'green' ? bet * 9 : bet) : -bet;
+
+            me.data.coins = Math.max(0, me.data.coins + onChangeCoins);
+            let itemId = null;
+            if (won && color === 'green') {
+                me.data.owned = me.data.owned || {};
+                me.data.owned[CASINO_ITEM_ID] = (me.data.owned[CASINO_ITEM_ID] || 0) + 1;
+                itemId = CASINO_ITEM_ID;
+            }
+            saveUsers(users);
+            sendJson(res, 200, {
+                ok: true,
+                event: {
+                    bet: bet,
+                    color: color,
+                    result: result,
+                    won: won,
+                    payout: won ? (color === 'green' ? bet * 10 : bet * 2) : 0,
+                    itemId: itemId,
+                },
+                coins: me.data.coins,
+            });
+        } catch (e) {
+            sendJson(res, 500, { error: 'Error interno' });
+        }
+    });
+}
+
 const DAILY_MAX_DAY = 31;
 const DAILY_MS = 24 * 60 * 60 * 1000;
 
@@ -1767,6 +1829,9 @@ if (urlPath === '/api/logout' && req.method === 'POST') {
             }
             if (urlPath === '/api/code/redeem' && req.method === 'POST') {
                 return handleCodeRedeem(req, res);
+            }
+            if (urlPath === '/api/casino/spin' && req.method === 'POST') {
+                return handleCasinoSpin(req, res);
             }
             if (urlPath === '/api/daily/status' && req.method === 'GET') {
                 return handleDailyStatus(req, res);

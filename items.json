@@ -29,6 +29,7 @@
         { "id": "unpvp", "name": "UnPvP", "chance": 400000000, "image": "img/unpvp.png", "epic": true, "epicBackground": "fondos/matrix.gif" },
         { "id": "lmsilvares", "name": "LMSilvares", "chance": 1500000000, "image": "img/lmsilvares.png", "epic": true, "epicBackground": "fondos/matrix.gif" },
         { "id": "rubyalba", "name": "Ruby Alba", "chance": 6700000000000, "image": "img/rubyalba.jfif" },
-        { "id": "rubymejuto", "name": "Ruby Mejuto", "chance": 6900000000000, "image": "img/rubymejuto.jfif" }
+        { "id": "rubymejuto", "name": "Ruby Mejuto", "chance": 6900000000000, "image": "img/rubymejuto.jfif" },
+        { "id": "anderdingus", "name": "Anderdingus", "chance": 5000000, "image": "img/anderdingus.svg", "exclusive": true }
     ]
 }

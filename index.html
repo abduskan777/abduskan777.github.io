@@ -537,9 +537,12 @@
             top: 16px;
             right: 16px;
             display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
             gap: 8px;
+            max-width: calc(100vw - 32px);
         }
-        #inventory-btn, #index-btn, #shop-btn-top {
+        #inventory-btn, #index-btn, #shop-btn-top, #casino-btn {
             padding: 10px 18px;
             font-size: 0.95rem;
             font-weight: bold;
@@ -555,6 +558,8 @@
         #index-btn:hover { background: #22d3ee22; }
         #shop-btn-top { border: 2px solid #fbbf2466; color: #fbbf24; }
         #shop-btn-top:hover { background: #fbbf2422; }
+        #casino-btn { border: 2px solid #4ade8066; color: #4ade80; }
+        #casino-btn:hover { background: #4ade8033; }
 
         /* Modal base */
         #modal-overlay {
@@ -1066,6 +1071,95 @@
         .daily-btn:hover { background: #1d4ed8; }
         .daily-btn:disabled { background: #334155; cursor: default; }
 
+        /* Casino */
+        .casino-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(4, 8, 14, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 55;
+            padding: 20px;
+        }
+        .casino-overlay.open { display: flex; }
+        .casino-wrap { text-align: center; }
+        .casino-title { font-size: 1.3rem; font-weight: 900; color: #fbbf24; letter-spacing: 1px; }
+        .casino-sub { font-size: 0.8rem; color: #9fb3c8; margin-bottom: 14px; }
+        .casino-balance { font-size: 0.95rem; font-weight: bold; color: #fbbf24; margin-bottom: 12px; }
+        .casino-wheel-box { position: relative; width: min(280px, 78vw); height: min(280px, 78vw); margin: 0 auto 20px; }
+        .casino-wheel {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: conic-gradient(#ef4444 0deg 162deg, #1f2937 162deg 324deg, #15803d 324deg 360deg);
+            border: 10px solid #1f2937;
+            box-shadow: 0 0 0 4px #0b0716, 0 0 26px rgba(251, 191, 36, 0.35);
+            transition: transform 4.3s cubic-bezier(0.12, 0.8, 0.18, 1);
+            will-change: transform;
+        }
+        .casino-wheel::after {
+            content: '';
+            position: absolute;
+            top: 6px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 18px solid #fbbf24;
+            filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.6));
+        }
+        .casino-wheel-label {
+            position: absolute;
+            width: 34%;
+            text-align: center;
+            font-size: 0.72rem;
+            font-weight: 900;
+            color: #fff;
+            text-shadow: 0 1px 3px #000;
+            pointer-events: none;
+        }
+        .casino-seg-red { top: 13%; left: 50%; transform: translateX(-50%); }
+        .casino-seg-black { right: 12%; top: 50%; transform: translateY(-50%); }
+        .casino-seg-green { bottom: 12%; left: 50%; transform: translateX(-50%); color: #bbf7d0; }
+        .casino-bet-row { display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
+        .casino-bet-input {
+            width: 120px; padding: 10px; border-radius: 8px; border: 2px solid #223040;
+            background: #0a0f16; color: #fbbf24; font-size: 1rem; font-weight: bold; text-align: center; outline: none;
+        }
+        .casino-bet-input:focus { border-color: #fbbf24; }
+        .casino-color-btn {
+            padding: 10px 16px; border-radius: 8px; border: 2px solid #334155; background: #10171f;
+            color: #fff; font-size: 0.85rem; font-weight: bold; cursor: pointer; transition: all 0.15s;
+        }
+        .casino-color-btn.red-c { border-color: #ef4444; color: #fca5a5; }
+        .casino-color-btn.black-c { border-color: #1f2937; color: #cbd5e1; background: #1f2937; }
+        .casino-color-btn.green-c { border-color: #16a34a; color: #bbf7d0; }
+        .casino-color-btn:hover { filter: brightness(1.2); }
+        .casino-color-btn.active { box-shadow: 0 0 0 2px #fbbf24; transform: scale(1.05); }
+        .casino-spin-btn {
+            width: 100%;
+            max-width: 280px;
+            margin: 12px auto 0;
+            padding: 12px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #f59e0b, #fbbf24);
+            border: none;
+            color: #111;
+            font-size: 1rem;
+            font-weight: 900;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .casino-spin-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(251, 191, 36, 0.4); }
+        .casino-spin-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .casino-result { margin-top: 12px; min-height: 44px; font-size: 0.95rem; font-weight: bold; }
+        .casino-result.win { color: #4ade80; }
+        .casino-result.lose { color: #f87171; }
+        .casino-result.green-win { color: #4ade80; text-shadow: 0 0 8px rgba(74, 222, 128, 0.6); }
+        .casino-error { color: #f87171; font-size: 0.8rem; margin-top: 6px; min-height: 16px; }
+
         .cases-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; }
         .case-card {
             background: #10171f; border: 1px solid #223040; border-radius: 12px; padding: 12px;
@@ -1473,6 +1567,7 @@
                 <button id="inventory-btn">🎒 Inventario</button>
                 <button id="index-btn">📖 Índice</button>
                 <button id="shop-btn-top">🛒 Tienda</button>
+                <button id="casino-btn">🎰 Casino</button>
             </div>
             <div id="event-log"></div>
             <div id="display"><span id="new-badge">🆕</span></div>
@@ -1510,6 +1605,35 @@
                 <button id="shop-close">✕</button>
             </div>
             <div id="shop-body"></div>
+        </div>
+    </div>
+
+    <!-- Modal Casino -->
+    <div id="casino-overlay" class="casino-overlay">
+        <div id="modal">
+            <div id="modal-header" style="border-color:#4ade80;">
+                <h3 style="color:#4ade80;">🎰 Casino</h3>
+                <button id="casino-close">✕</button>
+            </div>
+            <div class="casino-wrap">
+                <div class="casino-sub">Acierta al rojo o al negro y doblas 🪙 · Acierta al verde (x10) y consigues al legendario <b>Anderdingus</b>, solo disponible en la ruleta.</div>
+                <div class="casino-balance" id="casino-balance">—</div>
+                <div class="casino-wheel-box">
+                    <div class="casino-wheel" id="casino-wheel"></div>
+                    <div class="casino-wheel-label casino-seg-red">ROJO<br>x2</div>
+                    <div class="casino-wheel-label casino-seg-black">NEGRO<br>x2</div>
+                    <div class="casino-wheel-label casino-seg-green">VERDE<br>x10</div>
+                </div>
+                <div class="casino-bet-row">
+                    <input type="number" id="casino-bet" class="casino-bet-input" min="20" step="1" value="20" placeholder="Apuesta (min 20)">
+                    <button class="casino-color-btn red-c" data-color="red">🔴 Rojo</button>
+                    <button class="casino-color-btn black-c" data-color="black">⚫ Negro</button>
+                    <button class="casino-color-btn green-c" data-color="green">🟢 Verde</button>
+                </div>
+                <button id="casino-spin-btn" class="casino-spin-btn">🎡 GIRAR</button>
+                <div id="casino-result" class="casino-result"></div>
+                <div id="casino-error" class="casino-error"></div>
+            </div>
         </div>
     </div>
 
@@ -3208,7 +3332,10 @@
     }
     function effLuckTotal() {
         let total = 0;
-        for (const it of ITEMS) total += effLuck() / it.chance;
+        for (const it of ITEMS) {
+            if (it.exclusive) continue;
+            total += effLuck() / it.chance;
+        }
         return total;
     }
 
@@ -3234,6 +3361,7 @@
         let picked = ITEMS[0];
         let acc = 0;
         for (const it of ITEMS) {
+            if (it.exclusive) continue;
             acc += effLuck() / it.chance;
             if (rollVal < acc) { picked = it; break; }
         }
@@ -3757,6 +3885,98 @@
     }
     function closeShop() {
         document.getElementById('shop-overlay').classList.remove('open');
+    }
+
+    // ---- Casino ----
+    let casinoSelectedColor = null;
+    let casinoSpinning = false;
+    function openCasino() {
+        if (!authToken) { showTradeToast('Inicia sesión para acceder al casino.'); return; }
+        renderCasino();
+        document.getElementById('casino-overlay').classList.add('open');
+    }
+    function closeCasino() {
+        document.getElementById('casino-overlay').classList.remove('open');
+    }
+    function renderCasino() {
+        document.getElementById('casino-balance').textContent = '🪙 ' + (state.coins || 0).toLocaleString('es-ES') + ' disponibles';
+        document.getElementById('casino-bet').value = Math.max(20, parseInt(document.getElementById('casino-bet').value, 10) || 20);
+        document.getElementById('casino-result').textContent = '';
+        document.getElementById('casino-result').className = 'casino-result';
+        document.getElementById('casino-error').textContent = '';
+        document.querySelectorAll('.casino-color-btn').forEach(b => b.classList.remove('active'));
+        casinoSelectedColor = null;
+        casinoSpinning = false;
+        document.getElementById('casino-spin-btn').disabled = false;
+        resetCasinoWheel();
+    }
+    function resetCasinoWheel() {
+        const el = document.getElementById('casino-wheel');
+        if (!el) return;
+        el.style.transition = 'none';
+        el.style.transform = 'rotate(0deg)';
+        void el.offsetWidth;
+    }
+    function casinoAngleForColor(c) {
+        const ranges = { red: [3, 161], black: [163, 322], green: [326, 358] };
+        const a = ranges[c];
+        return a[0] + Math.random() * (a[1] - a[0]);
+    }
+    async function casinoSpin() {
+        if (casinoSpinning) return;
+        if (!authToken) { showTradeToast('Inicia sesión.'); return; }
+        const betInput = document.getElementById('casino-bet');
+        const bet = Math.floor(Number(betInput.value));
+        if (!Number.isFinite(bet) || bet < 20) { document.getElementById('casino-error').textContent = 'La apuesta mínima es 20'; return; }
+        if (bet > (state.coins || 0)) { document.getElementById('casino-error').textContent = 'Saldo insuficiente'; return; }
+        if (!casinoSelectedColor) { document.getElementById('casino-error').textContent = 'Elige un color'; return; }
+        document.getElementById('casino-error').textContent = '';
+        casinoSpinning = true;
+        document.getElementById('casino-spin-btn').disabled = true;
+        document.getElementById('casino-result').textContent = 'Girando…';
+        document.getElementById('casino-result').className = 'casino-result';
+
+        try {
+            const res = await fetch(API_BASE + '/api/casino/spin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: authToken, bet: bet, color: casinoSelectedColor }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.ok) { document.getElementById('casino-error').textContent = data.error || 'Error'; casinoSpinning = false; document.getElementById('casino-spin-btn').disabled = false; return; }
+
+            const angle = casinoAngleForColor(data.event.result);
+            const el = document.getElementById('casino-wheel');
+            el.style.transition = 'none';
+            el.style.transform = 'rotate(0deg)';
+            void el.offsetWidth;
+            el.style.transition = 'transform 4.3s cubic-bezier(0.12, 0.8, 0.18, 1)';
+            el.style.transform = 'rotate(' + (5 * 360 + angle) + 'deg)';
+
+            await new Promise(r => setTimeout(r, 4400));
+
+            state.coins = data.coins;
+            if (data.event.itemId) state.owned[data.event.itemId] = (state.owned[data.event.itemId] || 0) + 1;
+            updateTopStats();
+            save();
+            renderCasino();
+
+            const resEl = document.getElementById('casino-result');
+            if (data.event.won) {
+                const extra = data.event.itemId ? ' 🏆 ¡Conseguiste al legendario ANDERDINGUS!' : '';
+                resEl.textContent = '🎉 ¡Ganaste! ' + data.event.color.toUpperCase() + ' ×' + (data.event.payout / data.event.bet) + ' → +' + data.event.payout.toLocaleString('es-ES') + ' 🪙' + extra;
+                resEl.className = 'casino-result ' + (data.event.color === 'green' ? 'green-win' : 'win');
+                addEvent('🎰 Casino: ¡Ganaste ' + data.event.color + '! +' + data.event.payout.toLocaleString('es-ES') + ' 🪙' + extra, 'evt-sistema');
+            } else {
+                resEl.textContent = '😢 Cayó en ' + data.event.result.toUpperCase() + '. Has perdido ' + data.event.bet.toLocaleString('es-ES') + ' 🪙.';
+                resEl.className = 'casino-result lose';
+                addEvent('🎰 Casino: cayó en ' + data.event.result + '. Has perdido ' + data.event.bet.toLocaleString('es-ES') + ' 🪙.', 'evt-sistema');
+            }
+        } catch (e) {
+            document.getElementById('casino-error').textContent = 'Error de conexión';
+        }
+        casinoSpinning = false;
+        document.getElementById('casino-spin-btn').disabled = false;
     }
 
     // ---- Recompensa diaria ----
@@ -5131,6 +5351,21 @@
     document.getElementById('shop-overlay').addEventListener('click', (e) => {
         if (e.target === e.currentTarget) closeShop();
     });
+    document.getElementById('casino-btn').addEventListener('click', openCasino);
+    document.getElementById('casino-close').addEventListener('click', closeCasino);
+    document.getElementById('casino-spin-btn').addEventListener('click', casinoSpin);
+    document.getElementById('casino-overlay').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeCasino();
+    });
+    document.querySelectorAll('.casino-color-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (casinoSpinning) return;
+            document.querySelectorAll('.casino-color-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            casinoSelectedColor = btn.dataset.color;
+            document.getElementById('casino-error').textContent = '';
+        });
+    });
     document.getElementById('tester-btn').addEventListener('click', openTester);
     document.getElementById('tester-close').addEventListener('click', closeTester);
     document.getElementById('tester-pw-btn').addEventListener('click', tryTesterPassword);
@@ -5188,7 +5423,7 @@
         if (e.target === e.currentTarget) cancelActiveTrade();
     });
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') { closeInventory(); closeShop(); closeTester(); closeAuth(); closeTrade(); closeChat(); closeLeaderboard(); closeCodes(); cancelActiveTrade(); }
+        if (e.key === 'Escape') { closeInventory(); closeShop(); closeCasino(); closeTester(); closeAuth(); closeTrade(); closeChat(); closeLeaderboard(); closeCodes(); cancelActiveTrade(); }
     });
 
     document.getElementById('reset-btn').addEventListener('click', () => {
