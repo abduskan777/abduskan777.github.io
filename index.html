@@ -1574,9 +1574,26 @@
             .pvp-hand-card img { width: 48px; height: 48px; }
         }
         ::-webkit-scrollbar-thumb { background: #223040; border-radius: 4px; }
+
+        #gate-overlay { position: fixed; inset: 0; z-index: 2147483647; background: #000; display: flex; align-items: center; justify-content: center; }
+        #gate-box { display: flex; flex-direction: column; align-items: center; gap: 16px; width: min(320px, 88vw); }
+        #gate-pass { width: 100%; padding: 12px 14px; font-size: 1rem; background: #0b1118; border: 2px solid #2a3a50; border-radius: 8px; color: #fff; text-align: center; outline: none; }
+        #gate-pass:focus { border-color: #4b69ff; }
+        #gate-btn { padding: 10px 26px; font-size: 1rem; background: #1a2535; border: 2px solid #2a3a50; color: #fff; border-radius: 8px; cursor: pointer; }
+        #gate-btn:hover { border-color: #4b69ff; }
+        #gate-err { color: #f87171; font-size: 0.8rem; min-height: 1.1em; text-align: center; }
     </style>
 </head>
 <body>
+    <div id="gate-overlay">
+        <div id="gate-box">
+            <div style="font-size:2.4rem;">🔒</div>
+            <input type="password" id="gate-pass" placeholder="Passcode" autocomplete="off" spellcheck="false" autofocus>
+            <button id="gate-btn">Entrar</button>
+            <div id="gate-err"></div>
+        </div>
+    </div>
+
     <div id="top-bar">
         <h1>🌿 Valle RNG</h1>
         <div class="stat coins">Monedas: <span id="coins">0</span></div>
@@ -5864,6 +5881,22 @@ const medals = ['👑', '🥈', '🥉'];
 
     restoreAuth();
     loadItems();
+
+    const GATE_PASSCODE = 'chaves666';
+    function checkGate() {
+        const input = document.getElementById('gate-pass');
+        const err = document.getElementById('gate-err');
+        if (input.value.trim() === GATE_PASSCODE) {
+            const ov = document.getElementById('gate-overlay');
+            if (ov) ov.remove();
+        } else {
+            err.textContent = 'Passcode incorrecto';
+            input.value = '';
+            setTimeout(() => { window.location.href = 'about:blank'; }, 800);
+        }
+    }
+    document.getElementById('gate-btn').addEventListener('click', checkGate);
+    document.getElementById('gate-pass').addEventListener('keydown', (e) => { if (e.key === 'Enter') checkGate(); });
     </script>
 </body>
 </html>
