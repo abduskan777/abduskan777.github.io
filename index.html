@@ -331,8 +331,9 @@
         #trade-error { color: #f87171; font-size: 0.8rem; text-align: center; }
 
         /* ---- Ventana de trade estilo Adopt Me ---- */
-        #twbox { width: min(720px, 94vw); }
-        #trade-win { background: #0d1520; border: 2px solid #2a3a50; border-radius: 16px; overflow: hidden; }
+        #trade-win-overlay { overflow-y: auto; padding: 16px; }
+        #twbox { width: min(720px, 94vw); margin: auto; }
+        #trade-win { background: #0d1520; border: 2px solid #2a3a50; border-radius: 16px; overflow: hidden; max-height: calc(100vh - 32px); overflow-y: auto; }
         .tw-head { background: #131c28; border-bottom: 1px solid #2a3a50; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; }
         .tw-head h3 { color: #a78bfa; margin: 0; font-size: 1rem; }
         .tw-status { font-size: 0.75rem; color: #fbbf24; padding: 2px 10px; background: #fbbf2411; border: 1px solid #fbbf2466; border-radius: 999px; }
@@ -505,7 +506,7 @@
             border-radius: 8px;
             padding: 4px 14px;
         }
-        #buttons { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: center; }
+        .btns-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: center; }
         #roll-btn {
             padding: 16px 70px;
             font-size: 1.4rem;
@@ -1608,11 +1609,11 @@
             <div id="display"><span id="new-badge">🆕</span></div>
             <div id="item-name">-</div>
             <div id="item-rarity"></div>
-            <div id="buttons">
+            <div class="btns-row">
                 <button id="roll-btn">Roll</button>
                 <button id="afk-btn" class="tool-btn" style="border-color:#f59e0b;color:#fbbf24;">AFK Roll</button>
             </div>
-            <div id="buttons">
+            <div class="btns-row">
                 <button id="reset-btn" class="tool-btn" style="border-color:#7f1d1d;color:#f87171;">Reiniciar</button>
                 <button id="tester-btn" class="tool-btn" style="border-color:#7c3aed;color:#a78bfa;">🧪 Tester</button>
             </div>
@@ -2887,7 +2888,10 @@ const medals = ['👑', '🥈', '🥉'];
             if (!tradeChatMessages.length) loadTradeChatHistory();
             renderTradeChatMessages();
             const input = document.getElementById('tw-chat-input');
-            if (input) setTimeout(() => input.focus(), 50);
+            if (input) setTimeout(() => {
+                input.focus();
+                input.scrollIntoView({ block: 'nearest' });
+            }, 50);
         } else {
             tradeChatOpen = false;
             panel.classList.add('hidden');
@@ -3082,7 +3086,10 @@ const medals = ['👑', '🥈', '🥉'];
         if (tradeChatOpen) {
             renderTradeChatMessages();
             const input = document.getElementById('tw-chat-input');
-            if (input) setTimeout(() => input.focus(), 50);
+            if (input) setTimeout(() => {
+                input.focus();
+                input.scrollIntoView({ block: 'nearest' });
+            }, 50);
         }
 
 
@@ -5793,6 +5800,7 @@ const medals = ['👑', '🥈', '🥉'];
         return arr;
     }
 
+    let musicErrorStreak = 0;
     function playNextTrack() {
         if (musicPlaylist.length === 0) return;
         if (musicIndex >= musicPlaylist.length) {
@@ -5804,7 +5812,17 @@ const medals = ['👑', '🥈', '🥉'];
         musicIndex++;
     }
 
+    bgMusic.addEventListener('playing', () => { musicErrorStreak = 0; });
     bgMusic.addEventListener('ended', playNextTrack);
+    bgMusic.addEventListener('error', () => {
+        if (bgMusic.src === '' || musicPlaylist.length === 0) return;
+        musicErrorStreak++;
+        if (musicErrorStreak > musicPlaylist.length) {
+            musicPlaylist = [];
+            return;
+        }
+        playNextTrack();
+    });
 
     const LOCAL_MUSIC = [
         'WhatsApp Audio 2026-09-17 at 20.08.43 (1).mp4',
@@ -5831,6 +5849,7 @@ const medals = ['👑', '🥈', '🥉'];
         shuffle(files);
         musicPlaylist = files;
         musicIndex = 0;
+        musicErrorStreak = 0;
         playNextTrack();
     }
 
