@@ -1313,6 +1313,8 @@ function handleLoad(req, res) {
                 totalCoins: INFINITE_CAP,
                 shop: { rollSpeed: 10, luckBoost: 20, coinMulti: 10 },
                 autoSell: false,
+                avatar: (user.data && user.data.avatar) || null,
+                bio: (user.data && typeof user.data.bio === 'string') ? user.data.bio : '',
             },
         });
     }
