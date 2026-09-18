@@ -5870,15 +5870,6 @@ const medals = ['👑', '🥈', '🥉'];
         playNextTrack();
     }
 
-    document.addEventListener('click', function firstClick() {
-        initMusic();
-        document.removeEventListener('click', firstClick);
-    }, { once: true });
-    document.addEventListener('keydown', function firstKey() {
-        initMusic();
-        document.removeEventListener('keydown', firstKey);
-    }, { once: true });
-
     restoreAuth();
     loadItems();
 
@@ -5889,6 +5880,7 @@ const medals = ['👑', '🥈', '🥉'];
         if (input.value.trim() === GATE_PASSCODE) {
             const ov = document.getElementById('gate-overlay');
             if (ov) ov.remove();
+            initMusic();
         } else {
             err.textContent = 'Passcode incorrecto';
             input.value = '';
