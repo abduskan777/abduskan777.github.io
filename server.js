@@ -83,6 +83,20 @@ function saveChat(chat) {
     }
 }
 
+function saveDm(dms) {
+    dmMessages = dms;
+    if (dbPool) {
+        const snapshot = JSON.stringify(dms);
+        dbWriteChain = dbWriteChain
+            .catch(() => {})
+            .then(() => dbPool.query(
+                'INSERT INTO app_kv (k, v) VALUES (\'dm\', $1) ON CONFLICT (k) DO UPDATE SET v = EXCLUDED.v',
+                [snapshot]
+            ));
+        dbWriteChain.catch(e => console.error('DB dm save error:', e.message));
+    }
+}
+
 async function initDatabase() {
     if (!process.env.DATABASE_URL) {
         console.log('Sin DATABASE_URL: los usuarios se guardan en users.json');
@@ -104,6 +118,10 @@ async function initDatabase() {
     const chatRes = await dbPool.query("SELECT v FROM app_kv WHERE k = 'chat'");
     if (chatRes.rows[0]) {
         try { chatMessages = JSON.parse(chatRes.rows[0].v); } catch (e) { chatMessages = []; }
+    }
+    const dmRes = await dbPool.query("SELECT v FROM app_kv WHERE k = 'dm'");
+    if (dmRes.rows[0]) {
+        try { dmMessages = JSON.parse(dmRes.rows[0].v); } catch (e) { dmMessages = {}; }
     }
     console.log('PostgreSQL conectado: ' + (Object.keys(usersCache).length) + ' usuarios cargados, ' + chatMessages.length + ' mensajes de chat');
     return true;
@@ -1410,6 +1428,44 @@ function pushChatToClients(obj) {
     }
 }
 
+const DM_MAX = 200;
+const DM_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const DM_RATE_MS = 1200;
+let dmMessages = {};
+let dmLastSent = {};
+
+function convKey(a, b) {
+    return [String(a || '').toLowerCase(), String(b || '').toLowerCase()].sort().join('__');
+}
+
+function trimDm(conv) {
+    const cutoff = Date.now() - DM_TTL_MS;
+    let list = (dmMessages[conv] || []).filter(m => m && m.at && m.at >= cutoff);
+    if (list.length > DM_MAX) list = list.slice(-DM_MAX);
+    dmMessages[conv] = list;
+    return list;
+}
+
+function userByName(name) {
+    const users = loadUsers();
+    return users[String(name || '').toLowerCase()] || null;
+}
+
+function userPublicProfile(user) {
+    if (!user) return { username: '', avatar: null, bio: '', online: false };
+    const d = user.data;
+    return {
+        username: user.username || '',
+        avatar: (d && typeof d.avatar === 'string' && d.avatar.indexOf('data:image/') === 0 && d.avatar.length <= 400000) ? d.avatar : null,
+        bio: (d && typeof d.bio === 'string') ? d.bio : '',
+        online: isOnline(user),
+    };
+}
+
+function isFriendOf(me, them) {
+    return Array.isArray(me.friends) && me.friends.indexOf(String(them || '').toLowerCase()) !== -1;
+}
+
 function pushToUser(username, obj) {
     const key = String(username || '').toLowerCase();
     const conns = sseClients[key] || [];
@@ -1585,6 +1641,263 @@ function handleChatSend(req, res) {
         saveChat(chatMessages);
         sendJson(res, 200, { ok: true });
     }).catch(() => sendJson(res, 500, { error: 'Error interno' }));
+}
+
+function handleProfileUpdate(req, res) {
+    readBody(req).then(body => {
+        let parsed;
+        try { parsed = JSON.parse(body || '{}'); } catch (e) { parsed = {}; }
+        const user = findUserByToken(parsed.token);
+        if (!user) return sendJson(res, 401, { error: 'Sesión inválida' });
+        const bio = String(parsed.bio || '').trim().slice(0, 160);
+        if (!user.data || typeof user.data !== 'object') user.data = {};
+        user.data.bio = bio;
+        const users = loadUsers();
+        users[user.username.toLowerCase()] = user;
+        saveUsers(users);
+        sendJson(res, 200, { ok: true, bio: bio });
+    }).catch(() => sendJson(res, 500, { error: 'Error interno' }));
+}
+
+function handleProfileView(req, res) {
+    readBody(req).then(body => {
+        let parsed;
+        try { parsed = JSON.parse(body || '{}'); } catch (e) { parsed = {}; }
+        const me = findUserByToken(parsed.token);
+        if (!me) return sendJson(res, 401, { error: 'Sesión inválida' });
+        const target = userByName(parsed.user);
+        if (!target) return sendJson(res, 404, { error: 'No existe ese jugador' });
+        const meKey = me.username.toLowerCase();
+        const tKey = target.username.toLowerCase();
+        let rel = 'none';
+        if (meKey === tKey) rel = 'self';
+        else if (isFriendOf(me, target.username)) rel = 'friends';
+        else if ((me.friendRequests || []).some(r => (r.from || '').toLowerCase() === tKey)) rel = 'incoming';
+        else if ((me.sentRequests || []).some(r => (r.to || '').toLowerCase() === tKey)) rel = 'sent';
+        sendJson(res, 200, { ok: true, profile: userPublicProfile(target), relation: rel });
+    }).catch(() => sendJson(res, 500, { error: 'Error interno' }));
+}
+
+function handleFriendsAdd(req, res) {
+    readBody(req).then(body => {
+        let parsed;
+        try { parsed = JSON.parse(body || '{}'); } catch (e) { parsed = {}; }
+        const me = findUserByToken(parsed.token);
+        if (!me) return sendJson(res, 401, { error: 'Sesión inválida' });
+        const users = loadUsers();
+        const meKey = me.username.toLowerCase();
+        const tKey = String(parsed.user || '').toLowerCase();
+        const meU = users[meKey];
+        const tU = users[tKey];
+        if (!meU || !tU) return sendJson(res, 404, { error: 'No existe ese jugador' });
+        if (meKey === tKey) return sendJson(res, 400, { error: 'No puedes ser tu propio amigo' });
+        meU.sentRequests = meU.sentRequests || [];
+        if (isFriendOf(meU, tU.username)) return sendJson(res, 400, { error: 'Ya sois amigos' });
+        if (meU.sentRequests.some(r => (r.to || '').toLowerCase() === tKey)) return sendJson(res, 400, { error: 'Solicitud ya enviada' });
+        meU.sentRequests.push({ to: tU.username, at: Date.now() });
+        tU.friendRequests = tU.friendRequests || [];
+        if (!tU.friendRequests.some(r => (r.from || '').toLowerCase() === meKey)) {
+            tU.friendRequests.push({ from: meU.username, at: Date.now() });
+        }
+        saveUsers(users);
+        pushToUser(tKey, { type: 'friendRequest', from: meU.username });
+        pushToUser(meKey, { type: 'friendsChanged' });
+        sendJson(res, 200, { ok: true });
+    }).catch(() => sendJson(res, 500, { error: 'Error interno' }));
+}
+
+function handleFriendsCancel(req, res) {
+    readBody(req).then(body => {
+        let parsed;
+        try { parsed = JSON.parse(body || '{}'); } catch (e) { parsed = {}; }
+        const me = findUserByToken(parsed.token);
+        if (!me) return sendJson(res, 401, { error: 'Sesión inválida' });
+        const users = loadUsers();
+        const meKey = me.username.toLowerCase();
+        const tKey = String(parsed.user || '').toLowerCase();
+        const meU = users[meKey];
+        const tU = users[tKey];
+        if (!meU || !tU) return sendJson(res, 404, { error: 'No existe ese jugador' });
+        meU.sentRequests = (meU.sentRequests || []).filter(r => (r.to || '').toLowerCase() !== tKey);
+        tU.friendRequests = (tU.friendRequests || []).filter(r => (r.from || '').toLowerCase() !== meKey);
+        saveUsers(users);
+        sendJson(res, 200, { ok: true });
+    }).catch(() => sendJson(res, 500, { error: 'Error interno' }));
+}
+
+function handleFriendsAccept(req, res) {
+    readBody(req).then(body => {
+        let parsed;
+        try { parsed = JSON.parse(body || '{}'); } catch (e) { parsed = {}; }
+        const me = findUserByToken(parsed.token);
+        if (!me) return sendJson(res, 401, { error: 'Sesión inválida' });
+        const users = loadUsers();
+        const meKey = me.username.toLowerCase();
+        const tKey = String(parsed.user || '').toLowerCase();
+        const meU = users[meKey];
+        const tU = users[tKey];
+        if (!meU || !tU) return sendJson(res, 404, { error: 'No existe ese jugador' });
+        meU.friendRequests = (meU.friendRequests || []).filter(r => (r.from || '').toLowerCase() !== tKey);
+        tU.sentRequests = (tU.sentRequests || []).filter(r => (r.to || '').toLowerCase() !== meKey);
+        meU.sentRequests = (meU.sentRequests || []).filter(r => (r.to || '').toLowerCase() !== tKey);
+        tU.friendRequests = (tU.friendRequests || []).filter(r => (r.from || '').toLowerCase() !== meKey);
+        meU.friends = meU.friends || [];
+        tU.friends = tU.friends || [];
+        if (meU.friends.indexOf(tKey) === -1) meU.friends.push(tKey);
+        if (tU.friends.indexOf(meKey) === -1) tU.friends.push(meKey);
+        saveUsers(users);
+        pushToUser(tKey, { type: 'friendAccepted', by: meU.username });
+        pushToUser(meKey, { type: 'friendsChanged' });
+        sendJson(res, 200, { ok: true, profile: userPublicProfile(tU) });
+    }).catch(() => sendJson(res, 500, { error: 'Error interno' }));
+}
+
+function handleFriendsDecline(req, res) {
+    readBody(req).then(body => {
+        let parsed;
+        try { parsed = JSON.parse(body || '{}'); } catch (e) { parsed = {}; }
+        const me = findUserByToken(parsed.token);
+        if (!me) return sendJson(res, 401, { error: 'Sesión inválida' });
+        const users = loadUsers();
+        const meKey = me.username.toLowerCase();
+        const tKey = String(parsed.user || '').toLowerCase();
+        const meU = users[meKey];
+        const tU = users[tKey];
+        if (!meU || !tU) return sendJson(res, 404, { error: 'No existe ese jugador' });
+        meU.friendRequests = (meU.friendRequests || []).filter(r => (r.from || '').toLowerCase() !== tKey);
+        tU.sentRequests = (tU.sentRequests || []).filter(r => (r.to || '').toLowerCase() !== meKey);
+        saveUsers(users);
+        sendJson(res, 200, { ok: true });
+    }).catch(() => sendJson(res, 500, { error: 'Error interno' }));
+}
+
+function handleFriendsRemove(req, res) {
+    readBody(req).then(body => {
+        let parsed;
+        try { parsed = JSON.parse(body || '{}'); } catch (e) { parsed = {}; }
+        const me = findUserByToken(parsed.token);
+        if (!me) return sendJson(res, 401, { error: 'Sesión inválida' });
+        const users = loadUsers();
+        const meKey = me.username.toLowerCase();
+        const tKey = String(parsed.user || '').toLowerCase();
+        const meU = users[meKey];
+        const tU = users[tKey];
+        if (!meU || !tU) return sendJson(res, 404, { error: 'No existe ese jugador' });
+        meU.friends = (meU.friends || []).filter(k => k !== tKey);
+        tU.friends = (tU.friends || []).filter(k => k !== meKey);
+        meU.friendRequests = (meU.friendRequests || []).filter(r => (r.from || '').toLowerCase() !== tKey);
+        tU.friendRequests = (tU.friendRequests || []).filter(r => (r.from || '').toLowerCase() !== meKey);
+        meU.sentRequests = (meU.sentRequests || []).filter(r => (r.to || '').toLowerCase() !== tKey);
+        tU.sentRequests = (tU.sentRequests || []).filter(r => (r.to || '').toLowerCase() !== meKey);
+        saveUsers(users);
+        pushToUser(meKey, { type: 'friendsChanged' });
+        pushToUser(tKey, { type: 'friendsChanged' });
+        sendJson(res, 200, { ok: true });
+    }).catch(() => sendJson(res, 500, { error: 'Error interno' }));
+}
+
+function handleFriendsList(req, res) {
+    readBody(req).then(body => {
+        let parsed;
+        try { parsed = JSON.parse(body || '{}'); } catch (e) { parsed = {}; }
+        const me = findUserByToken(parsed.token);
+        if (!me) return sendJson(res, 401, { error: 'Sesión inválida' });
+        const users = loadUsers();
+        const meU = users[me.username.toLowerCase()] || {};
+        const friends = (meU.friends || []).map(k => userPublicProfile(users[k] || { username: k }));
+        const requests = (meU.friendRequests || []).map(r => {
+            const p = userPublicProfile(users[String(r.from || '').toLowerCase()] || { username: r.from || '' });
+            return { from: p.username, avatar: p.avatar, at: r.at || 0 };
+        });
+        const sent = (meU.sentRequests || []).map(r => ({ to: r.to || '', at: r.at || 0 }));
+        sendJson(res, 200, { ok: true, friends: friends, requests: requests, sent: sent });
+    }).catch(() => sendJson(res, 500, { error: 'Error interno' }));
+}
+
+function handleDmHistory(req, res) {
+    const url = new URL(req.url, 'http://localhost');
+    const token = url.searchParams.get('token') || '';
+    const withName = url.searchParams.get('with') || '';
+    const user = findUserByToken(token);
+    if (!user) return sendJson(res, 401, { error: 'Sesión inválida' });
+    const users = loadUsers();
+    const tU = users[String(withName).toLowerCase()];
+    if (!tU) return sendJson(res, 404, { error: 'No existe ese jugador' });
+    const meU = users[user.username.toLowerCase()];
+    if (!isFriendOf(meU, withName)) return sendJson(res, 403, { error: 'Solo puedes chatear con amigos' });
+    const conv = convKey(user.username, withName);
+    trimDm(conv);
+    sendJson(res, 200, {
+        ok: true,
+        with: userPublicProfile(tU).username,
+        avatar: (userPublicProfile(tU)).avatar,
+        messages: dmMessages[conv] || [],
+    });
+}
+
+function handleDmSend(req, res) {
+    readBody(req).then(body => {
+        let parsed;
+        try { parsed = JSON.parse(body || '{}'); } catch (e) { parsed = {}; }
+        const user = findUserByToken(parsed.token);
+        if (!user) return sendJson(res, 401, { error: 'Sesión inválida' });
+        if (!isOnline(user)) return sendJson(res, 403, { error: 'Conéctate al juego para poder escribir' });
+        const users = loadUsers();
+        const meKey = user.username.toLowerCase();
+        const tKey = String(parsed.to || '').toLowerCase();
+        const meU = users[meKey];
+        const tU = users[tKey];
+        if (!meU || !tU) return sendJson(res, 404, { error: 'No existe ese jugador' });
+        if (meKey === tKey) return sendJson(res, 400, { error: 'No puedes escribirte a ti mismo' });
+        if (!isFriendOf(meU, parsed.to)) return sendJson(res, 403, { error: 'Solo puedes chatear con tus amigos' });
+        const text = String(parsed.text || '').trim();
+        if (!text) return sendJson(res, 400, { error: 'Mensaje vacío' });
+        if (text.length > 300) return sendJson(res, 400, { error: 'El mensaje es demasiado largo' });
+        const conv = convKey(meKey, tKey);
+        const now = Date.now();
+        const rlKey = meKey + ':' + conv;
+        if (dmLastSent[rlKey] && now - dmLastSent[rlKey] < DM_RATE_MS) {
+            return sendJson(res, 429, { error: 'Espera un momento antes de seguir escribiendo' });
+        }
+        dmLastSent[rlKey] = now;
+        const msg = { user: meU.username, text: text, at: now };
+        trimDm(conv);
+        dmMessages[conv].push(msg);
+        if (dmMessages[conv].length > DM_MAX) dmMessages[conv] = dmMessages[conv].slice(-DM_MAX);
+        saveDm(dmMessages);
+        pushToUser(meKey, { type: 'dm', with: tU.username, message: msg });
+        pushToUser(tKey, { type: 'dm', with: meU.username, message: msg });
+        sendJson(res, 200, { ok: true, message: msg });
+    }).catch(() => sendJson(res, 500, { error: 'Error interno' }));
+}
+
+function handleDmStream(req, res) {
+    const url = new URL(req.url, 'http://localhost');
+    const token = url.searchParams.get('token') || '';
+    const user = findUserByToken(token);
+    if (!user) {
+        res.writeHead(401, { 'Content-Type': 'text/plain' });
+        return res.end('401');
+    }
+    res.writeHead(200, {
+        'Content-Type': 'text/event-stream; charset=utf-8',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'Access-Control-Allow-Origin': '*',
+    });
+    res.write('retry: 3000\n\n');
+    const key = user.username.toLowerCase();
+    if (!sseClients[key]) sseClients[key] = [];
+    const conn = { res };
+    sseClients[key].push(conn);
+    const ping = setInterval(() => {
+        try { res.write(': ping\n\n'); } catch (e) {}
+    }, 25000);
+    res.on('close', () => {
+        clearInterval(ping);
+        sseClients[key] = (sseClients[key] || []).filter(c => c !== conn);
+        if (sseClients[key].length === 0) delete sseClients[key];
+    });
 }
 
 function getTradeChat(tradeId) {
@@ -2003,6 +2316,18 @@ if (urlPath === '/api/logout' && req.method === 'POST') {
         return handlePvpAction(req, res);
     }
 
+    if (urlPath === '/api/profile/update' && req.method === 'POST') return handleProfileUpdate(req, res);
+    if (urlPath === '/api/profile/view' && req.method === 'POST') return handleProfileView(req, res);
+    if (urlPath === '/api/friends/add' && req.method === 'POST') return handleFriendsAdd(req, res);
+    if (urlPath === '/api/friends/cancel' && req.method === 'POST') return handleFriendsCancel(req, res);
+    if (urlPath === '/api/friends/accept' && req.method === 'POST') return handleFriendsAccept(req, res);
+    if (urlPath === '/api/friends/decline' && req.method === 'POST') return handleFriendsDecline(req, res);
+    if (urlPath === '/api/friends/remove' && req.method === 'POST') return handleFriendsRemove(req, res);
+    if (urlPath === '/api/friends/list' && req.method === 'POST') return handleFriendsList(req, res);
+    if (urlPath === '/api/dm/history' && req.method === 'GET') return handleDmHistory(req, res);
+    if (urlPath === '/api/dm/send' && req.method === 'POST') return handleDmSend(req, res);
+    if (urlPath === '/api/dm/stream' && req.method === 'GET') return handleDmStream(req, res);
+
     const filePath = path.join(ROOT, path.normalize(urlPath));
     if (!filePath.startsWith(ROOT)) {
         res.writeHead(403);
@@ -2038,4 +2363,15 @@ setInterval(() => {
     const before = chatMessages.length;
     pruneChat();
     if (chatMessages.length !== before) saveChat(chatMessages);
+}, 6 * 60 * 60 * 1000);
+
+setInterval(() => {
+    let changed = false;
+    for (const conv in dmMessages) {
+        const before = dmMessages[conv].length;
+        trimDm(conv);
+        if (dmMessages[conv].length !== before) changed = true;
+        if (dmMessages[conv].length === 0) { delete dmMessages[conv]; changed = true; }
+    }
+    if (changed) saveDm(dmMessages);
 }, 6 * 60 * 60 * 1000);

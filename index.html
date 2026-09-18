@@ -68,6 +68,88 @@
         #profile-remove-btn:hover { background: #f8717122; border-color: #f87171; color: #fca5a5; }
         #profile-msg { font-size: 0.75rem; color: #4ade80; text-align: center; min-height: 1em; }
         .mini-avatar { border-radius: 50%; object-fit: cover; flex-shrink: 0; vertical-align: middle; border: 1.5px solid rgba(255,255,255,0.28); }
+
+        .clickable-name { cursor: pointer; border-bottom: 1px dashed #22d3ee88; transition: color 0.15s; }
+        .clickable-name:hover { color: #7dd3fc; border-bottom-color: #7dd3fc; }
+
+        #profile-btn-badge {
+            position: absolute; top: -3px; right: -3px; min-width: 16px; height: 16px;
+            border-radius: 50%; background: #f87171; color: #fff; font-size: 0.65rem; font-weight: bold;
+            display: none; align-items: center; justify-content: center; padding: 0 3px;
+            border: 2px solid #0f172a;
+        }
+        .profile-bio { font-size: 0.8rem; color: #cbd5e1; background: #131c28; border: 1px solid #2a3a50; border-radius: 8px; padding: 8px; word-break: break-word; max-height: 72px; overflow-y: auto; }
+        .profile-bio.empty { color: #64748b; font-style: italic; }
+        #profile-bio-btn, #profile-friends-btn {
+            padding: 8px 12px; font-size: 0.8rem; font-weight: bold; border-radius: 8px;
+            cursor: pointer; border: 1px solid #3a4e70; background: #1e293b; color: #dbeafe;
+            transition: all 0.15s;
+        }
+        #profile-bio-btn:hover { background: #facc1522; border-color: #facc15; color: #fde047; }
+        #profile-friends-btn:hover { background: #34d39922; border-color: #34d399; color: #6ee7b7; }
+        #profile-bio-edit { display: flex; flex-direction: column; gap: 6px; }
+        #profile-bio-input {
+            background: #0b1118; color: #e8e8e8; border: 1px solid #2a3a50; border-radius: 8px;
+            padding: 8px; font-family: inherit; font-size: 0.8rem; resize: vertical; min-height: 48px;
+        }
+        #profile-bio-save {
+            padding: 7px 10px; font-size: 0.8rem; font-weight: bold; border-radius: 8px; cursor: pointer;
+            border: 1px solid #34d399; background: #34d39922; color: #6ee7b7; transition: all 0.15s;
+        }
+        #profile-bio-save:hover { background: #34d39944; }
+
+        .pv-overlay, .fr-overlay {
+            position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+            background: rgba(4, 8, 14, 0.85); z-index: 500;
+        }
+        .pv-overlay.open, .fr-overlay.open { display: flex; }
+        .pv-actions { display: flex; flex-direction: column; gap: 8px; }
+        .pv-online { font-size: 0.8rem; text-align: center; }
+        .pv-online.on { color: #4ade80; } .pv-online.off { color: #94a3b8; }
+
+        .fr-modal { width: min(860px, 96vw); height: min(560px, 90vh); display: flex; flex-direction: column; }
+        .fr-body { flex: 1; display: flex; min-height: 0; }
+        .fr-list { width: 250px; flex-shrink: 0; overflow-y: auto; border-right: 1px solid #2a3a50; padding: 10px; display: flex; flex-direction: column; gap: 10px; }
+        .fr-section-label { font-size: 0.72rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+        .fr-friend {
+            display: flex; align-items: center; gap: 8px; padding: 8px; border-radius: 8px; cursor: pointer;
+            border: 1px solid transparent; transition: all 0.15s; position: relative;
+        }
+        .fr-friend:hover { background: #1e293b; border-color: #223040; }
+        .fr-friend.active { background: #1e293b; border-color: #34d399; }
+        .fr-friend-name { flex: 1; font-weight: bold; color: #e8e8e8; font-size: 0.8rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+        .fr-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+        .fr-dot.on { background: #4ade80; box-shadow: 0 0 6px #4ade80; }
+        .fr-dot.off { background: #475569; }
+        .fr-unread { background: #f87171; color: #fff; font-size: 0.65rem; font-weight: bold; border-radius: 50%; min-width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; padding: 0 3px; }
+        .fr-x { color: #64748b; font-size: 0.85rem; cursor: pointer; padding: 2px 5px; border-radius: 4px; }
+        .fr-x:hover { color: #fca5a5; background: #f8717122; }
+        .fr-req { display: flex; align-items: center; gap: 8px; padding: 6px; border-radius: 8px; border: 1px solid #2a3a50; background: #131c28; }
+        .fr-req-name { flex: 1; font-size: 0.78rem; font-weight: bold; color: #e8e8e8; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+        .fr-req button { font-size: 0.78rem; padding: 4px 8px; border-radius: 6px; cursor: pointer; border: 1px solid #223040; background: #1e293b; color: #dbeafe; font-weight: bold; }
+        .fr-req button.acc { border-color: #34d399; color: #6ee7b7; }
+        .fr-req button.acc:hover { background: #34d39922; }
+        .fr-req button.dec { border-color: #f87171; color: #fca5a5; }
+        .fr-req button.dec:hover { background: #f8717122; }
+        .fr-sent-item { font-size: 0.75rem; color: #94a3b8; padding: 4px 8px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .fr-sent-item button { font-size: 0.7rem; padding: 3px 7px; border-radius: 6px; cursor: pointer; border: 1px solid #3a4e70; background: #1e293b; color: #dbeafe; }
+        .fr-empty { font-size: 0.8rem; color: #64748b; text-align: center; padding: 12px 4px; }
+        .fr-chat { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .fr-chat-head { padding: 10px 12px; border-bottom: 1px solid #2a3a50; display: flex; align-items: center; gap: 8px; }
+        .fr-chat-head .fr-uname { flex: 1; font-weight: bold; color: #22d3ee; font-size: 0.9rem; cursor: pointer; }
+        .fr-chat-msgs { flex: 1; overflow-y: auto; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
+        .fr-msg { max-width: 75%; padding: 6px 10px; border-radius: 12px; font-size: 0.8rem; line-height: 1.4; word-break: break-word; }
+        .fr-msg.own { align-self: flex-end; background: #164e6344; border: 1px solid #155e7566; color: #dbeafe; }
+        .fr-msg.other { align-self: flex-start; background: #1e293b; border: 1px solid #2a3a50; color: #e8e8e8; }
+        .fr-msg-time { display: block; font-size: 0.62rem; color: #64748b; margin-top: 2px; text-align: right; }
+        .fr-input-row { display: flex; gap: 8px; padding: 10px 12px; border-top: 1px solid #2a3a50; }
+        .fr-input-row input { flex: 1; background: #0b1118; color: #e8e8e8; border: 1px solid #2a3a50; border-radius: 8px; padding: 9px 10px; font-family: inherit; }
+        .fr-input-row button {
+            padding: 9px 16px; border-radius: 8px; cursor: pointer; border: 1px solid #34d399;
+            background: #34d39922; color: #6ee7b7; font-weight: bold; white-space: nowrap;
+        }
+        .fr-input-row button:hover { background: #34d39944; }
+        .fr-dm-empty { text-align: center; color: #64748b; font-size: 0.85rem; margin: auto; }
         #auth-btn, #logout-btn {
             padding: 7px 14px;
             font-size: 0.8rem;
@@ -355,6 +437,8 @@
         .trade-btn.green:hover { background: #22c55e44; }
         .trade-btn.red { background: #f8717122; border-color: #f8717166; color: #fca5a5; }
         .trade-btn.red:hover { background: #f8717144; }
+        .trade-btn.blue { background: #38bdf822; border-color: #38bdf866; color: #7dd3fc; }
+        .trade-btn.blue:hover { background: #38bdf844; }
         .trade-msg { font-size: 0.8rem; color: #9fb3c8; text-align: center; padding: 10px; }
         #trade-error { color: #f87171; font-size: 0.8rem; text-align: center; }
 
@@ -1626,6 +1710,7 @@
         <div id="profile-wrap">
             <button id="profile-btn" title="Perfil">
                 <span class="pvp-avatar" id="profile-btn-avatar">👤</span>
+                <span id="profile-btn-badge"></span>
             </button>
             <div id="profile-dropdown">
                 <div class="pvp-avatar profile-avatar-lg" id="profile-avatar-lg"></div>
@@ -1633,6 +1718,13 @@
                 <div class="profile-hint" id="profile-hint"></div>
                 <button id="profile-upload-btn" style="display:none;">📷 Subir foto de perfil</button>
                 <button id="profile-remove-btn" style="display:none;">🗑 Quitar foto</button>
+                <div class="profile-bio empty" id="profile-bio"></div>
+                <button id="profile-bio-btn" style="display:none;">✏️ Editar biografía</button>
+                <div id="profile-bio-edit" style="display:none;">
+                    <textarea id="profile-bio-input" maxlength="160" placeholder="Cuéntanos algo sobre ti..."></textarea>
+                    <button id="profile-bio-save">Guardar</button>
+                </div>
+                <button id="profile-friends-btn" style="display:none;">👥 Amigos <span id="profile-friends-badge" style="display:none;"></span></button>
                 <div id="profile-msg"></div>
             </div>
         </div>
@@ -1765,6 +1857,46 @@
                     <button id="auth-submit" class="auth-submit">Entrar</button>
                     <div id="auth-error" class="auth-error" style="display:none;"></div>
                     <div id="auth-info" class="auth-info">Tu progreso se guardará en el servidor para que puedas continuar en otro dispositivo.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ver perfil de otro jugador -->
+    <div id="profile-view-overlay" class="pv-overlay">
+        <div id="modal" style="width:min(360px,94vw);">
+            <div id="modal-header" style="border-color:#22d3ee;">
+                <h3 style="color:#22d3ee;">👤 Perfil</h3>
+                <button id="profile-view-close">✕</button>
+            </div>
+            <div style="padding:16px;display:flex;flex-direction:column;gap:12px;align-items:center;">
+                <div class="pvp-avatar profile-avatar-lg" id="pv-avatar"></div>
+                <div style="font-weight:bold;color:#22d3ee;font-size:1rem;text-align:center;word-break:break-word;" id="pv-name"></div>
+                <div class="pv-online off" id="pv-online"></div>
+                <div class="profile-bio" id="pv-bio"></div>
+                <div class="pv-actions" id="pv-actions" style="width:100%;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Amigos + chat privado -->
+    <div id="friends-overlay" class="fr-overlay">
+        <div id="modal" class="fr-modal">
+            <div id="modal-header" style="border-color:#34d399;">
+                <h3 style="color:#34d399;">👥 Amigos</h3>
+                <button id="friends-close">✕</button>
+            </div>
+            <div class="fr-body">
+                <div class="fr-list" id="friends-list"></div>
+                <div class="fr-chat">
+                    <div class="fr-chat-head" id="friends-chat-head" style="display:none;"></div>
+                    <div class="fr-chat-msgs" id="friends-chat-msgs">
+                        <div class="fr-dm-empty">Selecciona un amigo para chatear.<br>Manda una solicitud desde su perfil (toca su nombre).</div>
+                    </div>
+                    <div class="fr-input-row" style="display:none;" id="friends-chat-input-row">
+                        <input type="text" id="friends-chat-input" maxlength="300" placeholder="Escribe un mensaje..." autocomplete="off">
+                        <button id="friends-chat-send">Enviar</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2083,6 +2215,7 @@
         shop: { rollSpeed: 0, luckBoost: 0, coinMulti: 0 },
         autoSell: false,
         avatar: null,
+        bio: '',
     };
 
     let ITEMS = [];
@@ -2119,6 +2252,7 @@
             shop: state.shop,
             autoSell: state.autoSell,
             avatar: state.avatar || null,
+            bio: state.bio || '',
         };
     }
 
@@ -2132,11 +2266,16 @@
         state.shop = (d && d.shop) || { rollSpeed: 0, luckBoost: 0, coinMulti: 0 };
         state.autoSell = !!(d && d.autoSell);
         state.avatar = (d && typeof d.avatar === 'string' && d.avatar.indexOf('data:image/') === 0 && d.avatar.length <= 400000) ? d.avatar : null;
+        state.bio = (d && typeof d.bio === 'string') ? d.bio : '';
         updateTopStats();
     }
 
     function avatarSrcFor(name) {
-        return (state.avatar && name && authUsername && String(name).toLowerCase() === String(authUsername).toLowerCase()) ? state.avatar : null;
+        const k = String(name || '').toLowerCase();
+        if (k && authUsername && k === String(authUsername).toLowerCase()) {
+            return (state.avatar && state.avatar.indexOf('data:image/') === 0) ? state.avatar : null;
+        }
+        return avatarCache[k] || null;
     }
 
     function avatarImgHTML(name, size) {
@@ -2254,8 +2393,18 @@
             codesBtn.style.display = 'inline-block';
             initTradeStream();
             initChatStream();
+            initDmStream();
             initPvp();
             refreshTradeMenu();
+            refreshFriends();
+            fetch(API_BASE + '/api/profile/view', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: authToken, user: username }) })
+                .then(r => r.json()).then((d) => {
+                    if (d && d.ok && d.profile && typeof d.profile.bio === 'string') {
+                        state.bio = d.profile.bio;
+                        const bioEl = document.getElementById('profile-bio');
+                        if (bioEl) { bioEl.textContent = state.bio || 'Sin biografía todavía.'; bioEl.classList.toggle('empty', !state.bio); }
+                    }
+                }).catch(() => {});
         } else {
             userEl.innerHTML = '';
             userEl.style.display = 'none';
@@ -2268,9 +2417,12 @@
             codesBtn.style.display = 'none';
             stopTradeStream();
             stopChatStream();
+            stopDmStream();
             closeChat();
             closeLeaderboard();
             closeTradeWindow();
+            closeFriends();
+            closeProfileView();
             resetPvp();
             closeTrade();
         }
@@ -2286,6 +2438,9 @@
         const uploadBtn = document.getElementById('profile-upload-btn');
         const removeBtn = document.getElementById('profile-remove-btn');
         const msg = document.getElementById('profile-msg');
+        const bioEl = document.getElementById('profile-bio');
+        const bioBtn = document.getElementById('profile-bio-btn');
+        const friendsBtn = document.getElementById('profile-friends-btn');
         if (authUsername) {
             if (btnAv) btnAv.innerHTML = avatarImgHTML(authUsername, 34);
             if (lg) lg.innerHTML = avatarImgHTML(authUsername, 66);
@@ -2293,6 +2448,12 @@
             if (hint) hint.textContent = 'Tu foto aparecerá junto a tu nombre en todo el juego.';
             if (uploadBtn) uploadBtn.style.display = 'block';
             if (removeBtn) removeBtn.style.display = state.avatar ? 'block' : 'none';
+            if (bioEl) {
+                bioEl.textContent = state.bio || 'Sin biografía todavía.';
+                bioEl.classList.toggle('empty', !state.bio);
+            }
+            if (bioBtn) bioBtn.style.display = 'block';
+            if (friendsBtn) friendsBtn.style.display = 'block';
         } else {
             if (btnAv) btnAv.textContent = '👤';
             if (lg) lg.innerHTML = '';
@@ -2300,8 +2461,12 @@
             if (hint) hint.textContent = 'Inicia sesión para poder subir tu foto de perfil.';
             if (uploadBtn) uploadBtn.style.display = 'none';
             if (removeBtn) removeBtn.style.display = 'none';
+            if (bioEl) { bioEl.textContent = ''; bioEl.classList.add('empty'); }
+            if (bioBtn) bioBtn.style.display = 'none';
+            if (friendsBtn) friendsBtn.style.display = 'none';
         }
         if (msg) msg.textContent = '';
+        updateProfileBadges();
     }
 
     function openProfileMenu() {
@@ -2372,6 +2537,440 @@
         save();
         refreshProfileUI();
         setProfileMsg('Foto eliminada.');
+    }
+
+    function saveBio() {
+        const input = document.getElementById('profile-bio-input');
+        const bio = input.value.trim().slice(0, 160);
+        fetch(API_BASE + '/api/profile/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: authToken, bio: bio }),
+        }).then(r => r.json()).then((d) => {
+            if (d && d.ok) {
+                document.getElementById('profile-bio-btn').style.display = 'block';
+                document.getElementById('profile-bio-edit').style.display = 'none';
+                refreshProfileUI();
+                setProfileMsg('Biografía guardada ✔');
+            } else {
+                setProfileMsg('No se pudo guardar la biografía.');
+            }
+        }).catch(() => setProfileMsg('No se pudo conectar.'));
+    }
+
+    // ---- Amigos + DM + ver perfil ----
+    function apiPost(path, body) {
+        return fetch(API_BASE + path, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body || {}),
+        }).then(r => r.json()).catch(() => null);
+    }
+
+    function initDmStream() {
+        if (dmStream || !authToken) return;
+        try {
+            dmStream = new EventSource(API_BASE + '/api/dm/stream?token=' + encodeURIComponent(authToken));
+            dmStream.onmessage = (e) => {
+                let msg = {};
+                try { msg = JSON.parse(e.data); } catch (_) { return; }
+                handleSocialEvent(msg);
+            };
+            dmStream.onerror = () => {};
+        } catch (e) {}
+    }
+
+    function stopDmStream() {
+        if (dmStream) { dmStream.close(); dmStream = null; }
+    }
+
+    function handleSocialEvent(msg) {
+        if (!msg || !msg.type) return;
+        if (msg.type === 'dm' && msg.with && msg.message) {
+            const k = String(msg.with).toLowerCase();
+            if (!dmHistory[k]) dmHistory[k] = [];
+            dmHistory[k].push(msg.message);
+            if (dmHistory[k].length > 100) dmHistory[k] = dmHistory[k].slice(-100);
+            if (dmOpen[k] && document.getElementById('friends-overlay').classList.contains('open')
+                && currentDmFriend && String(currentDmFriend).toLowerCase() === k) {
+                renderDmMessages(currentDmFriend);
+            } else {
+                dmUnread[k] = (dmUnread[k] || 0) + 1;
+                updateProfileBadges();
+                if (document.getElementById('friends-overlay').classList.contains('open')) renderFriendsList();
+            }
+        } else if (msg.type === 'friendRequest' || msg.type === 'friendAccepted' || msg.type === 'friendsChanged' || msg.type === 'friendSent') {
+            if (msg.type === 'friendAccepted') showTradeToast('✅ ' + msg.by + ' aceptó tu solicitud de amistad');
+            refreshFriends();
+        }
+        updateProfileBadges();
+    }
+
+    function updateProfileBadges() {
+        const total = (friendsData.requests || []).length + Object.keys(dmUnread).reduce((a, k) => a + (dmUnread[k] || 0), 0);
+        const dot = document.getElementById('profile-btn-badge');
+        const badge = document.getElementById('profile-friends-badge');
+        if (dot) {
+            dot.style.display = total > 0 ? 'flex' : 'none';
+            dot.textContent = total > 99 ? '99+' : total;
+        }
+        if (badge) {
+            badge.style.display = total > 0 ? 'inline-flex' : 'none';
+            badge.textContent = total > 99 ? '99+' : total;
+        }
+    }
+
+    async function refreshFriends() {
+        if (!authToken) return;
+        const d = await apiPost('/api/friends/list', { token: authToken });
+        if (!d || !d.ok) return;
+        const copy = d;
+        friendsData = { friends: copy.friends || [], requests: copy.requests || [], sent: copy.sent || [] };
+        for (const f of friendsData.friends) {
+            if (f.avatar) avatarCache[String(f.username || '').toLowerCase()] = f.avatar;
+        }
+        for (const r of friendsData.requests) {
+            if (r.avatar) avatarCache[String(r.from || '').toLowerCase()] = r.avatar;
+        }
+        updateProfileBadges();
+        if (document.getElementById('friends-overlay').classList.contains('open')) {
+            renderFriendsList();
+            if (currentDmFriend) renderDmMessages(currentDmFriend);
+        }
+    }
+
+    function renderFriendsList() {
+        const box = document.getElementById('friends-list');
+        if (!box) return;
+        box.innerHTML = '';
+        if (!friendsData.friends.length && !friendsData.requests.length && !friendsData.sent.length) {
+            const empty = document.createElement('div');
+            empty.className = 'fr-empty';
+            empty.innerHTML = 'Aún no tienes amigos.<br>Manda solicitudes tocando el nombre de alguien en el chat, el ranking o el comercio.';
+            box.appendChild(empty);
+            return;
+        }
+        if (friendsData.friends.length) {
+            const sec = document.createElement('div');
+            sec.className = 'fr-section-label';
+            sec.textContent = 'Amigos';
+            box.appendChild(sec);
+            for (const f of friendsData.friends) {
+                const row = document.createElement('div');
+                row.className = 'fr-friend' + (currentDmFriend && String(currentDmFriend).toLowerCase() === String(f.username).toLowerCase() ? ' active' : '');
+                row.innerHTML = '<img class="mini-avatar" style="width:34px;height:34px" src="' + (avatarCache[String(f.username).toLowerCase()] || 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2234%22 height=%2234%22><rect width=%2234%22 height=%2234%22 fill=%22%23131c28%22 rx=%2217%22/></svg>').replace('#', '%23') + '" alt="">';
+                const name = document.createElement('span');
+                name.className = 'fr-friend-name';
+                name.textContent = f.username;
+                name.title = 'Ver perfil';
+                name.addEventListener('click', (e) => { e.stopPropagation(); closeProfileMenu(); openProfileView(f.username); });
+                const dot = document.createElement('span');
+                dot.className = 'fr-dot ' + (f.online ? 'on' : 'off');
+                dot.title = f.online ? 'En línea' : 'Desconectado';
+                const bad = document.createElement('span');
+                const un = dmUnread[String(f.username).toLowerCase()] || 0;
+                bad.className = 'fr-unread';
+                bad.style.display = un > 0 ? 'flex' : 'none';
+                bad.textContent = un > 99 ? '99+' : un;
+                const x = document.createElement('span');
+                x.className = 'fr-x';
+                x.title = 'Eliminar amigo';
+                x.textContent = '✕';
+                x.addEventListener('click', (e) => { e.stopPropagation(); removeFriend(f.username); });
+                row.appendChild(name);
+                row.appendChild(dot);
+                row.appendChild(bad);
+                row.appendChild(x);
+                row.addEventListener('click', () => openDm(f.username));
+                box.appendChild(row);
+            }
+        }
+        if (friendsData.requests.length) {
+            const sec = document.createElement('div');
+            sec.className = 'fr-section-label';
+            sec.textContent = 'Solicitudes de amistad';
+            box.appendChild(sec);
+            for (const r of friendsData.requests) {
+                const row = document.createElement('div');
+                row.className = 'fr-req';
+                row.innerHTML = '<img class="mini-avatar" style="width:28px;height:28px" src="' + (avatarCache[String(r.from).toLowerCase()] || 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2228%22 height=%2228%22><rect width=%2228%22 height=%2228%22 fill=%22%23131c28%22 rx=%2214%22/></svg>').replace('#', '%23') + '" alt="">';
+                const nm = document.createElement('span');
+                nm.className = 'fr-req-name';
+                nm.textContent = r.from;
+                nm.title = 'Ver perfil';
+                nm.addEventListener('click', (e) => { e.stopPropagation(); closeProfileMenu(); openProfileView(r.from); });
+                const acc = document.createElement('button');
+                acc.className = 'acc';
+                acc.textContent = '✔';
+                acc.title = 'Aceptar';
+                acc.addEventListener('click', (e) => { e.stopPropagation(); acceptFriend(r.from); });
+                const dec = document.createElement('button');
+                dec.className = 'dec';
+                dec.textContent = '✕';
+                dec.title = 'Rechazar';
+                dec.addEventListener('click', (e) => { e.stopPropagation(); declineFriend(r.from); });
+                row.appendChild(nm);
+                row.appendChild(acc);
+                row.appendChild(dec);
+                box.appendChild(row);
+            }
+        }
+        if (friendsData.sent.length) {
+            const sec = document.createElement('div');
+            sec.className = 'fr-section-label';
+            sec.textContent = 'Solicitudes enviadas';
+            box.appendChild(sec);
+            for (const s of friendsData.sent) {
+                const row = document.createElement('div');
+                row.className = 'fr-sent-item';
+                const n = document.createElement('span');
+                n.textContent = '⏳ ' + s.to;
+                n.addEventListener('click', (e) => { e.stopPropagation(); openProfileView(s.to); });
+                const cx = document.createElement('button');
+                cx.textContent = 'Cancelar';
+                cx.addEventListener('click', (e) => { e.stopPropagation(); cancelFriend(s.to); });
+                row.appendChild(n);
+                row.appendChild(cx);
+                box.appendChild(row);
+            }
+        }
+    }
+
+    function openFriends() {
+        if (!authToken) { openAuth(); return; }
+        document.getElementById('friends-overlay').classList.add('open');
+        refreshFriends();
+    }
+
+    function closeFriends() {
+        document.getElementById('friends-overlay').classList.remove('open');
+        currentDmFriend = null;
+    }
+
+    async function addFriend(name) {
+        const d = await apiPost('/api/friends/add', { token: authToken, user: name });
+        if (d && d.ok) {
+            setProfileMsg('Solicitud de amistad enviada.');
+            refreshFriends();
+            if (document.getElementById('profile-view-overlay').classList.contains('open')) {
+                openProfileViewAfterAction(pvCurrentName);
+            }
+        } else {
+            setProfileMsg((d && d.error) || 'No se pudo enviar la solicitud.');
+        }
+    }
+
+    async function cancelFriend(name) {
+        const d = await apiPost('/api/friends/cancel', { token: authToken, user: name });
+        if (d && d.ok) {
+            showTradeToast('⏳ Solicitud cancelada.');
+            document.getElementById('profile-view-overlay').classList.remove('open');
+            refreshFriends();
+        }
+    }
+
+    async function acceptFriend(name) {
+        const d = await apiPost('/api/friends/accept', { token: authToken, user: name });
+        if (d && d.ok) {
+            showTradeToast('✅ Ahora sois amigos. ¡Toca su nombre para escribirle!');
+            if (d.profile && d.profile.avatar) avatarCache[String(name).toLowerCase()] = d.profile.avatar;
+            friendsData.requests = (friendsData.requests || []).filter(r => String(r.from).toLowerCase() !== String(name).toLowerCase());
+            refreshFriends();
+            if (document.getElementById('profile-view-overlay').classList.contains('open')) openProfileView(pvCurrentName);
+        }
+    }
+
+    async function declineFriend(name) {
+        const d = await apiPost('/api/friends/decline', { token: authToken, user: name });
+        if (d && d.ok) {
+            showTradeToast('❌ Solicitud rechazada.');
+            document.getElementById('profile-view-overlay').classList.remove('open');
+            refreshFriends();
+        }
+    }
+
+    async function removeFriend(name) {
+        await apiPost('/api/friends/remove', { token: authToken, user: name });
+        delete dmHistory[String(name).toLowerCase()];
+        delete dmOpen[String(name).toLowerCase()];
+        delete dmUnread[String(name).toLowerCase()];
+        if (currentDmFriend && String(currentDmFriend).toLowerCase() === String(name).toLowerCase()) currentDmFriend = null;
+        refreshFriends();
+        renderFriendsList();
+    }
+
+    function makeNameClickable(el, username) {
+        const meKey = String(authUsername || '').toLowerCase();
+        const k = String(username || '').toLowerCase();
+        if (!k || k === meKey) return;
+        el.classList.add('clickable-name');
+        el.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeProfileMenu();
+            openProfileView(username);
+        });
+    }
+
+    // ---- Ver perfil de otro jugador ----
+    let pvCurrentName = null;
+
+    async function openProfileView(name) {
+        if (!authToken) { openAuth(); return; }
+        pvCurrentName = name;
+        const d = await apiPost('/api/profile/view', { token: authToken, user: name });
+        if (!d || !d.ok) {
+            showTradeToast('No se pudo cargar ese perfil.');
+            return;
+        }
+        const p = d.profile || {};
+        if (p.avatar) avatarCache[String(p.username || name).toLowerCase()] = p.avatar;
+        const ov = document.getElementById('profile-view-overlay');
+        document.getElementById('pv-avatar').innerHTML = avatarImgHTML(p.username || name, 66);
+        document.getElementById('pv-name').textContent = p.username || name;
+        const onlineEl = document.getElementById('pv-online');
+        onlineEl.textContent = p.online ? '● En línea' : '● Desconectado';
+        onlineEl.className = 'pv-online ' + (p.online ? 'on' : 'off');
+        const bio = document.getElementById('pv-bio');
+        bio.textContent = p.bio || 'Sin biografía.';
+        bio.classList.toggle('empty', !p.bio);
+        if (d.relation === 'self') {
+            document.getElementById('pv-actions').innerHTML = '<div class="fr-empty">Este es tu perfil.</div>';
+        } else {
+            renderProfileActions(d.relation, p.username || name);
+        }
+        ov.classList.add('open');
+    }
+
+    function openProfileViewAfterAction(name) {
+        openProfileView(name);
+    }
+
+    function renderProfileActions(rel, name) {
+        const box = document.getElementById('pv-actions');
+        box.innerHTML = '';
+        const add = (label, cls, fn) => {
+            const b = document.createElement('button');
+            b.className = 'trade-btn ' + (cls || '');
+            b.textContent = label;
+            b.addEventListener('click', fn);
+            box.appendChild(b);
+        };
+        if (rel === 'friends') {
+            add('💬 Enviar mensaje', 'green', () => { document.getElementById('profile-view-overlay').classList.remove('open'); openDm(name); });
+            add('✕ Eliminar de amigos', 'red', async () => {
+                await removeFriend(name);
+                document.getElementById('profile-view-overlay').classList.remove('open');
+                showTradeToast('Amigo eliminado.');
+            });
+        } else if (rel === 'sent') {
+            add('⏳ Solicitud enviada', '', () => {});
+            add('Cancelar solicitud', 'red', async () => { await cancelFriend(name); document.getElementById('profile-view-overlay').classList.remove('open'); });
+        } else if (rel === 'incoming') {
+            add('✅ Aceptar solicitud', 'green', () => acceptFriend(name));
+            add('✕ Rechazar', 'red', () => declineFriend(name));
+        } else {
+            add('➕ Agregar amigo', 'blue', () => addFriend(name));
+        }
+    }
+
+    function closeProfileView() {
+        document.getElementById('profile-view-overlay').classList.remove('open');
+    }
+
+    // ---- Chat privado (DM) ----
+    let currentDmFriend = null;
+
+    function openDm(name) {
+        currentDmFriend = name;
+        dmOpen[String(name).toLowerCase()] = true;
+        dmUnread[String(name).toLowerCase()] = 0;
+        document.getElementById('friends-overlay').classList.add('open');
+        renderDmMessages(name);
+        fetch(API_BASE + '/api/dm/history?token=' + encodeURIComponent(authToken) + '&with=' + encodeURIComponent(name))
+            .then(r => r.json()).then((d) => {
+                if (!d || !d.ok) {
+                    showTradeToast((d && d.error) || 'No se pudo cargar la conversación.');
+                    return;
+                }
+                if (d.avatar) avatarCache[String(d.with || name).toLowerCase()] = d.avatar;
+                dmHistory[String(name).toLowerCase()] = d.messages || [];
+                if (currentDmFriend && String(currentDmFriend).toLowerCase() === String(name).toLowerCase()) {
+                    renderDmMessages(name);
+                }
+            }).catch(() => {});
+        updateProfileBadges();
+        renderFriendsList();
+        setTimeout(() => { const i = document.getElementById('friends-chat-input'); if (i) i.focus(); }, 50);
+    }
+
+    function renderDmMessages(name) {
+        const head = document.getElementById('friends-chat-head');
+        const row = document.getElementById('friends-chat-input-row');
+        const msgs = document.getElementById('friends-chat-msgs');
+        head.style.display = 'flex';
+        row.style.display = 'flex';
+        msgs.innerHTML = '';
+        const k = String(name || '').toLowerCase();
+        const hh = document.createElement('div');
+        hh.className = 'pvp-avatar';
+        hh.style.width = '34px';
+        hh.style.height = '34px';
+        hh.style.fontSize = '0.9rem';
+        hh.innerHTML = avatarImgHTML(name, 34);
+        const nm = document.createElement('span');
+        nm.className = 'fr-uname';
+        nm.textContent = name;
+        nm.title = 'Ver perfil';
+        nm.addEventListener('click', () => openProfileView(name));
+        head.innerHTML = '';
+        head.appendChild(hh);
+        head.appendChild(nm);
+        const hist = dmHistory[k] || [];
+        if (!hist.length) {
+            const empty = document.createElement('div');
+            empty.className = 'fr-dm-empty';
+            empty.textContent = 'Sin mensajes todavía. ¡Saluda a ' + name + '!';
+            msgs.appendChild(empty);
+        } else {
+            for (const m of hist) renderDmMessage(msgs, m, name);
+        }
+        msgs.scrollTop = msgs.scrollHeight;
+    }
+
+    function renderDmMessage(container, m, name) {
+        const isMine = String(m.user).toLowerCase() === String(authUsername || '').toLowerCase();
+        const div = document.createElement('div');
+        div.className = 'fr-msg ' + (isMine ? 'own' : 'other');
+        if (!isMine) {
+            const sender = document.createElement('span');
+            sender.style.fontWeight = 'bold';
+            sender.style.color = '#22d3ee';
+            sender.style.fontSize = '0.72rem';
+            sender.appendChild(nameWithAvatarEl(m.user, 14));
+            div.appendChild(sender);
+        }
+        div.appendChild(document.createTextNode(m.text));
+        const time = document.createElement('span');
+        time.className = 'fr-msg-time';
+        time.textContent = fmtChatTime(m.at);
+        div.appendChild(time);
+        container.appendChild(div);
+    }
+
+    async function sendDm() {
+        const input = document.getElementById('friends-chat-input');
+        const text = input.value.trim();
+        if (!text || !currentDmFriend) return;
+        input.value = '';
+        const d = await apiPost('/api/dm/send', { token: authToken, to: currentDmFriend, text: text });
+        if (!d || !d.ok) {
+            showTradeToast((d && d.error) || 'No se pudo enviar el mensaje.');
+            return;
+        }
+        const k = String(currentDmFriend).toLowerCase();
+        if (!dmHistory[k]) dmHistory[k] = [];
+        dmHistory[k].push(d.message);
+        renderDmMessages(currentDmFriend);
     }
 
     function setAuthMode(mode) {
@@ -2533,6 +3132,12 @@
     let tradeChatOpen = false;
     let tradeChatUnread = 0;
     let chatUnread = 0;
+    let dmStream = null;
+    let dmHistory = {};
+    let dmOpen = {};
+    let dmUnread = {};
+    let avatarCache = {};
+    let friendsData = { friends: [], requests: [], sent: [] };
 
     function itemById(id) {
         return ITEMS.find(i => i.id === id) || null;
@@ -2824,7 +3429,9 @@
             div.className = 'chat-line' + (String(m.user).toLowerCase() === myKey ? ' chat-own' : '');
             const u = document.createElement('span');
             u.className = 'chat-user';
-            u.appendChild(nameWithAvatarEl(m.user, 16));
+            const uWrap = nameWithAvatarEl(m.user, 16);
+            makeNameClickable(uWrap, m.user);
+            u.appendChild(uWrap);
             u.appendChild(document.createTextNode(':'));
             const t = document.createElement('span');
             t.textContent = m.text;
@@ -2943,6 +3550,7 @@ const medals = ['👑', '🥈', '🥉'];
                     }
                     name.insertAdjacentHTML('afterbegin', avatarImgHTML(r.username, 18));
                     name.appendChild(document.createTextNode(r.username));
+                    makeNameClickable(name, r.username);
                 const val = document.createElement('span');
                 val.className = 'lb-value';
                 val.textContent = fmtValue(r.value);
@@ -3054,7 +3662,9 @@ const medals = ['👑', '🥈', '🥉'];
             div.className = 'chat-line' + (String(m.user).toLowerCase() === myKey ? ' chat-own' : '');
             const u = document.createElement('span');
             u.className = 'chat-user';
-            u.appendChild(nameWithAvatarEl(m.user, 16));
+            const uWrap = nameWithAvatarEl(m.user, 16);
+            makeNameClickable(uWrap, m.user);
+            u.appendChild(uWrap);
             u.appendChild(document.createTextNode(':'));
             div.appendChild(u);
             div.appendChild(document.createTextNode(m.text));
@@ -3185,7 +3795,9 @@ const medals = ['👑', '🥈', '🥉'];
         head.className = 'tw-head';
         const h = document.createElement('h3');
         h.innerHTML = '🤝 Trade con ';
-        h.appendChild(nameWithAvatarEl(tradeOtherName(t), 18));
+        const hName = nameWithAvatarEl(tradeOtherName(t), 18);
+        makeNameClickable(hName, tradeOtherName(t));
+        h.appendChild(hName);
         head.appendChild(h);
         const statusEl = document.createElement('div');
         statusEl.id = 'tw-status';
@@ -3251,7 +3863,9 @@ const medals = ['👑', '🥈', '🥉'];
         otherTick.textContent = '✓';
         const otherName = document.createElement('div');
         otherName.className = 'tw-tick-name';
-        otherName.appendChild(nameWithAvatarEl(tradeOtherName(t), 16));
+        const otherWrap = nameWithAvatarEl(tradeOtherName(t), 16);
+        makeNameClickable(otherWrap, tradeOtherName(t));
+        otherName.appendChild(otherWrap);
         otherTickCol.appendChild(otherTick);
         otherTickCol.appendChild(otherName);
 
@@ -5171,6 +5785,7 @@ const medals = ['👑', '🥈', '🥉'];
             const nm = document.createElement('div');
             nm.className = 'pvp-row-name';
             nm.textContent = p.username;
+            makeNameClickable(nm, p.username);
             const st = document.createElement('span');
             st.className = 'pvp-status ' + (p.status === 'disponible' ? 'disponible' : (p.status === 'enpartida' ? 'enpartida' : 'offline'));
             st.textContent = p.status === 'disponible' ? 'Disponible' : (p.status === 'enpartida' ? 'En partida' : 'Offline');
@@ -5213,6 +5828,7 @@ const medals = ['👑', '🥈', '🥉'];
             const nm = document.createElement('div');
             nm.className = 'pvp-row-name';
             nm.textContent = p.challenger;
+            makeNameClickable(nm, p.challenger);
             const sub = document.createElement('div');
             sub.className = 'pvp-seq';
             sub.textContent = 'Apuesta: ' + pvpBetText(p.bet);
@@ -5906,6 +6522,34 @@ const medals = ['👑', '🥈', '🥉'];
     });
     document.getElementById('profile-file').addEventListener('change', onProfileFile);
     document.getElementById('profile-remove-btn').addEventListener('click', removeProfilePhoto);
+    document.getElementById('profile-bio-btn').addEventListener('click', () => {
+        if (!authToken) { closeProfileMenu(); openAuth(); return; }
+        document.getElementById('profile-bio-input').value = state.bio || '';
+        document.getElementById('profile-bio-edit').style.display = 'flex';
+        document.getElementById('profile-bio-btn').style.display = 'none';
+        document.getElementById('profile-bio-input').focus();
+    });
+    document.getElementById('profile-bio-save').addEventListener('click', saveBio);
+    document.getElementById('profile-bio-input').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); saveBio(); }
+    });
+    document.getElementById('profile-friends-btn').addEventListener('click', () => {
+        if (!authToken) { closeProfileMenu(); openAuth(); return; }
+        closeProfileMenu();
+        openFriends();
+    });
+    document.getElementById('friends-close').addEventListener('click', closeFriends);
+    document.getElementById('friends-overlay').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeFriends();
+    });
+    document.getElementById('friends-chat-send').addEventListener('click', sendDm);
+    document.getElementById('friends-chat-input').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); sendDm(); }
+    });
+    document.getElementById('profile-view-close').addEventListener('click', closeProfileView);
+    document.getElementById('profile-view-overlay').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeProfileView();
+    });
     document.addEventListener('click', (e) => {
         const wrap = document.getElementById('profile-wrap');
         if (wrap && wrap.classList.contains('open') && !wrap.contains(e.target)) wrap.classList.remove('open');
