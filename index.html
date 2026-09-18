@@ -2353,13 +2353,15 @@
         writeLocalBackup(data);
         if (authToken) {
             try {
-                await fetch(API_BASE + '/api/save', {
+                const res = await fetch(API_BASE + '/api/save', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'x-token': authToken },
                     body: JSON.stringify(data),
                 });
-            } catch (e) {}
+                return !!(res && res.ok);
+            } catch (e) { return false; }
         }
+        return true;
     }
 
     async function load() {
@@ -2380,7 +2382,12 @@
                     }
                     applySaveData(data.data);
                     setAuthUI(serverName);
-                    writeLocalBackup(data.data);
+                    if (backup && backup.data && backup.user === serverName) {
+                        if (!state.avatar && typeof backup.data.avatar === 'string' && backup.data.avatar.indexOf('data:image/') === 0) state.avatar = backup.data.avatar;
+                        if (!state.bio && typeof backup.data.bio === 'string') state.bio = backup.data.bio;
+                    }
+                    writeLocalBackup(buildSaveData());
+                    await save();
                     return;
                 }
                 authToken = null;
@@ -2524,9 +2531,9 @@
         if (file.size > 5 * 1024 * 1024) { setProfileMsg('La imagen es demasiado grande (máx 5 MB).'); return; }
         try {
             state.avatar = await readProfileImage(file);
-            await save();
+            const savedServer = await save();
             refreshProfileUI();
-            setProfileMsg('Foto de perfil actualizada ✔');
+            setProfileMsg(savedServer ? 'Foto de perfil actualizada ✔' : 'Foto guardada solo en este dispositivo (no se pudo subir al servidor).');
         } catch (e) {
             setProfileMsg('No se pudo procesar la imagen.');
         }
