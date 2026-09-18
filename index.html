@@ -2589,12 +2589,16 @@
         if (msg.type === 'dm' && msg.with && msg.message) {
             const k = String(msg.with).toLowerCase();
             if (!dmHistory[k]) dmHistory[k] = [];
-            dmHistory[k].push(msg.message);
-            if (dmHistory[k].length > 100) dmHistory[k] = dmHistory[k].slice(-100);
+            const m = msg.message;
+            const dupe = dmHistory[k].some(x => x && x.at === m.at && x.user === m.user && x.text === m.text);
+            if (!dupe) {
+                dmHistory[k].push(m);
+                if (dmHistory[k].length > 100) dmHistory[k] = dmHistory[k].slice(-100);
+            }
             if (dmOpen[k] && document.getElementById('friends-overlay').classList.contains('open')
                 && currentDmFriend && String(currentDmFriend).toLowerCase() === k) {
                 renderDmMessages(currentDmFriend);
-            } else {
+            } else if (!dupe) {
                 dmUnread[k] = (dmUnread[k] || 0) + 1;
                 updateProfileBadges();
                 if (document.getElementById('friends-overlay').classList.contains('open')) renderFriendsList();
