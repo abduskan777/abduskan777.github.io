@@ -32,7 +32,7 @@
         { "id": "rubyalba", "name": "Ruby Alba", "chance": 6700000000000, "image": "img/rubyalba.jfif" },
         { "id": "rubymejuto", "name": "Ruby Mejuto", "chance": 6900000000000, "image": "img/rubymejuto.jfif" },
         { "id": "anderdingus", "name": "Anderdingus", "chance": 5000000, "image": "img/anderdingus.jfif", "exclusive": true },
-        { "id": "chiquibai", "name": "Chiqui Ibai", "chance": 12000000, "image": "img/chiquiibai.png", "rarity": "limited", "exclusive": true, "price": 67, "maxQty": 2, "sellPrice": 100000 },
-        { "id": "lilbro", "name": "Lil Bro", "chance": 5000000, "image": "img/lilbro.jfif", "rarity": "legendario", "exclusive": true, "exclusiveLabel": "Exclusivo en caja básica" }
+        { "id": "lilbro", "name": "Lil Bro", "chance": 5000000, "image": "img/lilbro.jfif", "exclusive": true, "exclusiveLabel": "Exclusivo en caja básica" },
+        { "id": "chiquibai", "name": "Chiqui Ibai", "chance": 12000000, "image": "img/chiquiibai.png", "rarity": "limited", "exclusive": true, "price": 67, "maxQty": 2, "sellPrice": 100000 }
     ]
 }
