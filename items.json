@@ -12,6 +12,7 @@
         { "id": "sorriso", "name": "Fernando", "chance": 128, "image": "img/fernando.jpg" },
         { "id": "gubbyfeet", "name": "Gubby Feet", "chance": 300, "image": "img/gubbyfeet.png" },
         { "id": "gubbypeanut", "name": "Gubby Peanut", "chance": 600, "image": "img/gubbypeanut.png" },
+        { "id": "cappy", "name": "Cappy", "chance": 800, "image": "img/cappy.jfif" },
         { "id": "goldenmejuto", "name": "Golden Mejuto", "chance": 1500, "image": "img/goldenmejuto.jfif" },
         { "id": "goldenalba", "name": "Golden Alba", "chance": 3000, "image": "img/goldenalba.jfif" },
         { "id": "rodrigorey", "name": "Rodrigo Rey", "chance": 6000, "image": "img/rodrigorey.png" },
