@@ -40,6 +40,34 @@
 
         #auth-area { display: flex; align-items: center; gap: 8px; }
         .auth-username { font-size: 0.85rem; color: #22d3ee; font-weight: bold; }
+        #profile-wrap { position: relative; display: flex; align-items: center; }
+        #profile-btn {
+            display: flex; align-items: center; justify-content: center;
+            background: #1e293b; border: 1px solid #3a4e70; border-radius: 50%;
+            padding: 2px; cursor: pointer; line-height: 0;
+            transition: all 0.15s;
+        }
+        #profile-btn:hover { border-color: #22d3ee; box-shadow: 0 0 8px #22d3ee55; }
+        #profile-btn-avatar { width: 34px; height: 34px; font-size: 0.9rem; border: none; }
+        #profile-dropdown {
+            position: absolute; left: 0; top: calc(100% + 8px); z-index: 999;
+            display: none; flex-direction: column; gap: 8px;
+            background: #0f172a; border: 1px solid #2a3a50; border-radius: 12px;
+            padding: 12px; min-width: 230px; box-shadow: 0 12px 30px rgba(0,0,0,0.55);
+        }
+        #profile-wrap.open #profile-dropdown { display: flex; }
+        .profile-avatar-lg { width: 66px; height: 66px; margin: 0 auto; font-size: 1.6rem; border: none; }
+        .profile-uname { text-align: center; color: #22d3ee; font-weight: bold; font-size: 0.95rem; word-break: break-word; }
+        .profile-hint { font-size: 0.78rem; color: #9fb3c8; text-align: center; line-height: 1.4; }
+        #profile-upload-btn, #profile-remove-btn {
+            padding: 8px 12px; font-size: 0.8rem; font-weight: bold; border-radius: 8px;
+            cursor: pointer; border: 1px solid #3a4e70; background: #1e293b; color: #dbeafe;
+            transition: all 0.15s;
+        }
+        #profile-upload-btn:hover { background: #22d3ee22; border-color: #22d3ee; }
+        #profile-remove-btn:hover { background: #f8717122; border-color: #f87171; color: #fca5a5; }
+        #profile-msg { font-size: 0.75rem; color: #4ade80; text-align: center; min-height: 1em; }
+        .mini-avatar { border-radius: 50%; object-fit: cover; flex-shrink: 0; vertical-align: middle; border: 1.5px solid rgba(255,255,255,0.28); }
         #auth-btn, #logout-btn {
             padding: 7px 14px;
             font-size: 0.8rem;
@@ -1595,6 +1623,20 @@
     </div>
 
     <div id="top-bar">
+        <div id="profile-wrap">
+            <button id="profile-btn" title="Perfil">
+                <span class="pvp-avatar" id="profile-btn-avatar">👤</span>
+            </button>
+            <div id="profile-dropdown">
+                <div class="pvp-avatar profile-avatar-lg" id="profile-avatar-lg"></div>
+                <div class="profile-uname" id="profile-uname">—</div>
+                <div class="profile-hint" id="profile-hint"></div>
+                <button id="profile-upload-btn" style="display:none;">📷 Subir foto de perfil</button>
+                <button id="profile-remove-btn" style="display:none;">🗑 Quitar foto</button>
+                <div id="profile-msg"></div>
+            </div>
+        </div>
+        <input type="file" id="profile-file" accept="image/*" style="display:none;">
         <h1>🌿 Valle RNG</h1>
         <div class="stat coins">Monedas: <span id="coins">0</span></div>
         <div class="stat">Rolls: <span id="roll-count">0</span></div>
@@ -2040,6 +2082,7 @@
         totalCoins: 0,
         shop: { rollSpeed: 0, luckBoost: 0, coinMulti: 0 },
         autoSell: false,
+        avatar: null,
     };
 
     let ITEMS = [];
@@ -2075,6 +2118,7 @@
             totalCoins: state.totalCoins,
             shop: state.shop,
             autoSell: state.autoSell,
+            avatar: state.avatar || null,
         };
     }
 
@@ -2087,7 +2131,33 @@
         state.totalCoins = (d && d.totalCoins) || 0;
         state.shop = (d && d.shop) || { rollSpeed: 0, luckBoost: 0, coinMulti: 0 };
         state.autoSell = !!(d && d.autoSell);
+        state.avatar = (d && typeof d.avatar === 'string' && d.avatar.indexOf('data:image/') === 0 && d.avatar.length <= 400000) ? d.avatar : null;
         updateTopStats();
+    }
+
+    function avatarSrcFor(name) {
+        return (state.avatar && name && authUsername && String(name).toLowerCase() === String(authUsername).toLowerCase()) ? state.avatar : null;
+    }
+
+    function avatarImgHTML(name, size) {
+        const src = avatarSrcFor(name);
+        if (src) {
+            return '<img class="mini-avatar" style="width:' + size + 'px;height:' + size + 'px" src="' + src + '" alt="">';
+        }
+        const s = String(name || '?');
+        let initial = (s.trim().charAt(0) || '?').toUpperCase();
+        if (!/[A-Za-z0-9]/.test(initial)) initial = '?';
+        return '<span class="pvp-avatar" style="width:' + size + 'px;height:' + size + 'px;font-size:' + Math.round(size * 0.4) + 'px;background:' + pvpColorFor(s) + '">' + initial + '</span>';
+    }
+
+    function nameWithAvatarEl(name, size) {
+        const wrap = document.createElement('span');
+        wrap.style.display = 'inline-flex';
+        wrap.style.alignItems = 'center';
+        wrap.style.gap = '6px';
+        wrap.innerHTML = avatarImgHTML(name, size || 18);
+        wrap.appendChild(document.createTextNode(name));
+        return wrap;
     }
 
     function writeLocalBackup(data) {
@@ -2170,8 +2240,11 @@
         const pvpBtn = document.getElementById('pvp-btn');
         const codesBtn = document.getElementById('codes-btn');
         if (username) {
-            userEl.textContent = '👤 ' + username;
-            userEl.style.display = 'inline';
+            userEl.innerHTML = '';
+            userEl.style.display = 'inline-flex';
+            userEl.style.alignItems = 'center';
+            userEl.style.gap = '6px';
+            userEl.appendChild(nameWithAvatarEl(username, 18));
             authBtn.style.display = 'none';
             logoutBtn.style.display = 'inline-block';
             tradeBtn.style.display = 'inline-block';
@@ -2184,6 +2257,7 @@
             initPvp();
             refreshTradeMenu();
         } else {
+            userEl.innerHTML = '';
             userEl.style.display = 'none';
             authBtn.style.display = 'inline-block';
             logoutBtn.style.display = 'none';
@@ -2200,6 +2274,104 @@
             resetPvp();
             closeTrade();
         }
+        refreshProfileUI();
+    }
+
+    // ---- Perfil (avatar) ----
+    function refreshProfileUI() {
+        const btnAv = document.getElementById('profile-btn-avatar');
+        const lg = document.getElementById('profile-avatar-lg');
+        const uname = document.getElementById('profile-uname');
+        const hint = document.getElementById('profile-hint');
+        const uploadBtn = document.getElementById('profile-upload-btn');
+        const removeBtn = document.getElementById('profile-remove-btn');
+        const msg = document.getElementById('profile-msg');
+        if (authUsername) {
+            if (btnAv) btnAv.innerHTML = avatarImgHTML(authUsername, 34);
+            if (lg) lg.innerHTML = avatarImgHTML(authUsername, 66);
+            if (uname) uname.textContent = authUsername;
+            if (hint) hint.textContent = 'Tu foto aparecerá junto a tu nombre en todo el juego.';
+            if (uploadBtn) uploadBtn.style.display = 'block';
+            if (removeBtn) removeBtn.style.display = state.avatar ? 'block' : 'none';
+        } else {
+            if (btnAv) btnAv.textContent = '👤';
+            if (lg) lg.innerHTML = '';
+            if (uname) uname.textContent = 'Sin sesión';
+            if (hint) hint.textContent = 'Inicia sesión para poder subir tu foto de perfil.';
+            if (uploadBtn) uploadBtn.style.display = 'none';
+            if (removeBtn) removeBtn.style.display = 'none';
+        }
+        if (msg) msg.textContent = '';
+    }
+
+    function openProfileMenu() {
+        document.getElementById('profile-wrap').classList.add('open');
+        refreshProfileUI();
+    }
+
+    function closeProfileMenu() {
+        document.getElementById('profile-wrap').classList.remove('open');
+    }
+
+    function toggleProfileMenu() {
+        const wrap = document.getElementById('profile-wrap');
+        const open = !wrap.classList.contains('open');
+        wrap.classList.toggle('open', open);
+        if (open) refreshProfileUI();
+    }
+
+    function setProfileMsg(text) {
+        const msg = document.getElementById('profile-msg');
+        if (msg) msg.textContent = text || '';
+    }
+
+    async function onProfileFile() {
+        const input = document.getElementById('profile-file');
+        const file = input.files && input.files[0];
+        if (!file) return;
+        input.value = '';
+        if (!/^image\//.test(file.type)) { setProfileMsg('Solo se permiten imágenes.'); return; }
+        if (file.size > 5 * 1024 * 1024) { setProfileMsg('La imagen es demasiado grande (máx 5 MB).'); return; }
+        try {
+            state.avatar = await readProfileImage(file);
+            await save();
+            refreshProfileUI();
+            setProfileMsg('Foto de perfil actualizada ✔');
+        } catch (e) {
+            setProfileMsg('No se pudo procesar la imagen.');
+        }
+    }
+
+    function readProfileImage(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onerror = () => reject(new Error('read'));
+            reader.onload = () => {
+                const img = new Image();
+                img.onerror = () => reject(new Error('img'));
+                img.onload = () => {
+                    try {
+                        const size = 128;
+                        const canvas = document.createElement('canvas');
+                        canvas.width = size;
+                        canvas.height = size;
+                        const ctx = canvas.getContext('2d');
+                        const s = Math.min(img.width, img.height);
+                        ctx.drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, size, size);
+                        resolve(canvas.toDataURL('image/jpeg', 0.72));
+                    } catch (e) { reject(e); }
+                };
+                img.src = reader.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function removeProfilePhoto() {
+        state.avatar = null;
+        save();
+        refreshProfileUI();
+        setProfileMsg('Foto eliminada.');
     }
 
     function setAuthMode(mode) {
@@ -2652,7 +2824,8 @@
             div.className = 'chat-line' + (String(m.user).toLowerCase() === myKey ? ' chat-own' : '');
             const u = document.createElement('span');
             u.className = 'chat-user';
-            u.textContent = m.user + ':';
+            u.appendChild(nameWithAvatarEl(m.user, 16));
+            u.appendChild(document.createTextNode(':'));
             const t = document.createElement('span');
             t.textContent = m.text;
             const time = document.createElement('span');
@@ -2768,6 +2941,7 @@ const medals = ['👑', '🥈', '🥉'];
                         medal.textContent = medals[idx];
                         name.appendChild(medal);
                     }
+                    name.insertAdjacentHTML('afterbegin', avatarImgHTML(r.username, 18));
                     name.appendChild(document.createTextNode(r.username));
                 const val = document.createElement('span');
                 val.className = 'lb-value';
@@ -2880,7 +3054,8 @@ const medals = ['👑', '🥈', '🥉'];
             div.className = 'chat-line' + (String(m.user).toLowerCase() === myKey ? ' chat-own' : '');
             const u = document.createElement('span');
             u.className = 'chat-user';
-            u.textContent = m.user + ':';
+            u.appendChild(nameWithAvatarEl(m.user, 16));
+            u.appendChild(document.createTextNode(':'));
             div.appendChild(u);
             div.appendChild(document.createTextNode(m.text));
             const time = document.createElement('span');
@@ -3009,7 +3184,8 @@ const medals = ['👑', '🥈', '🥉'];
         const head = document.createElement('div');
         head.className = 'tw-head';
         const h = document.createElement('h3');
-        h.textContent = '🤝 Trade con ' + tradeOtherName(t);
+        h.innerHTML = '🤝 Trade con ';
+        h.appendChild(nameWithAvatarEl(tradeOtherName(t), 18));
         head.appendChild(h);
         const statusEl = document.createElement('div');
         statusEl.id = 'tw-status';
@@ -3075,7 +3251,7 @@ const medals = ['👑', '🥈', '🥉'];
         otherTick.textContent = '✓';
         const otherName = document.createElement('div');
         otherName.className = 'tw-tick-name';
-        otherName.textContent = tradeOtherName(t);
+        otherName.appendChild(nameWithAvatarEl(tradeOtherName(t), 16));
         otherTickCol.appendChild(otherTick);
         otherTickCol.appendChild(otherName);
 
@@ -3088,7 +3264,7 @@ const medals = ['👑', '🥈', '🥉'];
         myTick.addEventListener('click', toggleAccept);
         const myName = document.createElement('div');
         myName.className = 'tw-tick-name';
-        myName.textContent = (authUsername || '');
+        if (authUsername) myName.appendChild(nameWithAvatarEl(authUsername, 16));
         myTickCol.appendChild(myTick);
         myTickCol.appendChild(myName);
 
@@ -4917,6 +5093,12 @@ const medals = ['👑', '🥈', '🥉'];
         return 'hsl(' + h + ',60%,42%)';
     }
     function pvpAvatarHTML(name, cls) {
+        const src = avatarSrcFor(name);
+        if (src) {
+            const hasCls = cls || '';
+            const size = hasCls.indexOf('lg') >= 0 ? 54 : hasCls.indexOf('sm') >= 0 ? 30 : 40;
+            return '<img class="pvp-avatar" style="width:' + size + 'px;height:' + size + 'px;object-fit:cover" src="' + src + '" alt="">';
+        }
         const s = String(name || '?');
         let initial = (s.trim().charAt(0) || '?').toUpperCase();
         if (!/[A-Za-z0-9]/.test(initial)) initial = '?';
@@ -5717,6 +5899,17 @@ const medals = ['👑', '🥈', '🥉'];
     document.getElementById('auth-btn').addEventListener('click', openAuth);
     document.getElementById('auth-close').addEventListener('click', closeAuth);
     document.getElementById('logout-btn').addEventListener('click', logout);
+    document.getElementById('profile-btn').addEventListener('click', (e) => { e.stopPropagation(); toggleProfileMenu(); });
+    document.getElementById('profile-upload-btn').addEventListener('click', () => {
+        if (!authToken) { closeProfileMenu(); openAuth(); return; }
+        document.getElementById('profile-file').click();
+    });
+    document.getElementById('profile-file').addEventListener('change', onProfileFile);
+    document.getElementById('profile-remove-btn').addEventListener('click', removeProfilePhoto);
+    document.addEventListener('click', (e) => {
+        const wrap = document.getElementById('profile-wrap');
+        if (wrap && wrap.classList.contains('open') && !wrap.contains(e.target)) wrap.classList.remove('open');
+    });
     document.getElementById('codes-btn').addEventListener('click', openCodes);
     document.getElementById('codes-close').addEventListener('click', closeCodes);
     document.getElementById('codes-overlay').addEventListener('click', (e) => {
