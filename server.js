@@ -80,6 +80,8 @@ function saveChat(chat) {
                 [snapshot]
             ));
         dbWriteChain.catch(e => console.error('DB chat save error:', e.message));
+    } else {
+        try { fs.writeFileSync(path.join(ROOT, 'chat.json'), JSON.stringify(chat)); } catch (e) {}
     }
 }
 
@@ -94,12 +96,17 @@ function saveDm(dms) {
                 [snapshot]
             ));
         dbWriteChain.catch(e => console.error('DB dm save error:', e.message));
+    } else {
+        try { fs.writeFileSync(path.join(ROOT, 'dm.json'), JSON.stringify(dms)); } catch (e) {}
     }
 }
 
 async function initDatabase() {
     if (!process.env.DATABASE_URL) {
         console.log('Sin DATABASE_URL: los usuarios se guardan en users.json');
+        try { chatMessages = JSON.parse(fs.readFileSync(path.join(ROOT, 'chat.json'), 'utf8')); if (!Array.isArray(chatMessages)) chatMessages = []; } catch (e) { chatMessages = []; }
+        try { dmMessages = JSON.parse(fs.readFileSync(path.join(ROOT, 'dm.json'), 'utf8')); if (typeof dmMessages !== 'object' || dmMessages === null || Array.isArray(dmMessages)) dmMessages = {}; } catch (e) { dmMessages = {}; }
+        try { pvpResultsLog = JSON.parse(fs.readFileSync(PVP_LOG_FILE, 'utf8')); if (!Array.isArray(pvpResultsLog)) pvpResultsLog = []; } catch (e) { pvpResultsLog = []; }
         return false;
     }
     const { Pool } = require('pg');
@@ -117,21 +124,32 @@ async function initDatabase() {
     }
     const chatRes = await dbPool.query("SELECT v FROM app_kv WHERE k = 'chat'");
     if (chatRes.rows[0]) {
-        try { chatMessages = JSON.parse(chatRes.rows[0].v); } catch (e) { chatMessages = []; }
+        try { chatMessages = JSON.parse(chatRes.rows[0].v); if (!Array.isArray(chatMessages)) chatMessages = []; } catch (e) { chatMessages = []; }
     }
     const dmRes = await dbPool.query("SELECT v FROM app_kv WHERE k = 'dm'");
     if (dmRes.rows[0]) {
-        try { dmMessages = JSON.parse(dmRes.rows[0].v); } catch (e) { dmMessages = {}; }
+        try { dmMessages = JSON.parse(dmRes.rows[0].v); if (typeof dmMessages !== 'object' || dmMessages === null || Array.isArray(dmMessages)) dmMessages = {}; } catch (e) { dmMessages = {}; }
     }
+    loadPvpLogFromDb();
     console.log('PostgreSQL conectado: ' + (Object.keys(usersCache).length) + ' usuarios cargados, ' + chatMessages.length + ' mensajes de chat');
     return true;
 }
 
-function readBody(req) {
+function readBody(req, maxBytes) {
     return new Promise((resolve, reject) => {
+        const limit = (Number.isFinite(maxBytes) && maxBytes > 0) ? maxBytes : 1048576;
         let data = '';
-        req.on('data', chunk => { data += chunk; });
-        req.on('end', () => resolve(data));
+        let done = false;
+        req.on('data', chunk => {
+            if (done) return;
+            if (data.length + chunk.length > limit) {
+                done = true;
+                reject(new Error('PAYLOAD_TOO_LARGE'));
+                return;
+            }
+            data += chunk;
+        });
+        req.on('end', () => { if (!done) { done = true; resolve(data); } });
         req.on('error', reject);
     });
 }
@@ -1330,6 +1348,8 @@ function handleSave(req, res) {
         try {
             const parsed = JSON.parse(body || '{}');
             if (typeof parsed !== 'object' || parsed === null) throw new Error('bad data');
+            if (pvpHasBet(user.username.toLowerCase())) return sendJson(res, 403, { error: 'No puedes guardar datos mientras tienes una apuesta activa en PvP' });
+            if (getTrade(user.username.toLowerCase(), ['active'])) return sendJson(res, 403, { error: 'No puedes guardar datos mientras tienes un trade activo' });
             user.data = parsed;
             const users = loadUsers();
             for (const key of Object.keys(users)) {
@@ -1577,6 +1597,7 @@ function handleTradeStream(req, res) {
     if (t) {
         res.write('data: ' + JSON.stringify({ type: 'trade', trade: t }) + '\n\n');
     }
+    res.on('error', () => {});
     const ping = setInterval(() => {
         try { res.write(': ping\n\n'); } catch (e) {}
     }, 25000);
@@ -1604,6 +1625,7 @@ function handleChatStream(req, res) {
     res.write('retry: 3000\n\n');
     const conn = { res };
     chatSseClients.add(conn);
+    res.on('error', () => {});
     res.write('data: ' + JSON.stringify({ type: 'history', messages: pruneChat() }) + '\n\n');
     const ping = setInterval(() => {
         try { res.write(': ping\n\n'); } catch (e) {}
@@ -1615,6 +1637,7 @@ function handleChatStream(req, res) {
 }
 
 let chatLastSent = {};
+let tradeChatLastSent = {};
 
 function handleChatSend(req, res) {
     readBody(req).then(body => {
@@ -1892,6 +1915,7 @@ function handleDmStream(req, res) {
     if (!sseClients[key]) sseClients[key] = [];
     const conn = { res };
     sseClients[key].push(conn);
+    res.on('error', () => {});
     const ping = setInterval(() => {
         try { res.write(': ping\n\n'); } catch (e) {}
     }, 25000);
@@ -1935,10 +1959,10 @@ function handleTradeChatSend(req, res) {
         const me = users[meKey];
         if (!me) return sendJson(res, 401, { error: 'Sesión inválida' });
         const now = Date.now();
-        if (chatLastSent[meKey] && now - chatLastSent[meKey] < 1500) {
+        if (tradeChatLastSent[meKey] && now - tradeChatLastSent[meKey] < 1500) {
             return sendJson(res, 429, { error: 'Espera un momento antes de seguir escribiendo' });
         }
-        chatLastSent[meKey] = now;
+        tradeChatLastSent[meKey] = now;
         if (!tradeChatMessages[tradeId]) tradeChatMessages[tradeId] = [];
         tradeChatMessages[tradeId].push({ user: me.username, text: msgText, at: now });
         if (tradeChatMessages[tradeId].length > TRADE_CHAT_MAX) tradeChatMessages[tradeId] = tradeChatMessages[tradeId].slice(-TRADE_CHAT_MAX);
@@ -2181,7 +2205,12 @@ setInterval(() => {
 }, 15000);
 
 const server = http.createServer((req, res) => {
-    let urlPath = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
+    let urlPath;
+    try { urlPath = decodeURIComponent(new URL(req.url, 'http://localhost').pathname); }
+    catch (e) {
+        res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' });
+        return res.end('400 Bad Request');
+    }
     if (urlPath === '/') urlPath = '/index.html';
 
     if (req.method === 'OPTIONS') {
@@ -2334,6 +2363,13 @@ if (urlPath === '/api/logout' && req.method === 'POST') {
     if (!filePath.startsWith(ROOT)) {
         res.writeHead(403);
         return res.end('403');
+    }
+    const BLOCKED_STATIC = new Set(['users.json', 'codes.json', 'pvp_log.json', 'chat.json', 'dm.json', 'server.js', 'package.json', 'package-lock.json', '.env', 'generate-code.js', 'yarn.lock']);
+    const SAFE_STATIC_EXT = new Set(['.html', '.css', '.js', '.json', '.png', '.jpg', '.jpeg', '.jfif', '.gif', '.webp', '.svg', '.ico', '.mp3', '.mp4', '.ogg', '.wav', '.woff', '.woff2', '.ttf']);
+    const basenameLow = path.basename(filePath).toLowerCase();
+    if (BLOCKED_STATIC.has(basenameLow) || !SAFE_STATIC_EXT.has(path.extname(filePath).toLowerCase())) {
+        res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' });
+        return res.end('403 Forbidden');
     }
 
     fs.readFile(filePath, (err, data) => {

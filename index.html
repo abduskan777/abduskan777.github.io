@@ -2348,20 +2348,34 @@
         return (d.coins > 0) || ownedKeys.length > 0;
     }
 
+    let saveInFlight = false;
+    let saveDirty = false;
     async function save() {
         const data = buildSaveData();
         writeLocalBackup(data);
-        if (authToken) {
-            try {
-                const res = await fetch(API_BASE + '/api/save', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'x-token': authToken },
-                    body: JSON.stringify(data),
-                });
-                return !!(res && res.ok);
-            } catch (e) { return false; }
+        if (!authToken) return true;
+        if (saveInFlight) { saveDirty = true; return true; }
+        saveInFlight = true;
+        try {
+            let ok = true;
+            do {
+                const snap = buildSaveData();
+                writeLocalBackup(snap);
+                saveDirty = false;
+                ok = true;
+                try {
+                    const res = await fetch(API_BASE + '/api/save', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'x-token': authToken },
+                        body: JSON.stringify(snap),
+                    });
+                    ok = !!(res && res.ok);
+                } catch (e) { ok = false; }
+            } while (saveDirty);
+            return ok;
+        } finally {
+            saveInFlight = false;
         }
-        return true;
     }
 
     async function load() {
@@ -2580,6 +2594,7 @@
             body: JSON.stringify({ token: authToken, bio: bio }),
         }).then(r => r.json()).then((d) => {
             if (d && d.ok) {
+                state.bio = bio;
                 document.getElementById('profile-bio-btn').style.display = 'block';
                 document.getElementById('profile-bio-edit').style.display = 'none';
                 refreshProfileUI();
@@ -2999,13 +3014,19 @@
         if (!text || !currentDmFriend) return;
         input.value = '';
         const d = await apiPost('/api/dm/send', { token: authToken, to: currentDmFriend, text: text });
+        const k = String(currentDmFriend).toLowerCase();
         if (!d || !d.ok) {
+            if (input.value.trim() === '') input.value = text;
             showTradeToast((d && d.error) || 'No se pudo enviar el mensaje.');
             return;
         }
-        const k = String(currentDmFriend).toLowerCase();
         if (!dmHistory[k]) dmHistory[k] = [];
-        dmHistory[k].push(d.message);
+        const m = d.message;
+        const dupe = dmHistory[k].some(x => x && x.at === m.at && x.user === m.user && x.text === m.text);
+        if (!dupe) {
+            dmHistory[k].push(m);
+            if (dmHistory[k].length > 100) dmHistory[k] = dmHistory[k].slice(-100);
+        }
         renderDmMessages(currentDmFriend);
     }
 
@@ -3429,7 +3450,7 @@
         }, 10000);
         try {
             tradeStream = new EventSource(API_BASE + '/api/trade/stream?token=' + encodeURIComponent(authToken));
-            tradeStream.onopen = () => { if (authToken) load(); };
+            tradeStream.onopen = () => { refreshTradeMenu(); };
             tradeStream.onmessage = (e) => {
                 let msg = {};
                 try { msg = JSON.parse(e.data); } catch (_) { return; }
@@ -3494,6 +3515,7 @@
             if (chatOpen) {
                 renderChat();
             } else {
+                if (msg.message.user === authUsername) return;
                 chatUnread++;
                 const badge = document.getElementById('chat-badge');
                 badge.textContent = chatUnread > 99 ? '99+' : chatUnread;
@@ -3773,13 +3795,22 @@ const medals = ['👑', '🥈', '🥉'];
     }
 
     // ---- Ventana de trade (Adopt Me) ----
+    let lastTradeSig = '';
     function openTradeWindow(t) {
         const previous = currentTrade;
         if (!previous || previous.id !== t.id) {
             tradeChatMessages = [];
             tradeChatOpen = false;
             tradeChatUnread = 0;
+            lastTradeSig = '';
         }
+        const sig = JSON.stringify([t.id, t.offerFrom || {}, t.offerTo || {}, t.coinsFrom || 0, t.coinsTo || 0, !!t.acceptFrom, !!t.acceptTo, t.status]);
+        const alreadyOpen = document.getElementById('trade-win-overlay').classList.contains('open');
+        if (previous && previous.id === t.id && alreadyOpen && sig === lastTradeSig) {
+            currentTrade = t;
+            return;
+        }
+        lastTradeSig = sig;
         currentTrade = t;
         document.getElementById('trade-win-overlay').classList.add('open');
         renderTradeWindow();
@@ -3825,6 +3856,8 @@ const medals = ['👑', '🥈', '🥉'];
         const t = currentTrade;
         if (!t) return;
         const win = document.getElementById('trade-win');
+        const prevChatInput = document.getElementById('tw-chat-input');
+        const draftChat = prevChatInput ? prevChatInput.value : '';
         win.innerHTML = '';
 
         const head = document.createElement('div');
@@ -3929,10 +3962,13 @@ const medals = ['👑', '🥈', '🥉'];
         if (tradeChatOpen) {
             renderTradeChatMessages();
             const input = document.getElementById('tw-chat-input');
-            if (input) setTimeout(() => {
-                input.focus();
-                input.scrollIntoView({ block: 'nearest' });
-            }, 50);
+            if (input) {
+                if (draftChat !== '') input.value = draftChat;
+                setTimeout(() => {
+                    input.focus();
+                    input.scrollIntoView({ block: 'nearest' });
+                }, 50);
+            }
         }
 
 
@@ -4261,6 +4297,10 @@ const medals = ['👑', '🥈', '🥉'];
         if (state.rolling || ITEMS.length === 0) return;
         const now = Date.now();
         if (now < state.cooldownUntil) return;
+        if (authToken && ((currentTrade && currentTrade.status === 'active') || (pvpMatchId && pvpMatch && (pvpMatch.status === 'playing' || (pvpMatch.me && pvpMatch.me.confirm))))) {
+            addEvent('⛔ No puedes tirar mientras tienes un trade o una apuesta PvP activa', 'evt-sistema');
+            return;
+        }
         state.rolling = true;
         const btn = document.getElementById('roll-btn');
         btn.disabled = true;
@@ -4307,7 +4347,7 @@ const medals = ['👑', '🥈', '🥉'];
             state.rolling = false;
             btn.disabled = false;
         }, Math.min(cd, 200));
-        return lastPicked;
+        return isNew;
     }
 
     function revealItem(picked, isNew) {
@@ -5039,6 +5079,7 @@ const medals = ['👑', '🥈', '🥉'];
         document.getElementById('casino-spin-btn').disabled = true;
         document.getElementById('casino-result').textContent = 'Girando…';
         document.getElementById('casino-result').className = 'casino-result';
+        await save();
 
         try {
             const res = await fetch(API_BASE + '/api/casino/spin', {
@@ -5060,7 +5101,7 @@ const medals = ['👑', '🥈', '🥉'];
 
             await new Promise(r => setTimeout(r, 4400));
 
-            state.coins = data.coins;
+            state.coins = Math.max(state.coins || 0, data.coins);
             if (data.event.itemId) state.owned[data.event.itemId] = (state.owned[data.event.itemId] || 0) + 1;
             updateTopStats();
             save();
@@ -6635,7 +6676,10 @@ const medals = ['👑', '🥈', '🥉'];
         if (e.target === e.currentTarget) cancelActiveTrade();
     });
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') { closeInventory(); closeShop(); closeCasino(); closeTester(); closeAuth(); closeTrade(); closeChat(); closeLeaderboard(); closeCodes(); cancelActiveTrade(); }
+        if (e.key === 'Escape') {
+            if (document.getElementById('trade-win-overlay').classList.contains('open')) return;
+            closeInventory(); closeShop(); closeCasino(); closeTester(); closeAuth(); closeTrade(); closeChat(); closeLeaderboard(); closeCodes();
+        }
     });
 
     document.getElementById('reset-btn').addEventListener('click', () => {
